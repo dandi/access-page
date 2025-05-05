@@ -1,17 +1,20 @@
-name: Build and Deploy
-on: [push]
-permissions:
-  contents: write
-  
+name: Refresh gh-pages
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
-  build-and-deploy:
-    concurrency: ci-${{ github.ref }}
+  build-and-test:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout 🛎️
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: .
+      - name: Reset gh-pages to latest main
+        run: |
+          git checkout gh-pages
+          git reset --hard origin/main
+          git push origin gh-pages --force
