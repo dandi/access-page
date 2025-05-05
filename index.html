@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dandiset Access Summaries</title>
+
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
+    <script src="errors.js" defer></script>
+    <script src="plots.js" defer></script>
+
+    <style>
+        #totals {
+            text-align: center;
+            font-size: 2em;
+            margin: 20px auto;
+        }
+
+        #geography_heatmap {
+            width: 90vw;
+            height: 80vh;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dandiset Access Summaries</h1>
+    <label for="dandiset_selector">Select Dandiset ID:</label>
+    <select id="dandiset_selector"></select>
+    <div id="totals"></div>
+    <div id="over_time_plot"></div>
+    <div id="per_asset_histogram"></div>
+    <div id="geography_heatmap"></div>
+</body>
+</html>
