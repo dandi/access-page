@@ -16,6 +16,7 @@ jobs:
 
       - name: Reset gh-pages to latest main
         run: |
+          git fetch origin
           git checkout gh-pages
           git reset --hard origin/main
           git push origin gh-pages --force
