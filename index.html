@@ -22,12 +22,34 @@
             height: 80vh;
             margin: auto;
         }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 10px 0;
+        }
+
+        .log-scale-control {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
     </style>
 </head>
 <body>
     <h1>Dandiset Access Summaries</h1>
-    <label for="dandiset_selector">Select Dandiset ID:</label>
-    <select id="dandiset_selector"></select>
+    <div class="controls">
+        <div>
+            <label for="dandiset_selector">Select Dandiset ID:</label>
+            <select id="dandiset_selector"></select>
+        </div>
+        <div class="log-scale-control">
+            <label for="log_scale">Log Scale:</label>
+            <input type="checkbox" id="log_scale" />
+        </div>
+    </div>
     <div id="totals"></div>
     <div id="over_time_plot"></div>
     <div id="per_asset_histogram"></div>
