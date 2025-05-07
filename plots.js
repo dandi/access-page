@@ -9,6 +9,7 @@ const REGION_CODES_TO_LATITUDE_LONGITUDE_URL = "https://raw.githubusercontent.co
 
 let REGION_CODES_TO_LATITUDE_LONGITUDE = {};
 let ALL_DANDISET_TOTALS = {};
+let USE_LOG_SCALE = false;
 
 
 
@@ -16,6 +17,23 @@ let ALL_DANDISET_TOTALS = {};
 window.addEventListener("load", () => {
     if (typeof Plotly === "undefined") {
         handlePlotlyError();
+    }
+
+    // Add event listener for log scale checkbox
+    const logScaleCheckbox = document.getElementById("log_scale");
+    if (logScaleCheckbox) {
+        logScaleCheckbox.addEventListener("change", function() {
+            USE_LOG_SCALE = this.checked;
+            
+            // Get the current dandiset ID
+            const dandiset_selector = document.getElementById("dandiset_selector");
+            const selected_dandiset = dandiset_selector.value;
+            
+            // Reload plots with the current dandiset ID
+            load_over_time_plot(selected_dandiset);
+            load_per_asset_histogram(selected_dandiset);
+            load_geographic_heatmap(selected_dandiset);
+        });
     }
 });
 
@@ -214,11 +232,14 @@ function load_over_time_plot(dandiset_id) {
                 },
                 yaxis: {
                     title: {
-                        text: "Bytes",
+                        text: USE_LOG_SCALE ? "Bytes (log scale)" : "Bytes",
                         font: { size: 16 }
                     },
-                    tickformat: "~s",
-                    ticksuffix: "B",
+                    type: USE_LOG_SCALE ? "log" : "linear",
+                    tickformat: USE_LOG_SCALE ? "" : "~s",
+                    ticksuffix: USE_LOG_SCALE ? "" : "B",
+                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000] : null,
+                    ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
                 },
             }
 
@@ -313,11 +334,14 @@ function load_per_asset_histogram(dandiset_id) {
                 },
                 yaxis: {
                     title: {
-                        text: "Bytes",
+                        text: USE_LOG_SCALE ? "Bytes (log scale)" : "Bytes",
                         font: { size: 16 }
                     },
-                    tickformat: "~s",
-                    ticksuffix: "B",
+                    type: USE_LOG_SCALE ? "log" : "linear",
+                    tickformat: USE_LOG_SCALE ? "" : "~s",
+                    ticksuffix: USE_LOG_SCALE ? "" : "B",
+                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000] : null,
+                    ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
                 },
             };
 
@@ -399,12 +423,14 @@ function load_geographic_heatmap(dandiset_id) {
                         // size: 5,
                         size: bytes_sent.map((bytes) => Math.log(bytes) * 0.5),
                         //size: bytes_sent.map((bytes) => bytes / max_bytes_sent * 10),
-                        color: bytes_sent,
+                        color: USE_LOG_SCALE ? bytes_sent.map(bytes => Math.log10(Math.max(1, bytes))) : bytes_sent,
                         colorscale: "Viridis",
                         colorbar: {
-                            title: "Bytes Sent",
-                            tickformat: "~s",
-                            ticksuffix: "B",
+                            title: USE_LOG_SCALE ? "Bytes Sent (log scale)" : "Bytes Sent",
+                            tickformat: USE_LOG_SCALE ? "" : "~s",
+                            ticksuffix: USE_LOG_SCALE ? "" : "B",
+                            tickvals: USE_LOG_SCALE ? [3, 6, 9, 12] : null,
+                            ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
                         },
                         opacity: 1,
                     },
