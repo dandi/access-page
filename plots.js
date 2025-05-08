@@ -70,7 +70,6 @@ function resizePlots() {
 
 
 
-// TODO: Remember that when using opencagedata, the "lat"/"lon" are reversed ("lon"/"lat")
 fetch(REGION_CODES_TO_LATITUDE_LONGITUDE_URL)
     .then((response) => {
         if (!response.ok) {
@@ -164,7 +163,14 @@ function update_totals(dandiset_id) {
         const human_readable_bytes_sent = format_bytes(totals.total_bytes_sent);
         //totals_element.innerText = `Totals: ${human_readable_bytes_sent} sent to ?(WIP)? unique requesters from
         // ${totals.number_of_unique_regions} regions of ${totals.number_of_unique_countries} countries.`;
-        totals_element.innerText = `A total of ${human_readable_bytes_sent} was sent from ${totals.number_of_unique_regions} regions across ${totals.number_of_unique_countries} countries.`;
+        totals_element.innerHTML = `A total of ${human_readable_bytes_sent} was sent from ${totals.number_of_unique_regions} regions across ${totals.number_of_unique_countries} countries. <sup>*</sup>`;
+
+        // Add the footnote
+        const footnote = document.createElement("div");
+        footnote.style.fontSize = "0.5em";
+        footnote.style.marginTop = "7px";
+        footnote.innerHTML = "<sup>*</sup> These values are only estimates and are subject to change as additional information becomes available.";
+        totals_element.appendChild(footnote);
     } catch (error) {
         console.error("Error:", error);
         if (totals_element) {
