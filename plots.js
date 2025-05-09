@@ -10,6 +10,7 @@ const REGION_CODES_TO_LATITUDE_LONGITUDE_URL = "https://raw.githubusercontent.co
 let REGION_CODES_TO_LATITUDE_LONGITUDE = {};
 let ALL_DANDISET_TOTALS = {};
 let USE_LOG_SCALE = false;
+let USE_CUMULATIVE = false;
 
 
 
@@ -29,6 +30,23 @@ window.addEventListener("load", () => {
             const dandiset_selector = document.getElementById("dandiset_selector");
             const selected_dandiset = dandiset_selector.value;
             
+            // Reload plots with the current dandiset ID
+            load_over_time_plot(selected_dandiset);
+            load_per_asset_histogram(selected_dandiset);
+            load_geographic_heatmap(selected_dandiset);
+        });
+    }
+
+    // Add event listener for cumulative totals
+    const cumulativeCheckbox = document.getElementById("cumulative");
+    if (cumulativeCheckbox) {
+        cumulativeCheckbox.addEventListener("change", function () {
+            USE_CUMULATIVE = this.checked;
+
+            // Get the current dandiset ID
+            const dandiset_selector = document.getElementById("dandiset_selector");
+            const selected_dandiset = dandiset_selector.value;
+
             // Reload plots with the current dandiset ID
             load_over_time_plot(selected_dandiset);
             load_per_asset_histogram(selected_dandiset);
@@ -203,23 +221,29 @@ function load_over_time_plot(dandiset_id) {
                 throw new Error("TSV file does not contain enough data.");
             }
 
-            const data = rows.slice(1).map((row) => row.split("\t"));
+            const raw_data = rows.slice(1).map((row) => row.split("\t"));
 
-            const dates = data.map((row) => row[0]);
-            const formatted_dates = dates.map((date) => {
-                const [year, month, day] = date.split("-");
-                return `${month}/${day}/${year}`;
-            });
-            const bytes_sent = data.map((row) => parseInt(row[1], 10));
-            const human_readable_bytes_sent = bytes_sent.map((bytes) => format_bytes(bytes));
+            const dates = raw_data.map((row) => row[0]);
+            const bytes_sent = raw_data.map((row) => parseInt(row[1], 10));
 
-            const plot_data = [
+            // Convert to cumulative if the checkbox is checked
+            let plot_data = bytes_sent;
+            if (USE_CUMULATIVE) {
+                plot_data = bytes_sent.reduce((acc, value, index) => {
+                    acc.push((acc[index - 1] || 0) + value);
+                    return acc;
+                }, []);
+            }
+
+            const human_readable_bytes_sent = plot_data.map((bytes) => format_bytes(bytes));
+
+            const plot_info = [
                 {
                     type: "scatter",
                     mode: "lines+markers",
-                    x: dates,
-                    y: bytes_sent,
-                    text: formatted_dates.map((formatted_date, index) => `${formatted_date}<br>${human_readable_bytes_sent[index]}`),
+                    x: dates, // Use raw dates for proper alignment
+                    y: plot_data,
+                    text: dates.map((date, index) => `${date}<br>${human_readable_bytes_sent[index]}`),
                     textposition: "none",
                     hoverinfo: "text",
                 }
@@ -234,7 +258,8 @@ function load_over_time_plot(dandiset_id) {
                     title: {
                         text: "Date",
                         font: { size: 16 }
-                    }
+                    },
+                    tickformat: "%Y-%m-%d", // Ensure proper date formatting
                 },
                 yaxis: {
                     title: {
@@ -244,12 +269,14 @@ function load_over_time_plot(dandiset_id) {
                     type: USE_LOG_SCALE ? "log" : "linear",
                     tickformat: USE_LOG_SCALE ? "" : "~s",
                     ticksuffix: USE_LOG_SCALE ? "" : "B",
-                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000] : null,
-                    ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
+                    // Only set tickvals and ticktext for log scale
+                    //tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000] : null,
+                     // ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB", "PB"] : null,
+                    //range: USE_LOG_SCALE ? null : undefined // Let Plotly auto-scale for linear scale
                 },
-            }
+            };
 
-            Plotly.newPlot(plot_element_id, plot_data, layout);
+            Plotly.newPlot(plot_element_id, plot_info, layout);
         })
         .catch((error) => {
             console.error("Error:", error);
@@ -473,7 +500,7 @@ function load_geographic_heatmap(dandiset_id) {
 function format_bytes(bytes, decimals = 2) {
     if (bytes === 0) return "0 Bytes";
 
-    const k = 1024;
+    const k = 1000;
     const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 

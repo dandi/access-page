@@ -23,7 +23,7 @@
             margin: auto;
         }
 
-        .controls {
+        .ControllerContainer {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -31,7 +31,7 @@
             margin: 10px 0;
         }
 
-        .log-scale-control {
+        .BooleanController {
             display: flex;
             align-items: center;
             gap: 5px;
@@ -40,14 +40,18 @@
 </head>
 <body>
     <h1>Dandiset Access Summaries</h1>
-    <div class="controls">
+    <div class="ControllerContainer">
         <div>
             <label for="dandiset_selector">Select Dandiset ID:</label>
             <select id="dandiset_selector"></select>
         </div>
-        <div class="log-scale-control">
+        <div class="BooleanController">
             <label for="log_scale">Log Scale:</label>
             <input type="checkbox" id="log_scale" />
+        </div>
+        <div class="BooleanController">
+            <label for="cumulative">Cumulative:</label>
+            <input type="checkbox" id="cumulative" />
         </div>
     </div>
     <div id="totals"></div>
