@@ -11,6 +11,7 @@ let REGION_CODES_TO_LATITUDE_LONGITUDE = {};
 let ALL_DANDISET_TOTALS = {};
 let USE_LOG_SCALE = false;
 let USE_CUMULATIVE = false;
+let USE_BINARY = false;
 
 
 
@@ -42,6 +43,23 @@ window.addEventListener("load", () => {
     if (cumulativeCheckbox) {
         cumulativeCheckbox.addEventListener("change", function () {
             USE_CUMULATIVE = this.checked;
+
+            // Get the current dandiset ID
+            const dandiset_selector = document.getElementById("dandiset_selector");
+            const selected_dandiset = dandiset_selector.value;
+
+            // Reload plots with the current dandiset ID
+            load_over_time_plot(selected_dandiset);
+            load_per_asset_histogram(selected_dandiset);
+            load_geographic_heatmap(selected_dandiset);
+        });
+    }
+
+    // Add event listener for binary/decimal toggle
+    const prefix_selector = document.getElementById("prefix");
+    if (prefix_selector) {
+        prefix_selector.addEventListener("change", function () {
+            USE_BINARY = this.value === "binary";
 
             // Get the current dandiset ID
             const dandiset_selector = document.getElementById("dandiset_selector");
@@ -249,6 +267,9 @@ function load_over_time_plot(dandiset_id) {
                 }
             ];
 
+            const prefix_selector = document.getElementById("prefix");
+            const prefix_type = prefix_selector.value;
+            const prefix = prefix_type === "binary" ? "i" : ""
             const layout = {
                 title: {
                     text: `Bytes sent per day`,
@@ -269,10 +290,8 @@ function load_over_time_plot(dandiset_id) {
                     type: USE_LOG_SCALE ? "log" : "linear",
                     tickformat: USE_LOG_SCALE ? "" : "~s",
                     ticksuffix: USE_LOG_SCALE ? "" : "B",
-                    // Only set tickvals and ticktext for log scale
-                    //tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000] : null,
-                     // ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB", "PB"] : null,
-                    //range: USE_LOG_SCALE ? null : undefined // Let Plotly auto-scale for linear scale
+                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000, 1000000000000000000] : null,
+                    ticktext: USE_LOG_SCALE ? [`K${prefix}B`, `M${prefix}B`, `G${prefix}B`, `T${prefix}B`, `P${prefix}B`]  : null,
                 },
             };
 
@@ -348,7 +367,9 @@ function load_per_asset_histogram(dandiset_id) {
                 }
             ];
 
-
+            const prefix_selector = document.getElementById("prefix");
+            const prefix_type = prefix_selector.value;
+            const prefix = prefix_type === "binary" ? "i" : ""
             const layout = {
                 title: {
                     text: `Bytes sent per asset`,
@@ -374,7 +395,7 @@ function load_per_asset_histogram(dandiset_id) {
                     tickformat: USE_LOG_SCALE ? "" : "~s",
                     ticksuffix: USE_LOG_SCALE ? "" : "B",
                     tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000] : null,
-                    ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
+                    ticktext: USE_LOG_SCALE ? [`K${prefix}B`, `M${prefix}B`, `G${prefix}B`, `T${prefix}B`] : null
                 },
             };
 
@@ -443,7 +464,9 @@ function load_geographic_heatmap(dandiset_id) {
                 }
             });
 
-            const max_bytes_sent = Math.max(...bytes_sent);
+            const prefix_selector = document.getElementById("prefix");
+            const prefix_type = prefix_selector.value;
+            const prefix = prefix_type === "binary" ? "i" : ""
             const plot_data = [
                 {
                     type: "scattergeo",
@@ -452,10 +475,7 @@ function load_geographic_heatmap(dandiset_id) {
                     lon: longitudes,
                     marker: {
                         symbol: "circle",
-                        // ad hoc scaling from experimentation
-                        // size: 5,
                         size: bytes_sent.map((bytes) => Math.log(bytes) * 0.5),
-                        //size: bytes_sent.map((bytes) => bytes / max_bytes_sent * 10),
                         color: USE_LOG_SCALE ? bytes_sent.map(bytes => Math.log10(Math.max(1, bytes))) : bytes_sent,
                         colorscale: "Viridis",
                         colorbar: {
@@ -463,7 +483,7 @@ function load_geographic_heatmap(dandiset_id) {
                             tickformat: USE_LOG_SCALE ? "" : "~s",
                             ticksuffix: USE_LOG_SCALE ? "" : "B",
                             tickvals: USE_LOG_SCALE ? [3, 6, 9, 12] : null,
-                            ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
+                            ticktext: USE_LOG_SCALE ? [`K${prefix}B`, `M${prefix}B`, `G${prefix}B`, `T${prefix}B`] : null
                         },
                         opacity: 1,
                     },
@@ -500,8 +520,11 @@ function load_geographic_heatmap(dandiset_id) {
 function format_bytes(bytes, decimals = 2) {
     if (bytes === 0) return "0 Bytes";
 
-    const k = 1000;
-    const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+    const prefix_selector = document.getElementById("prefix");
+    const prefix_type = prefix_selector.value;
+
+    const k = prefix_type === "binary" ? 1024 : 1000;
+    const sizes = prefix_type === "binary" ? ["iBytes", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]: ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
     const reduced = parseFloat((bytes / Math.pow(k, i)).toFixed(decimals))

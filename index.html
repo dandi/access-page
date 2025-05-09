@@ -31,7 +31,7 @@
             margin: 10px 0;
         }
 
-        .BooleanController {
+        .SubControllerContainer {
             display: flex;
             align-items: center;
             gap: 5px;
@@ -45,13 +45,20 @@
             <label for="dandiset_selector">Select Dandiset ID:</label>
             <select id="dandiset_selector"></select>
         </div>
-        <div class="BooleanController">
+        <div class="SubControllerContainer">
             <label for="log_scale">Log Scale:</label>
             <input type="checkbox" id="log_scale" />
         </div>
-        <div class="BooleanController">
+        <div class="SubControllerContainer">
             <label for="cumulative">Cumulative:</label>
             <input type="checkbox" id="cumulative" />
+        </div>
+        <div class="SubControllerContainer">
+            <label for="prefix">Prefix:</label>
+            <select id="prefix">
+                <option value="decimal">Decimal</option>
+                <option value="binary">Binary</option>
+            </select>
         </div>
     </div>
     <div id="totals"></div>
