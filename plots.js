@@ -66,6 +66,7 @@ window.addEventListener("load", () => {
             const selected_dandiset = dandiset_selector.value;
 
             // Reload plots with the current dandiset ID
+            update_totals(selected_dandiset);
             load_over_time_plot(selected_dandiset);
             load_per_asset_histogram(selected_dandiset);
             load_geographic_heatmap(selected_dandiset);
@@ -267,9 +268,7 @@ function load_over_time_plot(dandiset_id) {
                 }
             ];
 
-            const prefix_selector = document.getElementById("prefix");
-            const prefix_type = prefix_selector.value;
-            const prefix = prefix_type === "binary" ? "i" : ""
+            const prefix = USE_BINARY ? "i" : ""
             const layout = {
                 title: {
                     text: `Bytes sent per day`,
@@ -289,7 +288,7 @@ function load_over_time_plot(dandiset_id) {
                     },
                     type: USE_LOG_SCALE ? "log" : "linear",
                     tickformat: USE_LOG_SCALE ? "" : "~s",
-                    ticksuffix: USE_LOG_SCALE ? "" : "B",
+                    ticksuffix: USE_LOG_SCALE ? "" : `${prefix}B`,
                     tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000, 1000000000000000000] : null,
                     ticktext: USE_LOG_SCALE ? [`K${prefix}B`, `M${prefix}B`, `G${prefix}B`, `T${prefix}B`, `P${prefix}B`]  : null,
                 },
@@ -367,9 +366,7 @@ function load_per_asset_histogram(dandiset_id) {
                 }
             ];
 
-            const prefix_selector = document.getElementById("prefix");
-            const prefix_type = prefix_selector.value;
-            const prefix = prefix_type === "binary" ? "i" : ""
+            const prefix = USE_BINARY ? "i" : ""
             const layout = {
                 title: {
                     text: `Bytes sent per asset`,
@@ -393,7 +390,7 @@ function load_per_asset_histogram(dandiset_id) {
                     },
                     type: USE_LOG_SCALE ? "log" : "linear",
                     tickformat: USE_LOG_SCALE ? "" : "~s",
-                    ticksuffix: USE_LOG_SCALE ? "" : "B",
+                    ticksuffix: USE_LOG_SCALE ? "" : `${prefix}B`,
                     tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000] : null,
                     ticktext: USE_LOG_SCALE ? [`K${prefix}B`, `M${prefix}B`, `G${prefix}B`, `T${prefix}B`] : null
                 },
@@ -464,10 +461,8 @@ function load_geographic_heatmap(dandiset_id) {
                 }
             });
 
-            const prefix_selector = document.getElementById("prefix");
-            const prefix_type = prefix_selector.value;
-            const prefix = prefix_type === "binary" ? "i" : ""
-            const plot_data = [
+            const prefix = USE_BINARY ? "i" : ""
+            const plot_info = [
                 {
                     type: "scattergeo",
                     mode: "markers",
@@ -479,9 +474,9 @@ function load_geographic_heatmap(dandiset_id) {
                         color: USE_LOG_SCALE ? bytes_sent.map(bytes => Math.log10(Math.max(1, bytes))) : bytes_sent,
                         colorscale: "Viridis",
                         colorbar: {
-                            title: USE_LOG_SCALE ? "Bytes Sent (log scale)" : "Bytes Sent",
+                            title: USE_LOG_SCALE ? "Bytes (log scale)" : "Bytes",
                             tickformat: USE_LOG_SCALE ? "" : "~s",
-                            ticksuffix: USE_LOG_SCALE ? "" : "B",
+                            ticksuffix: USE_LOG_SCALE ? "" : `${prefix}B`,
                             tickvals: USE_LOG_SCALE ? [3, 6, 9, 12] : null,
                             ticktext: USE_LOG_SCALE ? [`K${prefix}B`, `M${prefix}B`, `G${prefix}B`, `T${prefix}B`] : null
                         },
@@ -505,7 +500,7 @@ function load_geographic_heatmap(dandiset_id) {
                 },
             };
 
-            Plotly.newPlot(plot_element_id, plot_data, layout);
+            Plotly.newPlot(plot_element_id, plot_info, layout);
         })
         .catch((error) => {
             console.error("Error:", error);
@@ -520,11 +515,8 @@ function load_geographic_heatmap(dandiset_id) {
 function format_bytes(bytes, decimals = 2) {
     if (bytes === 0) return "0 Bytes";
 
-    const prefix_selector = document.getElementById("prefix");
-    const prefix_type = prefix_selector.value;
-
-    const k = prefix_type === "binary" ? 1024 : 1000;
-    const sizes = prefix_type === "binary" ? ["iBytes", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]: ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+    const k = USE_BINARY ? 1024 : 1000;
+    const sizes = USE_BINARY ? ["iBytes", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]: ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
     const reduced = parseFloat((bytes / Math.pow(k, i)).toFixed(decimals))
