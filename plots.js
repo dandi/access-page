@@ -10,6 +10,8 @@ const REGION_CODES_TO_LATITUDE_LONGITUDE_URL = "https://raw.githubusercontent.co
 let REGION_CODES_TO_LATITUDE_LONGITUDE = {};
 let ALL_DANDISET_TOTALS = {};
 let USE_LOG_SCALE = false;
+let USE_CUMULATIVE = false;
+let USE_BINARY = false;
 
 
 
@@ -30,6 +32,41 @@ window.addEventListener("load", () => {
             const selected_dandiset = dandiset_selector.value;
             
             // Reload plots with the current dandiset ID
+            load_over_time_plot(selected_dandiset);
+            load_per_asset_histogram(selected_dandiset);
+            load_geographic_heatmap(selected_dandiset);
+        });
+    }
+
+    // Add event listener for cumulative totals
+    const cumulativeCheckbox = document.getElementById("cumulative");
+    if (cumulativeCheckbox) {
+        cumulativeCheckbox.addEventListener("change", function () {
+            USE_CUMULATIVE = this.checked;
+
+            // Get the current dandiset ID
+            const dandiset_selector = document.getElementById("dandiset_selector");
+            const selected_dandiset = dandiset_selector.value;
+
+            // Reload plots with the current dandiset ID
+            load_over_time_plot(selected_dandiset);
+            load_per_asset_histogram(selected_dandiset);
+            load_geographic_heatmap(selected_dandiset);
+        });
+    }
+
+    // Add event listener for binary/decimal toggle
+    const prefix_selector = document.getElementById("prefix");
+    if (prefix_selector) {
+        prefix_selector.addEventListener("change", function () {
+            USE_BINARY = this.value === "binary";
+
+            // Get the current dandiset ID
+            const dandiset_selector = document.getElementById("dandiset_selector");
+            const selected_dandiset = dandiset_selector.value;
+
+            // Reload plots with the current dandiset ID
+            update_totals(selected_dandiset);
             load_over_time_plot(selected_dandiset);
             load_per_asset_histogram(selected_dandiset);
             load_geographic_heatmap(selected_dandiset);
@@ -203,23 +240,30 @@ function load_over_time_plot(dandiset_id) {
                 throw new Error("TSV file does not contain enough data.");
             }
 
-            const data = rows.slice(1).map((row) => row.split("\t"));
+            const raw_data = rows.slice(1).map((row) => row.split("\t"));
 
-            const dates = data.map((row) => row[0]);
-            const formatted_dates = dates.map((date) => {
-                const [year, month, day] = date.split("-");
-                return `${month}/${day}/${year}`;
-            });
-            const bytes_sent = data.map((row) => parseInt(row[1], 10));
-            const human_readable_bytes_sent = bytes_sent.map((bytes) => format_bytes(bytes));
+            const dates = raw_data.map((row) => row[0]);
+            const bytes_sent = raw_data.map((row) => parseInt(row[1], 10));
 
-            const plot_data = [
+            // Convert to cumulative if the checkbox is checked
+            let plot_data = bytes_sent;
+            if (USE_CUMULATIVE) {
+                plot_data = bytes_sent.reduce((acc, value, index) => {
+                    acc.push((acc[index - 1] || 0) + value);
+                    return acc;
+                }, []);
+            }
+
+            const human_readable_bytes_sent = plot_data.map((bytes) => format_bytes(bytes));
+            // TODO: cleanup code
+
+            const plot_info = [
                 {
                     type: "scatter",
                     mode: "lines+markers",
-                    x: dates,
-                    y: bytes_sent,
-                    text: formatted_dates.map((formatted_date, index) => `${formatted_date}<br>${human_readable_bytes_sent[index]}`),
+                    x: dates, // Use raw dates for proper alignment
+                    y: plot_data,
+                    text: dates.map((date, index) => `${date}<br>${human_readable_bytes_sent[index]}`),
                     textposition: "none",
                     hoverinfo: "text",
                 }
@@ -234,7 +278,8 @@ function load_over_time_plot(dandiset_id) {
                     title: {
                         text: "Date",
                         font: { size: 16 }
-                    }
+                    },
+                    tickformat: "%Y-%m-%d",
                 },
                 yaxis: {
                     title: {
@@ -242,14 +287,14 @@ function load_over_time_plot(dandiset_id) {
                         font: { size: 16 }
                     },
                     type: USE_LOG_SCALE ? "log" : "linear",
-                    tickformat: USE_LOG_SCALE ? "" : "~s",
+                    tickformat: USE_LOG_SCALE ? "" : "s",
                     ticksuffix: USE_LOG_SCALE ? "" : "B",
-                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000] : null,
-                    ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
+                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000] : null,
+                    ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null,
                 },
-            }
+            };
 
-            Plotly.newPlot(plot_element_id, plot_data, layout);
+            Plotly.newPlot(plot_element_id, plot_info, layout);
         })
         .catch((error) => {
             console.error("Error:", error);
@@ -321,7 +366,6 @@ function load_per_asset_histogram(dandiset_id) {
                 }
             ];
 
-
             const layout = {
                 title: {
                     text: `Bytes sent per asset`,
@@ -346,7 +390,7 @@ function load_per_asset_histogram(dandiset_id) {
                     type: USE_LOG_SCALE ? "log" : "linear",
                     tickformat: USE_LOG_SCALE ? "" : "~s",
                     ticksuffix: USE_LOG_SCALE ? "" : "B",
-                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000] : null,
+                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000, 1000000000000000000] : null,
                     ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
                 },
             };
@@ -416,8 +460,8 @@ function load_geographic_heatmap(dandiset_id) {
                 }
             });
 
-            const max_bytes_sent = Math.max(...bytes_sent);
-            const plot_data = [
+            const prefix = USE_BINARY ? "i" : ""
+            const plot_info = [
                 {
                     type: "scattergeo",
                     mode: "markers",
@@ -425,14 +469,11 @@ function load_geographic_heatmap(dandiset_id) {
                     lon: longitudes,
                     marker: {
                         symbol: "circle",
-                        // ad hoc scaling from experimentation
-                        // size: 5,
                         size: bytes_sent.map((bytes) => Math.log(bytes) * 0.5),
-                        //size: bytes_sent.map((bytes) => bytes / max_bytes_sent * 10),
                         color: USE_LOG_SCALE ? bytes_sent.map(bytes => Math.log10(Math.max(1, bytes))) : bytes_sent,
                         colorscale: "Viridis",
                         colorbar: {
-                            title: USE_LOG_SCALE ? "Bytes Sent (log scale)" : "Bytes Sent",
+                            title: USE_LOG_SCALE ? "Bytes (log scale)" : "Bytes",
                             tickformat: USE_LOG_SCALE ? "" : "~s",
                             ticksuffix: USE_LOG_SCALE ? "" : "B",
                             tickvals: USE_LOG_SCALE ? [3, 6, 9, 12] : null,
@@ -458,7 +499,7 @@ function load_geographic_heatmap(dandiset_id) {
                 },
             };
 
-            Plotly.newPlot(plot_element_id, plot_data, layout);
+            Plotly.newPlot(plot_element_id, plot_info, layout);
         })
         .catch((error) => {
             console.error("Error:", error);
@@ -473,8 +514,8 @@ function load_geographic_heatmap(dandiset_id) {
 function format_bytes(bytes, decimals = 2) {
     if (bytes === 0) return "0 Bytes";
 
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+    const k = USE_BINARY ? 1024 : 1000;
+    const sizes = USE_BINARY ? ["Bytes", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]: ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
     const reduced = parseFloat((bytes / Math.pow(k, i)).toFixed(decimals))
