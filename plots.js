@@ -255,6 +255,7 @@ function load_over_time_plot(dandiset_id) {
             }
 
             const human_readable_bytes_sent = plot_data.map((bytes) => format_bytes(bytes));
+            // TODO: cleanup code
 
             const plot_info = [
                 {
@@ -268,7 +269,6 @@ function load_over_time_plot(dandiset_id) {
                 }
             ];
 
-            const prefix = USE_BINARY ? "i" : ""
             const layout = {
                 title: {
                     text: `Bytes sent per day`,
@@ -279,7 +279,7 @@ function load_over_time_plot(dandiset_id) {
                         text: "Date",
                         font: { size: 16 }
                     },
-                    tickformat: "%Y-%m-%d", // Ensure proper date formatting
+                    tickformat: "%Y-%m-%d",
                 },
                 yaxis: {
                     title: {
@@ -287,10 +287,10 @@ function load_over_time_plot(dandiset_id) {
                         font: { size: 16 }
                     },
                     type: USE_LOG_SCALE ? "log" : "linear",
-                    tickformat: USE_LOG_SCALE ? "" : "~s",
-                    ticksuffix: USE_LOG_SCALE ? "" : `${prefix}B`,
-                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000, 1000000000000000000] : null,
-                    ticktext: USE_LOG_SCALE ? [`K${prefix}B`, `M${prefix}B`, `G${prefix}B`, `T${prefix}B`, `P${prefix}B`]  : null,
+                    tickformat: USE_LOG_SCALE ? "" : "s",
+                    ticksuffix: USE_LOG_SCALE ? "" : "B",
+                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000] : null,
+                    ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null,
                 },
             };
 
@@ -366,7 +366,6 @@ function load_per_asset_histogram(dandiset_id) {
                 }
             ];
 
-            const prefix = USE_BINARY ? "i" : ""
             const layout = {
                 title: {
                     text: `Bytes sent per asset`,
@@ -390,9 +389,9 @@ function load_per_asset_histogram(dandiset_id) {
                     },
                     type: USE_LOG_SCALE ? "log" : "linear",
                     tickformat: USE_LOG_SCALE ? "" : "~s",
-                    ticksuffix: USE_LOG_SCALE ? "" : `${prefix}B`,
-                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000] : null,
-                    ticktext: USE_LOG_SCALE ? [`K${prefix}B`, `M${prefix}B`, `G${prefix}B`, `T${prefix}B`] : null
+                    ticksuffix: USE_LOG_SCALE ? "" : "B",
+                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000, 1000000000000000000] : null,
+                    ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
                 },
             };
 
@@ -476,9 +475,9 @@ function load_geographic_heatmap(dandiset_id) {
                         colorbar: {
                             title: USE_LOG_SCALE ? "Bytes (log scale)" : "Bytes",
                             tickformat: USE_LOG_SCALE ? "" : "~s",
-                            ticksuffix: USE_LOG_SCALE ? "" : `${prefix}B`,
+                            ticksuffix: USE_LOG_SCALE ? "" : "B",
                             tickvals: USE_LOG_SCALE ? [3, 6, 9, 12] : null,
-                            ticktext: USE_LOG_SCALE ? [`K${prefix}B`, `M${prefix}B`, `G${prefix}B`, `T${prefix}B`] : null
+                            ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
                         },
                         opacity: 1,
                     },
@@ -516,7 +515,7 @@ function format_bytes(bytes, decimals = 2) {
     if (bytes === 0) return "0 Bytes";
 
     const k = USE_BINARY ? 1024 : 1000;
-    const sizes = USE_BINARY ? ["iBytes", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]: ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+    const sizes = USE_BINARY ? ["Bytes", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]: ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
     const reduced = parseFloat((bytes / Math.pow(k, i)).toFixed(decimals))
