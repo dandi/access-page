@@ -2,10 +2,12 @@
 // (working for the moment due to global import in the index.html file)
 
 // URLs for fetching data
-const ARCHIVE_TOTALS_URL = "https://raw.githubusercontent.com/CodyCBakerPhD/dandiset-access-summaries/main/content/archive_totals.json";
-const ALL_DANDISET_TOTALS_URL = "https://raw.githubusercontent.com/CodyCBakerPhD/dandiset-access-summaries/main/content/all_dandiset_totals.json";
-const BASE_TSV_URL = "https://raw.githubusercontent.com/CodyCBakerPhD/dandiset-access-summaries/main/content/summaries";
-const REGION_CODES_TO_LATITUDE_LONGITUDE_URL = "https://raw.githubusercontent.com/CodyCBakerPhD/dandiset-access-summaries/main/content/region_codes_to_coordinates.json";
+const BASE_URL = "https://raw.githubusercontent.com/dandi/access-summaries/main";
+const BASE_TSV_URL = `${BASE_URL}/content/summaries`;
+
+const ARCHIVE_TOTALS_URL = `${BASE_URL}/content/archive_totals.json`;
+const ALL_DANDISET_TOTALS_URL = `${BASE_URL}/content/all_dandiset_totals.json`;
+const REGION_CODES_TO_LATITUDE_LONGITUDE_URL = `${BASE_URL}/content/region_codes_to_coordinates.json`;
 
 let REGION_CODES_TO_LATITUDE_LONGITUDE = {};
 let ALL_DANDISET_TOTALS = {};
