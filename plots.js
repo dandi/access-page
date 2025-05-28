@@ -208,7 +208,7 @@ function update_totals(dandiset_id) {
         const footnote = document.createElement("div");
         footnote.style.fontSize = "0.5em";
         footnote.style.marginTop = "7px";
-        footnote.innerHTML = "<sup>*</sup> These values are only estimates and are subject to change as additional information becomes available.";
+        footnote.innerHTML = "<sup>*</sup> These values are only estimates for publically released datasets and are subject to change as additional information becomes available.";
         totals_element.appendChild(footnote);
     } catch (error) {
         console.error("Error:", error);
