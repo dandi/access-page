@@ -510,7 +510,7 @@ function load_geographic_heatmap(dandiset_id) {
 
             const layout = {
                 title: {
-                    text: "Bytes Sent by Region",
+                    text: "Bytes sent by region",
                     font: { size: 24 },
                 },
                 geo: {
