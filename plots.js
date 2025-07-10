@@ -215,7 +215,7 @@ function update_totals(dandiset_id) {
         const human_readable_bytes_sent = format_bytes(totals.total_bytes_sent);
         //totals_element.innerText = `Totals: ${human_readable_bytes_sent} sent to ?(WIP)? unique requesters from
         // ${totals.number_of_unique_regions} regions of ${totals.number_of_unique_countries} countries.`;
-        totals_element.innerHTML = `A total of ${human_readable_bytes_sent} was sent from ${totals.number_of_unique_regions} regions across ${totals.number_of_unique_countries} countries. <sup>*</sup>`;
+        totals_element.innerHTML = `A total of ${human_readable_bytes_sent} was sent to ${totals.number_of_unique_regions} regions across ${totals.number_of_unique_countries} countries. <sup>*</sup>`;
 
         // Add the footnote
         const footnote = document.createElement("div");
