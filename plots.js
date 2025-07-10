@@ -2,12 +2,12 @@
 // (working for the moment due to global import in the index.html file)
 
 // URLs for fetching data
-const BASE_URL = "https://raw.githubusercontent.com/dandi/access-summaries/main";
+const BASE_URL = "https://raw.githubusercontent.com/dandi/access-summaries/new";
 const BASE_TSV_URL = `${BASE_URL}/content/summaries`;
 
 const ARCHIVE_TOTALS_URL = `${BASE_URL}/content/archive_totals.json`;
-const ALL_DANDISET_TOTALS_URL = `${BASE_URL}/content/all_dandiset_totals.json`;
-const REGION_CODES_TO_LATITUDE_LONGITUDE_URL = `${BASE_URL}/content/region_codes_to_coordinates.json`;
+const ALL_DANDISET_TOTALS_URL = `${BASE_URL}/content/totals.json`;
+const REGION_CODES_TO_LATITUDE_LONGITUDE_URL = `${BASE_URL}/content/region_codes_to_coordinates.yaml`;
 
 let REGION_CODES_TO_LATITUDE_LONGITUDE = {};
 let ALL_DANDISET_TOTALS = {};
@@ -112,15 +112,15 @@ function resizePlots() {
 fetch(REGION_CODES_TO_LATITUDE_LONGITUDE_URL)
     .then((response) => {
         if (!response.ok) {
-            throw new Error(`Failed to fetch JSON file: ${response.statusText}`);
+            throw new Error(`Failed to fetch YAML file: ${response.statusText}`);
         }
-        return response.json();
+        return response.text();
     })
     .then((data) => {
-        REGION_CODES_TO_LATITUDE_LONGITUDE = data;
+        REGION_CODES_TO_LATITUDE_LONGITUDE = jsyaml.load(data);
     })
     .catch((error) => {
-        console.error("Error loading JSON file:", error);
+        console.error("Error loading YAML file:", error);
     });
 
 fetch(ARCHIVE_TOTALS_URL)
@@ -153,7 +153,20 @@ fetch(ALL_DANDISET_TOTALS_URL)
     })
     .then((all_dandiset_totals_text) => {
         Object.assign(ALL_DANDISET_TOTALS, JSON.parse(all_dandiset_totals_text));
-        const dandiset_ids = Object.keys(ALL_DANDISET_TOTALS);
+        let dandiset_ids = Object.keys(ALL_DANDISET_TOTALS);
+        dandiset_ids.sort((a, b) => {
+            if (a === "archive") return -1;
+            if (b === "archive") return 1;
+            // Compare as numbers if both are numeric
+            const aNum = Number(a);
+            const bNum = Number(b);
+            if (!isNaN(aNum) && !isNaN(bNum)) {
+                return aNum - bNum;
+            }
+            // Fallback to string comparison
+            return a.localeCompare(b);
+        });
+
         const selector = document.getElementById("dandiset_selector");
 
         if (!selector) {
@@ -221,13 +234,7 @@ function update_totals(dandiset_id) {
 // Function to fetch and render the over time for a given Dandiset ID
 function load_over_time_plot(dandiset_id) {
     const plot_element_id = "over_time_plot";
-    let by_day_summary_tsv_url;
-
-    if (dandiset_id === "archive") {
-        by_day_summary_tsv_url = `${BASE_TSV_URL}/archive_summary_by_day.tsv`;
-    } else {
-        by_day_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/dandiset_summary_by_day.tsv`;
-    }
+    let by_day_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_day.tsv`;
 
     fetch(by_day_summary_tsv_url)
         .then((response) => {
@@ -261,8 +268,9 @@ function load_over_time_plot(dandiset_id) {
 
             const plot_info = [
                 {
-                    type: "scatter",
-                    mode: "lines+markers",
+                    //type: "scatter",
+                    //mode: "lines+markers",
+                    type: "bar",
                     x: dates, // Use raw dates for proper alignment
                     y: plot_data,
                     text: dates.map((date, index) => `${date}<br>${human_readable_bytes_sent[index]}`),
@@ -310,7 +318,7 @@ function load_over_time_plot(dandiset_id) {
 // Function to fetch and render histogram over asset IDs
 function load_per_asset_histogram(dandiset_id) {
     const plot_element_id = "per_asset_histogram";
-    let by_day_summary_tsv_url = "";
+    let by_asset_summary_tsv_url = "";
 
     // Suppress div element content if 'archive' is selected
     if (dandiset_id === "archive") {
@@ -320,10 +328,10 @@ function load_per_asset_histogram(dandiset_id) {
         }
         return "";
     } else {
-        by_day_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/dandiset_summary_by_asset.tsv`;
+        by_asset_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_asset.tsv`;
     }
 
-    fetch(by_day_summary_tsv_url)
+    fetch(by_asset_summary_tsv_url)
         .then((response) => {
             if (!response.ok) {
                 throw new Error(`Failed to fetch TSV file: ${response.statusText}`);
@@ -346,23 +354,25 @@ function load_per_asset_histogram(dandiset_id) {
                     throw new Error("Currently only supports NWB files.");
                 }
 
-                // TODO: this was a heuristic idea for shortening the asset names
-                // const subject_and_session = filename.split("_");
-                // const subject = subject_and_session.at(0).split("-").slice(1).join("-");
-                // const session = subject_and_sessions.slice(1).split("-").slice(1).join("-");
-                // return `${subject} ${session}`;
-
                 return filename;
             });
             const bytes_sent = data.map((row) => parseInt(row[1], 10));
-            const human_readable_bytes_sent = bytes_sent.map((bytes) => format_bytes(bytes));
 
+            // Sort asset_names and bytes_sent in descending order by bytes_sent
+            const combined = asset_names.map((name, idx) => ({ name, bytes: bytes_sent[idx] }));
+            combined.sort((a, b) => b.bytes - a.bytes);
+
+            const sorted_asset_names = combined.map(item => item.name);
+            const sorted_bytes_sent = combined.map(item => item.bytes);
+            const human_readable_bytes_sent = sorted_bytes_sent.map((bytes) => format_bytes(bytes));
+
+            // Use sorted arrays in the plot
             const plot_data = [
                 {
                     type: "bar",
-                    x: asset_names,
-                    y: bytes_sent,
-                    text: asset_names.map((name, index) => `${name}<br>${human_readable_bytes_sent[index]}`),
+                    x: sorted_asset_names,
+                    y: sorted_bytes_sent,
+                    text: sorted_asset_names.map((name, index) => `${name}<br>${human_readable_bytes_sent[index]}`),
                     textposition: "none",
                     hoverinfo: "text",
                 }
@@ -375,14 +385,10 @@ function load_per_asset_histogram(dandiset_id) {
                 },
                 xaxis: {
                     title: {
-                        text: "Asset Name",
+                        text: "(hover over an entry for asset names)",
                         font: { size: 16 }
                     },
                     showticklabels: false,
-                    // TODO: ticks are currently too long to fit since heuristic is not working well
-                    // tickangle: -45,
-                    // tickfont: { size: 10 },
-                    // automargin: true,
                 },
                 yaxis: {
                     title: {
@@ -403,7 +409,9 @@ function load_per_asset_histogram(dandiset_id) {
             console.error("Error:", error);
             const plot_element = document.getElementById(plot_element_id);
             if (plot_element) {
-                plot_element.innerText = "Failed to load data for per asset (current supports NWB datasets only).";
+                while (plot_element.firstChild) {
+                    plot_element.removeChild(plot_element.firstChild);
+                }
             }
         });
 }
@@ -411,13 +419,7 @@ function load_per_asset_histogram(dandiset_id) {
 // Function to fetch and render heatmap over geography
 function load_geographic_heatmap(dandiset_id) {
     const plot_element_id = "geography_heatmap";
-    let by_region_summary_tsv_url;
-
-    if (dandiset_id === "archive") {
-        by_region_summary_tsv_url = `${BASE_TSV_URL}/archive_summary_by_region.tsv`;
-    } else {
-        by_region_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/dandiset_summary_by_region.tsv`;
-    }
+    let by_region_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`;
 
     if (!REGION_CODES_TO_LATITUDE_LONGITUDE) {
         console.error("Error:", error);
