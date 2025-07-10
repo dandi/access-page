@@ -28,11 +28,11 @@ window.addEventListener("load", () => {
     if (logScaleCheckbox) {
         logScaleCheckbox.addEventListener("change", function() {
             USE_LOG_SCALE = this.checked;
-            
+
             // Get the current dandiset ID
             const dandiset_selector = document.getElementById("dandiset_selector");
             const selected_dandiset = dandiset_selector.value;
-            
+
             // Reload plots with the current dandiset ID
             load_over_time_plot(selected_dandiset);
             load_per_asset_histogram(selected_dandiset);
@@ -221,7 +221,7 @@ function update_totals(dandiset_id) {
         const footnote = document.createElement("div");
         footnote.style.fontSize = "0.5em";
         footnote.style.marginTop = "7px";
-        footnote.innerHTML = "<sup>*</sup> These values are only estimates for publically released datasets and are subject to change as additional information becomes available.";
+        footnote.innerHTML = "<sup>*</sup> These values are only estimates for publicly released datasets and are subject to change as additional information becomes available.";
         totals_element.appendChild(footnote);
     } catch (error) {
         console.error("Error:", error);
