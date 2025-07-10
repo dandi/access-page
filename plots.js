@@ -395,6 +395,7 @@ function load_per_asset_histogram(dandiset_id) {
             ];
 
             const layout = {
+                bargap: 0,
                 title: {
                     text: `Bytes sent per asset`,
                     font: { size: 24 }
