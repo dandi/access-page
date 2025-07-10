@@ -28,11 +28,11 @@ window.addEventListener("load", () => {
     if (logScaleCheckbox) {
         logScaleCheckbox.addEventListener("change", function() {
             USE_LOG_SCALE = this.checked;
-            
+
             // Get the current dandiset ID
             const dandiset_selector = document.getElementById("dandiset_selector");
             const selected_dandiset = dandiset_selector.value;
-            
+
             // Reload plots with the current dandiset ID
             load_over_time_plot(selected_dandiset);
             load_per_asset_histogram(selected_dandiset);
