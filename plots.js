@@ -2,7 +2,7 @@
 // (working for the moment due to global import in the index.html file)
 
 // URLs for fetching data
-const BASE_URL = "https://raw.githubusercontent.com/dandi/access-summaries/new";
+const BASE_URL = "https://raw.githubusercontent.com/dandi/access-summaries/main";
 const BASE_TSV_URL = `${BASE_URL}/content/summaries`;
 
 const ARCHIVE_TOTALS_URL = `${BASE_URL}/content/archive_totals.json`;
