@@ -268,8 +268,6 @@ function load_over_time_plot(dandiset_id) {
 
             const plot_info = [
                 {
-                    //type: "scatter",
-                    //mode: "lines+markers",
                     type: "bar",
                     x: dates, // Use raw dates for proper alignment
                     y: plot_data,
@@ -280,8 +278,9 @@ function load_over_time_plot(dandiset_id) {
             ];
 
             const layout = {
+                bargap: 0,
                 title: {
-                    text: `Bytes sent per day`,
+                    text: USE_CUMULATIVE ? `Total bytes sent to date` : `Bytes sent per day` ,
                     font: { size: 24 }
                 },
                 xaxis: {
@@ -303,6 +302,23 @@ function load_over_time_plot(dandiset_id) {
                     ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null,
                 },
             };
+
+            if (USE_CUMULATIVE) {
+                const date_set = new Set(dates);
+                const min_date = new Date(Math.min(...dates.map(d => new Date(d))));
+                const max_date = new Date(Math.max(...dates.map(d => new Date(d))));
+                let all_dates = [];
+                for (let date = new Date(min_date); date <= max_date; date.setDate(date.getDate() + 1)) {
+                    all_dates.push(date.toISOString().slice(0, 10));
+                }
+                const missing_dates = all_dates.filter(date => !date_set.has(date));
+
+                layout.xaxis.rangebreaks = [
+                    {
+                        values: missing_dates
+                    }
+                ];
+            }
 
             Plotly.newPlot(plot_element_id, plot_info, layout);
         })
@@ -379,6 +395,7 @@ function load_per_asset_histogram(dandiset_id) {
             ];
 
             const layout = {
+                bargap: 0,
                 title: {
                     text: `Bytes sent per asset`,
                     font: { size: 24 }
@@ -493,7 +510,7 @@ function load_geographic_heatmap(dandiset_id) {
 
             const layout = {
                 title: {
-                    text: "Bytes Sent by Region",
+                    text: "Bytes sent by region",
                     font: { size: 24 },
                 },
                 geo: {
