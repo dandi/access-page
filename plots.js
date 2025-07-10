@@ -280,7 +280,7 @@ function load_over_time_plot(dandiset_id) {
             const layout = {
                 bargap: 0,
                 title: {
-                    text: `Bytes sent per day` ? USE_CUMULATIVE : "Total bytes sent to date",
+                    text: USE_CUMULATIVE ? `Total bytes sent to date` : `Bytes sent per day` ,
                     font: { size: 24 }
                 },
                 xaxis: {
