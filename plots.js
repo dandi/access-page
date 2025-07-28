@@ -35,7 +35,7 @@ window.addEventListener("load", () => {
 
             // Reload plots with the current dandiset ID
             load_over_time_plot(selected_dandiset);
-            load_per_asset_histogram(selected_dandiset);
+            load_histogram(selected_dandiset);
             load_geographic_heatmap(selected_dandiset);
         });
     }
@@ -52,7 +52,7 @@ window.addEventListener("load", () => {
 
             // Reload plots with the current dandiset ID
             load_over_time_plot(selected_dandiset);
-            load_per_asset_histogram(selected_dandiset);
+            load_histogram(selected_dandiset);
             load_geographic_heatmap(selected_dandiset);
         });
     }
@@ -70,7 +70,7 @@ window.addEventListener("load", () => {
             // Reload plots with the current dandiset ID
             update_totals(selected_dandiset);
             load_over_time_plot(selected_dandiset);
-            load_per_asset_histogram(selected_dandiset);
+            load_histogram(selected_dandiset);
             load_geographic_heatmap(selected_dandiset);
         });
     }
@@ -81,29 +81,29 @@ window.addEventListener("resize", resizePlots);
 
 function resizePlots() {
     // Select the div elements
-    const overTimePlot = document.getElementById("over_time_plot");
-    const perAssetHistogram = document.getElementById("per_asset_histogram");
-    const geographyHeatmap = document.getElementById("geography_heatmap");
+    const over_time_plot = document.getElementById("over_time_plot");
+    const histogram = document.getElementById("histogram");
+    const geography_heatmap = document.getElementById("geography_heatmap");
 
     const dandiset_selector = document.getElementById("dandiset_selector");
     const selected_dandiset = dandiset_selector.value;
 
     // Update their sizes dynamically
-    if (overTimePlot) {
-        overTimePlot.style.width = "90vw";
-        overTimePlot.style.height = "80vh";
-        Plotly.relayout(overTimePlot, { width: overTimePlot.offsetWidth, height: overTimePlot.offsetHeight });
+    if (over_time_plot) {
+        over_time_plot.style.width = "90vw";
+        over_time_plot.style.height = "80vh";
+        Plotly.relayout(over_time_plot, { width: over_time_plot.offsetWidth, height: over_time_plot.offsetHeight });
     }
-    if (selected_dandiset !== "archive" && perAssetHistogram) {
-        perAssetHistogram.style.width = "90vw";
-        perAssetHistogram.style.height = "80vh";
-        Plotly.relayout(perAssetHistogram, { width: perAssetHistogram.offsetWidth, height: perAssetHistogram.offsetHeight });
+    if (selected_dandiset !== "archive" && histogram) {
+        histogram.style.width = "90vw";
+        histogram.style.height = "80vh";
+        Plotly.relayout(histogram, { width: histogram.offsetWidth, height: histogram.offsetHeight });
     }
-    if (geographyHeatmap) {
-        geographyHeatmap.style.width = "90vw";
-        geographyHeatmap.style.height = "80vh";
-        geographyHeatmap.style.margin = "auto";
-        Plotly.relayout(geographyHeatmap, { width: geographyHeatmap.offsetWidth, height: geographyHeatmap.offsetHeight });
+    if (geography_heatmap) {
+        geography_heatmap.style.width = "90vw";
+        geography_heatmap.style.height = "80vh";
+        geography_heatmap.style.margin = "auto";
+        Plotly.relayout(geography_heatmap, { width: geography_heatmap.offsetWidth, height: geography_heatmap.offsetHeight });
     }
 }
 
@@ -183,7 +183,7 @@ fetch(ALL_DANDISET_TOTALS_URL)
         // Load the plot for the first ID by default
         update_totals("archive");
         load_over_time_plot("archive");
-        load_per_asset_histogram("archive");
+        load_histogram("archive");
         load_geographic_heatmap("archive");
 
         // Update the plots when a new Dandiset ID is selected
@@ -191,7 +191,7 @@ fetch(ALL_DANDISET_TOTALS_URL)
             const target = event.target;
             update_totals(target.value);
             load_over_time_plot(target.value);
-            load_per_asset_histogram(target.value);
+            load_histogram(target.value);
             load_geographic_heatmap(target.value);
         });
     })
@@ -331,21 +331,101 @@ function load_over_time_plot(dandiset_id) {
         });
 }
 
-// Function to fetch and render histogram over asset IDs
-function load_per_asset_histogram(dandiset_id) {
-    const plot_element_id = "per_asset_histogram";
-    let by_asset_summary_tsv_url = "";
+// Function to fetch and render histogram over asset or Dandiset IDs
+function load_histogram(dandiset_id) {
+    let by_asset_summary_tsv_url, dandiset_totals_json_url;
 
     // Suppress div element content if 'archive' is selected
     if (dandiset_id === "archive") {
-        const plot_element = document.getElementById(plot_element_id);
-        if (plot_element) {
-            plot_element.innerText = "";
-        }
-        return "";
+        // const plot_element = document.getElementById(plot_element_id);
+        // if (plot_element) {
+        //     plot_element.innerText = "";
+        // }
+        // return "";
+
+        load_dandiset_histogram()
     } else {
         by_asset_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_asset.tsv`;
+        load_per_asset_histogram(by_asset_summary_tsv_url);
     }
+}
+
+function load_dandiset_histogram() {
+    const plot_element_id = "histogram";
+
+    fetch(ALL_DANDISET_TOTALS_URL)
+    .then((response) => {
+        if (!response.ok) {
+            throw new Error(`Failed to fetch JSON file: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then((data) => {
+        // Exclude 'archive' and cast IDs to strings
+        const combined = Object.keys(data)
+            .filter(key => key !== "archive")
+            .map(dandiset_id => ({
+                dandiset_id: "Dandiset ID " + String(dandiset_id),
+                bytes: data[dandiset_id].total_bytes_sent
+            }))
+            .sort((a, b) => b.bytes - a.bytes);
+
+    const sorted_dandiset_ids = combined.map(item => item.dandiset_id);
+        const sorted_bytes_sent = combined.map(item => item.bytes);
+        const human_readable_bytes_sent = sorted_bytes_sent.map(bytes => format_bytes(bytes));
+
+        const plot_data = [
+            {
+                type: "bar",
+                x: sorted_dandiset_ids,
+                y: sorted_bytes_sent,
+                text: sorted_dandiset_ids.map((dandiset_id, index) => `${dandiset_id}<br>${human_readable_bytes_sent[index]}`),
+                textposition: "none",
+                hoverinfo: "text",
+            }
+        ];
+
+        const layout = {
+            bargap: 0,
+            title: {
+                text: `Bytes sent per Dandiset`,
+                font: { size: 24 }
+            },
+            xaxis: {
+                title: {
+                    text: "(hover over an entry for Dandiset IDs)",
+                    font: { size: 16 }
+                },
+                showticklabels: false,
+            },
+            yaxis: {
+                title: {
+                    text: USE_LOG_SCALE ? "Bytes (log scale)" : "Bytes",
+                    font: { size: 16 }
+                },
+                type: USE_LOG_SCALE ? "log" : "linear",
+                tickformat: USE_LOG_SCALE ? "" : "~s",
+                ticksuffix: USE_LOG_SCALE ? "" : "B",
+                tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000, 1000000000000000000] : null,
+                ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
+            },
+        };
+
+        Plotly.newPlot(plot_element_id, plot_data, layout);
+    })
+    .catch((error) => {
+        console.error("Error:", error);
+        const plot_element = document.getElementById(plot_element_id);
+        if (plot_element) {
+            while (plot_element.firstChild) {
+                plot_element.removeChild(plot_element.firstChild);
+            }
+        }
+    });
+}
+
+function load_per_asset_histogram(by_asset_summary_tsv_url) {
+    const plot_element_id = "histogram";
 
     fetch(by_asset_summary_tsv_url)
         .then((response) => {
@@ -363,12 +443,9 @@ function load_per_asset_histogram(dandiset_id) {
             const data = rows.slice(1).map((row) => row.split("\t"));
 
             const asset_names = data.map((row) => {
-                const filename = row[0].split("/").at(-1);
-                const suffix = filename.split(".").at(-1);
-
-                if (suffix !== "nwb" && suffix !== "mp4" && suffix !== "avi") {
-                    throw new Error("Currently only supports NWB files.");
-                }
+                let suffix, filename;
+                suffix = row[0].split(".").at(-1);
+                filename = suffix === "nwb" ? row[0].split("/").at(-1) : row[0];
 
                 return filename;
             });
