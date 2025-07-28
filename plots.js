@@ -215,7 +215,8 @@ function update_totals(dandiset_id) {
         const human_readable_bytes_sent = format_bytes(totals.total_bytes_sent);
         //totals_element.innerText = `Totals: ${human_readable_bytes_sent} sent to ?(WIP)? unique requesters from
         // ${totals.number_of_unique_regions} regions of ${totals.number_of_unique_countries} countries.`;
-        totals_element.innerHTML = `A total of ${human_readable_bytes_sent} was sent to ${totals.number_of_unique_regions} regions across ${totals.number_of_unique_countries} countries. <sup>*</sup>`;
+        header = `A total of ${human_readable_bytes_sent} was sent to ${totals.number_of_unique_regions} regions across ${totals.number_of_unique_countries} countries. <sup>*</sup>`
+        totals_element.innerHTML = dandiset_id != "undetermined" ? header : header + `<br>However, the activity could not be uniquely associated with a particular Dandiset.<br>This can occur if the same file exists within more than one Dandiset at a time.`
 
         // Add the footnote
         const footnote = document.createElement("div");
@@ -336,13 +337,13 @@ function load_histogram(dandiset_id) {
     let by_asset_summary_tsv_url, dandiset_totals_json_url;
 
     // Suppress div element content if 'archive' is selected
-    if (dandiset_id === "archive") {
-        // const plot_element = document.getElementById(plot_element_id);
-        // if (plot_element) {
-        //     plot_element.innerText = "";
-        // }
-        // return "";
-
+    if (dandiset_id === "undetermined") {
+        const plot_element = document.getElementById("histogram");
+        if (plot_element) {
+            plot_element.innerText = "";
+        }
+        return "";
+    } if (dandiset_id === "archive") {
         load_dandiset_histogram()
     } else {
         by_asset_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_asset.tsv`;
@@ -363,7 +364,6 @@ function load_dandiset_histogram() {
     .then((data) => {
         // Exclude 'archive' and cast IDs to strings
         const combined = Object.keys(data)
-            .filter(key => key !== "archive")
             .map(dandiset_id => ({
                 dandiset_id: "Dandiset ID " + String(dandiset_id),
                 bytes: data[dandiset_id].total_bytes_sent
