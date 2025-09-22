@@ -36,6 +36,7 @@ window.addEventListener("load", () => {
             // Reload plots with the current dandiset ID
             load_over_time_plot(selected_dandiset);
             load_histogram(selected_dandiset);
+            load_aws_histogram(selected_dandiset);
             load_geographic_heatmap(selected_dandiset);
         });
     }
@@ -53,6 +54,7 @@ window.addEventListener("load", () => {
             // Reload plots with the current dandiset ID
             load_over_time_plot(selected_dandiset);
             load_histogram(selected_dandiset);
+            load_aws_histogram(selected_dandiset);
             load_geographic_heatmap(selected_dandiset);
         });
     }
@@ -71,6 +73,7 @@ window.addEventListener("load", () => {
             update_totals(selected_dandiset);
             load_over_time_plot(selected_dandiset);
             load_histogram(selected_dandiset);
+            load_aws_histogram(selected_dandiset);
             load_geographic_heatmap(selected_dandiset);
         });
     }
@@ -184,6 +187,7 @@ fetch(ALL_DANDISET_TOTALS_URL)
         update_totals("archive");
         load_over_time_plot("archive");
         load_histogram("archive");
+        load_aws_histogram("archive");
         load_geographic_heatmap("archive");
 
         // Update the plots when a new Dandiset ID is selected
@@ -192,6 +196,7 @@ fetch(ALL_DANDISET_TOTALS_URL)
             update_totals(target.value);
             load_over_time_plot(target.value);
             load_histogram(target.value);
+            load_aws_histogram(target.value);
             load_geographic_heatmap(target.value);
         });
     })
@@ -506,6 +511,97 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
                 while (plot_element.firstChild) {
                     plot_element.removeChild(plot_element.firstChild);
                 }
+            }
+        });
+}
+
+// Function to fetch and render histogram over AWS regions
+function load_aws_histogram(dandiset_id) {
+    const plot_element_id = "aws_histogram";
+    let by_region_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`;
+
+    fetch(by_region_summary_tsv_url)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`Failed to fetch TSV file: ${response.statusText}`);
+            }
+            return response.text();
+        })
+        .then((text) => {
+            const rows = text.split("\n").filter((row) => row.trim() !== "");
+            if (rows.length < 2) {
+                throw new Error("TSV file does not contain enough data.");
+            }
+
+            const data = rows.slice(1).map((row) => row.split("\t"));
+            const subregion_data = [];
+
+            data.forEach((row) => {
+                const region = row[0];
+                if (!region.startsWith("AWS/")) return;
+                const region_clipped = region.replace("AWS/", "");
+                const bytes = parseInt(row[1], 10);
+                subregion_data.push({
+                    name: region_clipped,
+                    bytes: bytes,
+                    human: format_bytes(bytes)
+                });
+            });
+
+            // Sort descending by bytes
+            subregion_data.sort((a, b) => b.bytes - a.bytes);
+
+            const subregion_names = subregion_data.map(item => item.name);
+            const bytes_sent = subregion_data.map(item => item.bytes);
+            const human_readable_bytes_sent = subregion_data.map(item => item.human);
+
+            const total_bytes_sent = subregion_data.reduce((acc, item) => acc + item.bytes, 0);
+            const summary_text = `${format_bytes(total_bytes_sent)} in total sent to AWS data centers`;
+
+            const plot_data = [
+                {
+                    type: "bar",
+                    x: subregion_names,
+                    y: bytes_sent,
+                    text: subregion_names.map((name, index) => `${name}<br>${human_readable_bytes_sent[index]}`),
+                    textposition: "none",
+                    hoverinfo: "text",
+                }
+            ];
+
+            const layout = {
+                bargap: 0,
+                title: {
+                    text: summary_text,
+                    font: { size: 24 }
+                },
+                xaxis: {
+                    title: {
+                        text: "(hover over an entry for AWS subregions)",
+                        font: { size: 16 }
+                    },
+                    showticklabels: false,
+                },
+                yaxis: {
+                    title: {
+                        text: USE_LOG_SCALE ? "Bytes (log scale)" : "Bytes",
+                        font: { size: 16 }
+                    },
+                    type: USE_LOG_SCALE ? "log" : "linear",
+                    tickformat: USE_LOG_SCALE ? "" : "~s",
+                    ticksuffix: USE_LOG_SCALE ? "" : "B",
+                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000, 1000000000000000000] : null,
+                    ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
+                },
+            };
+
+            Plotly.newPlot(plot_element_id, plot_data, layout);
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            const plot_element = document.getElementById(plot_element_id);
+            if (plot_element) {
+                plot_element.innerText = "";
             }
         });
 }
