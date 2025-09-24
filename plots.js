@@ -15,7 +15,7 @@ let USE_LOG_SCALE = false;
 let USE_CUMULATIVE = false;
 let USE_BINARY = false;
 
-
+// test 2
 
 // Check if Plotly is loaded after the window loads
 window.addEventListener("load", () => {
