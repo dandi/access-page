@@ -974,7 +974,7 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
                 font: { size: 24 },
             },
             map: {
-                style: "open-street-map",
+                style: "carto-positron",
                 center: { lat: 30, lon: 0 },
                 zoom: 1,
             },

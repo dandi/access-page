@@ -12,11 +12,52 @@
     <script src="errors.js" defer></script>
     <script src="plots.js" defer></script>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+
     <style>
+        :root {
+            --color-bg: #fafafa;
+            --color-surface: #ffffff;
+            --color-border: #e0e0e0;
+            --color-text: #2c2c2c;
+            --color-text-secondary: #666;
+            --color-accent: #1a6fb5;
+            --font-main: 'Source Sans 3', -apple-system, sans-serif;
+            --radius: 6px;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: var(--color-text);
+            background: var(--color-bg);
+            margin: 0;
+            padding: 0 20px 40px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1 {
+            font-weight: 300;
+            font-size: 1.8em;
+            letter-spacing: -0.01em;
+            text-align: center;
+            margin: 28px 0 16px;
+            color: var(--color-text);
+        }
+
         #totals {
             text-align: center;
-            font-size: 2em;
-            margin: 20px auto;
+            font-size: 1.5em;
+            font-weight: 300;
+            margin: 12px auto 24px;
+            line-height: 1.5;
+            max-width: 800px;
+            color: var(--color-text-secondary);
         }
 
         #geography_heatmap {
@@ -29,33 +70,88 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 20px;
-            margin: 10px 0;
+            gap: 16px;
+            margin: 0 auto;
+            padding: 10px 20px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            width: fit-content;
         }
 
         .SubControllerContainer {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        select {
+            font-family: var(--font-main);
+            font-size: 0.85em;
+            padding: 4px 8px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            background: var(--color-bg);
+            color: var(--color-text);
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        select:hover, select:focus {
+            border-color: var(--color-accent);
+        }
+
+        input[type="checkbox"] {
+            accent-color: var(--color-accent);
+            cursor: pointer;
+            width: 15px;
+            height: 15px;
+        }
+
+        #over_time_plot, #histogram, #aws_histogram, #geography_heatmap {
+            margin: 8px auto;
+            max-width: 95vw;
+        }
+
+        .MapControls {
+            margin: 24px auto 4px;
+            width: fit-content;
+        }
+
+        .separator {
+            width: 1px;
+            height: 20px;
+            background: var(--color-border);
         }
     </style>
 </head>
 <body>
     <h1>Dandiset Access Summaries</h1>
     <div class="ControllerContainer">
-        <div>
-            <label for="dandiset_selector">Select Dandiset ID:</label>
+        <div class="SubControllerContainer">
+            <label for="dandiset_selector">Dandiset:</label>
             <select id="dandiset_selector"></select>
         </div>
+        <div class="separator"></div>
         <div class="SubControllerContainer">
             <label for="log_scale">Log Scale:</label>
             <input type="checkbox" id="log_scale" />
         </div>
-        <!-- TODO: Move cumulative controller to per day plot only (needs multiple div nested to look good)  -->
         <div class="SubControllerContainer">
             <label for="cumulative">Cumulative:</label>
             <input type="checkbox" id="cumulative" />
         </div>
+        <div class="separator"></div>
         <div class="SubControllerContainer">
             <label for="prefix">Prefix:</label>
             <select id="prefix">
@@ -63,15 +159,17 @@
                 <option value="binary">Binary</option>
             </select>
         </div>
-        <div class="SubControllerContainer">
-            <label for="choropleth">Choropleth:</label>
-            <input type="checkbox" id="choropleth" />
-        </div>
     </div>
     <div id="totals"></div>
     <div id="over_time_plot"></div>
     <div id="histogram"></div>
     <div id="aws_histogram"></div>
+    <div class="ControllerContainer MapControls">
+        <div class="SubControllerContainer">
+            <label for="choropleth">Choropleth:</label>
+            <input type="checkbox" id="choropleth" />
+        </div>
+    </div>
     <div id="geography_heatmap"></div>
 </body>
 </html>
