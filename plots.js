@@ -666,14 +666,17 @@ function normalize_region_name(name) {
     return name.trim();
 }
 
-// Load GeoJSON and name aliases (cached after first load)
+// Load TopoJSON and name aliases (cached after first load)
 function load_choropleth_data() {
     const promises = [];
     if (!GEOJSON_DATA) {
         promises.push(
-            fetch("gadm_admin1_simplified.geojson")
-                .then(r => { if (!r.ok) throw new Error("Failed to fetch GeoJSON"); return r.json(); })
-                .then(data => { GEOJSON_DATA = data; })
+            fetch("gadm_admin1_simplified.topojson")
+                .then(r => { if (!r.ok) throw new Error("Failed to fetch TopoJSON"); return r.json(); })
+                .then(topoData => {
+                    const objectName = Object.keys(topoData.objects)[0];
+                    GEOJSON_DATA = topojson.feature(topoData, topoData.objects[objectName]);
+                })
         );
     }
     if (!NAME_ALIASES) {
@@ -686,27 +689,55 @@ function load_choropleth_data() {
     return Promise.all(promises);
 }
 
-// Build a lookup from "iso2/name_norm" to feature index for fast matching
+// Build lookups from "iso2/name_norm" to feature index for fast matching
 function build_geojson_lookup() {
     const lookup = {};
+    const country_lookup = {};
     GEOJSON_DATA.features.forEach((feature, idx) => {
         const iso2 = feature.properties.iso2;
         const name_norm = feature.properties.name_norm;
-        if (iso2 && name_norm) {
+        if (iso2 && name_norm && name_norm.length > 1) {
             const key = `${iso2}/${name_norm}`;
             lookup[key] = idx;
+            if (!country_lookup[iso2]) country_lookup[iso2] = [];
+            country_lookup[iso2].push([name_norm, idx]);
         }
     });
-    return lookup;
+    return { lookup, country_lookup };
 }
 
+// Country remapping for special cases (e.g., HK → CN/Hong Kong)
+const COUNTRY_REMAPPING = {
+    'HK': ['CN', 'Hong Kong'],
+    'MO': ['CN', 'Macau'],
+    'SG': ['SG', null],
+    'MK': ['MK', null],
+    'XK': ['XK', null],
+    'NU': ['NU', null],
+    'MQ': ['MQ', null],
+    'CW': ['CW', null],
+    'MV': ['MV', null],
+};
+
 // Match a TSV region key to a GeoJSON feature index
-function match_region_to_feature(region, lookup) {
+function match_region_to_feature(region, lookup, country_lookup) {
     const parts = region.split("/");
     if (parts.length < 2) return -1;
-    const country_code = parts[0];
+    let country_code = parts[0];
     if (country_code === "AWS" || country_code === "GCP") return -1;
-    const subdivision_name = parts[1];
+    let subdivision_name = parts[1];
+
+    // Apply country remapping
+    if (country_code in COUNTRY_REMAPPING) {
+        const [new_cc, fixed_region] = COUNTRY_REMAPPING[country_code];
+        if (fixed_region) {
+            country_code = new_cc;
+            subdivision_name = fixed_region;
+        } else {
+            return -1; // Aggregate to country level, skip
+        }
+    }
+
     const norm_name = normalize_region_name(subdivision_name);
 
     // Try direct normalized match
@@ -719,6 +750,15 @@ function match_region_to_feature(region, lookup) {
         if (aliased) {
             const alias_key = `${country_code}/${aliased}`;
             if (alias_key in lookup) return lookup[alias_key];
+        }
+    }
+
+    // Try partial/substring match as last resort
+    if (country_lookup && country_lookup[country_code]) {
+        for (const [feat_norm, feat_idx] of country_lookup[country_code]) {
+            if (norm_name.length > 3 && (feat_norm.includes(norm_name) || norm_name.includes(feat_norm))) {
+                return feat_idx;
+            }
         }
     }
 
@@ -843,39 +883,73 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
         }
 
         const data = rows.slice(1).map((row) => row.split("\t"));
-        const lookup = build_geojson_lookup();
+        const { lookup, country_lookup } = build_geojson_lookup();
 
         // Accumulate bytes per feature
         const feature_bytes = new Array(GEOJSON_DATA.features.length).fill(0);
         data.forEach((row) => {
             const region = row[0];
             const bytes = parseInt(row[1], 10);
-            const idx = match_region_to_feature(region, lookup);
+            const idx = match_region_to_feature(region, lookup, country_lookup);
             if (idx >= 0) {
                 feature_bytes[idx] += bytes;
             }
         });
 
-        // Build arrays for features with data
-        const locations = [];
+        // Build a filtered GeoJSON with only features that have data
+        // Skip features that cross the dateline (lon span > 300°) as they
+        // cause Plotly to fill the entire map width
+        const filtered_features = [];
         const z_values = [];
         const hover_texts = [];
+
+        // Skip features whose geometry spans the entire map (dateline-crossing)
+        const SKIP_IDS = new Set([0, 909, 910, 2109, 2511, 3271]);
 
         feature_bytes.forEach((bytes, idx) => {
             if (bytes > 0) {
                 const feature = GEOJSON_DATA.features[idx];
-                locations.push(idx);
-                z_values.push(Math.log10(Math.max(1, bytes)));
+                if (SKIP_IDS.has(feature.properties.id)) return;
                 const name = feature.properties.name;
                 const iso2 = feature.properties.iso2;
+                filtered_features.push(feature);
+                z_values.push(Math.log10(bytes));
                 hover_texts.push(`${iso2}/${name}<br>${format_bytes(bytes)}`);
             }
         });
 
+        const filtered_geojson = {
+            type: "FeatureCollection",
+            features: filtered_features,
+        };
+
+        const locations = filtered_features.map(f => f.properties.id);
+
+        // Compute colorbar ticks based on data range
+        const colorbar_config = (function() {
+            const allTicks = [3, 6, 9, 12, 15];
+            const allLabels = ["KB", "MB", "GB", "TB", "PB"];
+            if (z_values.length === 0) return { title: "Bytes (log scale)" };
+            const zMin = Math.min(...z_values);
+            const zMax = Math.max(...z_values);
+            let vals = allTicks.filter(v => v >= zMin - 1 && v <= zMax + 1);
+            let texts = vals.map(v => allLabels[allTicks.indexOf(v)]);
+            if (vals.length < 2) {
+                const lo = Math.floor(zMin);
+                const hi = Math.ceil(zMax);
+                vals = lo === hi ? [lo, lo + 1] : [lo, hi];
+                texts = vals.map(v => {
+                    const idx = allTicks.indexOf(v);
+                    return idx >= 0 ? allLabels[idx] : "10^" + v;
+                });
+            }
+            return { title: "Bytes (log scale)", tickvals: vals, ticktext: texts };
+        })();
+
         const plot_info = [
             {
-                type: "choropleth",
-                geojson: GEOJSON_DATA,
+                type: "choroplethmap",
+                geojson: filtered_geojson,
                 featureidkey: "properties.id",
                 locations: locations,
                 z: z_values,
@@ -883,16 +957,13 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
                 hoverinfo: "text",
                 colorscale: "YlOrRd",
                 reversescale: true,
-                colorbar: {
-                    title: "Bytes (log scale)",
-                    tickvals: [3, 6, 9, 12],
-                    ticktext: ["KB", "MB", "GB", "TB"],
-                },
+                colorbar: colorbar_config,
                 marker: {
                     line: {
                         color: "white",
-                        width: 0.2,
+                        width: 0.5,
                     },
+                    opacity: 0.8,
                 },
             },
         ];
@@ -902,13 +973,10 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
                 text: "Bytes sent by region (choropleth)",
                 font: { size: 24 },
             },
-            geo: {
-                projection: {
-                    type: "equirectangular",
-                },
-                showframe: false,
-                showcoastlines: true,
-                coastlinecolor: "#999",
+            map: {
+                style: "open-street-map",
+                center: { lat: 30, lon: 0 },
+                zoom: 1,
             },
         };
 
