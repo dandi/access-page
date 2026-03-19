@@ -99,31 +99,13 @@ window.addEventListener("load", () => {
 window.addEventListener("resize", resizePlots);
 
 function resizePlots() {
-    // Select the div elements
-    const over_time_plot = document.getElementById("over_time_plot");
-    const histogram = document.getElementById("histogram");
-    const geography_heatmap = document.getElementById("geography_heatmap");
-
-    const dandiset_selector = document.getElementById("dandiset_selector");
-    const selected_dandiset = dandiset_selector.value;
-
-    // Update their sizes dynamically
-    if (over_time_plot) {
-        over_time_plot.style.width = "90vw";
-        over_time_plot.style.height = "80vh";
-        Plotly.relayout(over_time_plot, { width: over_time_plot.offsetWidth, height: over_time_plot.offsetHeight });
-    }
-    if (selected_dandiset !== "archive" && histogram) {
-        histogram.style.width = "90vw";
-        histogram.style.height = "80vh";
-        Plotly.relayout(histogram, { width: histogram.offsetWidth, height: histogram.offsetHeight });
-    }
-    if (geography_heatmap) {
-        geography_heatmap.style.width = "90vw";
-        geography_heatmap.style.height = "80vh";
-        geography_heatmap.style.margin = "auto";
-        Plotly.relayout(geography_heatmap, { width: geography_heatmap.offsetWidth, height: geography_heatmap.offsetHeight });
-    }
+    const plotIds = ["over_time_plot", "histogram", "aws_histogram", "geography_heatmap"];
+    plotIds.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el && el.data) {
+            Plotly.Plots.resize(el);
+        }
+    });
 }
 
 
