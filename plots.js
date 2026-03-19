@@ -1,6 +1,52 @@
 // TODO: if using a proper framework/package structure, import the error helper
 // (working for the moment due to global import in the index.html file)
 
+// Fetch with exponential backoff retry logic
+/**
+ * Fetches a URL with automatic retries using exponential backoff.
+ * Only retries on transient failures: network errors or 5xx server errors.
+ * Permanent client errors (4xx) are thrown immediately without retrying.
+ *
+ * @param {string} url - The URL to fetch.
+ * @param {RequestInit} [options={}] - Optional fetch options.
+ * @param {number} [maxRetries=4] - Maximum number of retry attempts.
+ * @param {number} [baseDelay=1000] - Base delay in milliseconds; doubles on each retry (1 s, 2 s, 4 s, 8 s).
+ * @returns {Promise<Response>} Resolves with the successful Response.
+ * @throws {Error} After all retries are exhausted, or immediately on a non-retryable error.
+ */
+async function fetchWithRetry(url, options = {}, maxRetries = 4, baseDelay = 1000) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        let response;
+        try {
+            response = await fetch(url, options);
+        } catch (networkError) {
+            // Network failure — always retryable
+            if (attempt === maxRetries) {
+                throw networkError;
+            }
+            const delay = baseDelay * Math.pow(2, attempt);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+        }
+
+        if (response.ok) {
+            return response;
+        }
+
+        // 4xx errors are permanent; do not retry
+        if (response.status < 500) {
+            throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+        }
+
+        // 5xx errors are transient; retry with backoff
+        if (attempt === maxRetries) {
+            throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+        }
+        const delay = baseDelay * Math.pow(2, attempt);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+}
+
 // URLs for fetching data
 const BASE_URL = "https://raw.githubusercontent.com/dandi/access-summaries/main";
 const BASE_TSV_URL = `${BASE_URL}/content/summaries`;
@@ -112,13 +158,8 @@ function resizePlots() {
 
 
 
-fetch(REGION_CODES_TO_LATITUDE_LONGITUDE_URL)
-    .then((response) => {
-        if (!response.ok) {
-            throw new Error(`Failed to fetch YAML file: ${response.statusText}`);
-        }
-        return response.text();
-    })
+fetchWithRetry(REGION_CODES_TO_LATITUDE_LONGITUDE_URL)
+    .then((response) => response.text())
     .then((data) => {
         REGION_CODES_TO_LATITUDE_LONGITUDE = jsyaml.load(data);
     })
@@ -126,36 +167,37 @@ fetch(REGION_CODES_TO_LATITUDE_LONGITUDE_URL)
         console.error("Error loading YAML file:", error);
     });
 
-fetch(ARCHIVE_TOTALS_URL)
-    .then((response) => {
-        if (!response.ok) {
-            throw new Error(`Failed to fetch archive totals: ${response.statusText}`);
-        }
-        return response.text();
-    })
+// Both archive totals and dandiset totals are fetched in parallel, but the dropdown
+// and initial plots are only rendered once BOTH have resolved. This prevents a race
+// condition where update_totals("archive") is called before ALL_DANDISET_TOTALS["archive"]
+// has been populated.
+const archiveTotalsPromise = fetchWithRetry(ARCHIVE_TOTALS_URL)
+    .then((response) => response.text())
     .then((archive_totals_text) => {
         ALL_DANDISET_TOTALS["archive"] = JSON.parse(archive_totals_text);
     })
     .catch((error) => {
         console.error("Error:", error);
 
-        // Only overlay error message over first plot element
         const totals_element = document.getElementById("totals");
         if (totals_element) {
             totals_element.innerText = "Failed to load data for archive totals.";
         }
     });
 
-// Populate the dropdown with IDs and render initial plots
-fetch(ALL_DANDISET_TOTALS_URL)
-    .then((response) => {
-        if (!response.ok) {
-            throw new Error(`Failed to fetch available Dandiset IDs: ${response.statusText}`);
-        }
-        return response.text();
-    })
+const allDandisetTotalsPromise = fetchWithRetry(ALL_DANDISET_TOTALS_URL)
+    .then((response) => response.text())
     .then((all_dandiset_totals_text) => {
         Object.assign(ALL_DANDISET_TOTALS, JSON.parse(all_dandiset_totals_text));
+    })
+    .catch((error) => {
+        console.error("Error:", error);
+        throw error; // Propagate so Promise.all rejects and its .catch() renders the error message
+    });
+
+// Populate the dropdown with IDs and render initial plots only after both fetches complete
+Promise.all([archiveTotalsPromise, allDandisetTotalsPromise])
+    .then(() => {
         let dandiset_ids = Object.keys(ALL_DANDISET_TOTALS);
         dandiset_ids.sort((a, b) => {
             if (a === "archive") return -1;
