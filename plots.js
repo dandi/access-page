@@ -14,6 +14,9 @@ let ALL_DANDISET_TOTALS = {};
 let USE_LOG_SCALE = false;
 let USE_CUMULATIVE = false;
 let USE_BINARY = false;
+let USE_CHOROPLETH = false;
+let GEOJSON_DATA = null;
+let NAME_ALIASES = null;
 
 
 
@@ -74,6 +77,19 @@ window.addEventListener("load", () => {
             load_over_time_plot(selected_dandiset);
             load_histogram(selected_dandiset);
             load_aws_histogram(selected_dandiset);
+            load_geographic_heatmap(selected_dandiset);
+        });
+    }
+
+    // Add event listener for choropleth toggle
+    const choroplethCheckbox = document.getElementById("choropleth");
+    if (choroplethCheckbox) {
+        choroplethCheckbox.addEventListener("change", function() {
+            USE_CHOROPLETH = this.checked;
+
+            const dandiset_selector = document.getElementById("dandiset_selector");
+            const selected_dandiset = dandiset_selector.value;
+
             load_geographic_heatmap(selected_dandiset);
         });
     }
@@ -606,13 +622,121 @@ function load_aws_histogram(dandiset_id) {
         });
 }
 
+// Normalize a subdivision name for matching against GeoJSON features
+function normalize_region_name(name) {
+    if (!name) return "";
+    name = name.toLowerCase();
+    const prefixes = ["state of ", "province of ", "region of ", "republic of ",
+                      "city state ", "county of "];
+    for (const prefix of prefixes) {
+        if (name.startsWith(prefix)) {
+            name = name.slice(prefix.length);
+        }
+    }
+    const suffixes = [" county", " province", " region", " parish",
+                      " prefecture", " department", " district",
+                      " governorate", " municipality"];
+    for (const suffix of suffixes) {
+        if (name.endsWith(suffix)) {
+            name = name.slice(0, -suffix.length);
+        }
+    }
+    const replacements = {
+        'á':'a','à':'a','â':'a','ä':'a','ã':'a','ą':'a','ă':'a','ā':'a',
+        'é':'e','è':'e','ê':'e','ë':'e','ę':'e','ě':'e','ė':'e','ǝ':'e',
+        'í':'i','ì':'i','î':'i','ï':'i','ı':'i','ī':'i',
+        'ó':'o','ò':'o','ô':'o','ö':'o','õ':'o','ő':'o','ō':'o',
+        'ú':'u','ù':'u','û':'u','ü':'u','ű':'u','ū':'u',
+        'ñ':'n','ń':'n','ň':'n',
+        'ç':'c','ć':'c','č':'c','ċ':'c',
+        'ß':'ss','ş':'s','ș':'s','š':'s','ś':'s',
+        'ø':'o','å':'a','æ':'ae',
+        'ł':'l','ľ':'l',
+        'ý':'y','ÿ':'y',
+        'ž':'z','ź':'z','ż':'z',
+        'ř':'r','ŕ':'r',
+        'ţ':'t','ț':'t','ť':'t',
+        'đ':'d','ď':'d',
+        'ğ':'g','ħ':'h','ḥ':'h',
+        '-':' ','_':' ',"'":"",'\u2019':'','\u2018':'','\u02bc':'',
+    };
+    for (const [old, repl] of Object.entries(replacements)) {
+        name = name.split(old).join(repl);
+    }
+    return name.trim();
+}
+
+// Load GeoJSON and name aliases (cached after first load)
+function load_choropleth_data() {
+    const promises = [];
+    if (!GEOJSON_DATA) {
+        promises.push(
+            fetch("gadm_admin1_simplified.geojson")
+                .then(r => { if (!r.ok) throw new Error("Failed to fetch GeoJSON"); return r.json(); })
+                .then(data => { GEOJSON_DATA = data; })
+        );
+    }
+    if (!NAME_ALIASES) {
+        promises.push(
+            fetch("name_aliases.json")
+                .then(r => { if (!r.ok) throw new Error("Failed to fetch name aliases"); return r.json(); })
+                .then(data => { NAME_ALIASES = data; })
+        );
+    }
+    return Promise.all(promises);
+}
+
+// Build a lookup from "iso2/name_norm" to feature index for fast matching
+function build_geojson_lookup() {
+    const lookup = {};
+    GEOJSON_DATA.features.forEach((feature, idx) => {
+        const iso2 = feature.properties.iso2;
+        const name_norm = feature.properties.name_norm;
+        if (iso2 && name_norm) {
+            const key = `${iso2}/${name_norm}`;
+            lookup[key] = idx;
+        }
+    });
+    return lookup;
+}
+
+// Match a TSV region key to a GeoJSON feature index
+function match_region_to_feature(region, lookup) {
+    const parts = region.split("/");
+    if (parts.length < 2) return -1;
+    const country_code = parts[0];
+    if (country_code === "AWS" || country_code === "GCP") return -1;
+    const subdivision_name = parts[1];
+    const norm_name = normalize_region_name(subdivision_name);
+
+    // Try direct normalized match
+    const direct_key = `${country_code}/${norm_name}`;
+    if (direct_key in lookup) return lookup[direct_key];
+
+    // Try alias match
+    if (NAME_ALIASES && NAME_ALIASES[country_code]) {
+        const aliased = NAME_ALIASES[country_code][norm_name];
+        if (aliased) {
+            const alias_key = `${country_code}/${aliased}`;
+            if (alias_key in lookup) return lookup[alias_key];
+        }
+    }
+
+    return -1;
+}
+
 // Function to fetch and render heatmap over geography
 function load_geographic_heatmap(dandiset_id) {
     const plot_element_id = "geography_heatmap";
     let by_region_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`;
 
+    if (USE_CHOROPLETH) {
+        load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summary_tsv_url);
+        return;
+    }
+
     if (!REGION_CODES_TO_LATITUDE_LONGITUDE) {
-        console.error("Error:", error);
+        console.error("Region coordinates not loaded");
         const plot_element = document.getElementById(plot_element_id);
         if (plot_element) {
             plot_element.innerText = "Failed to load data for geographic heatmap.";
@@ -654,7 +778,6 @@ function load_geographic_heatmap(dandiset_id) {
                 }
             });
 
-            const prefix = USE_BINARY ? "i" : ""
             const plot_info = [
                 {
                     type: "scattergeo",
@@ -702,6 +825,102 @@ function load_geographic_heatmap(dandiset_id) {
                 plot_element.innerText = "Failed to load data for geographic heatmap.";
             }
         });
+}
+
+// Function to fetch and render choropleth over geography
+function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summary_tsv_url) {
+    Promise.all([
+        load_choropleth_data(),
+        fetch(by_region_summary_tsv_url).then(r => {
+            if (!r.ok) throw new Error(`Failed to fetch TSV file: ${r.statusText}`);
+            return r.text();
+        })
+    ])
+    .then(([_, text]) => {
+        const rows = text.split("\n").filter((row) => row.trim() !== "");
+        if (rows.length < 2) {
+            throw new Error("TSV file does not contain enough data.");
+        }
+
+        const data = rows.slice(1).map((row) => row.split("\t"));
+        const lookup = build_geojson_lookup();
+
+        // Accumulate bytes per feature
+        const feature_bytes = new Array(GEOJSON_DATA.features.length).fill(0);
+        data.forEach((row) => {
+            const region = row[0];
+            const bytes = parseInt(row[1], 10);
+            const idx = match_region_to_feature(region, lookup);
+            if (idx >= 0) {
+                feature_bytes[idx] += bytes;
+            }
+        });
+
+        // Build arrays for features with data
+        const locations = [];
+        const z_values = [];
+        const hover_texts = [];
+
+        feature_bytes.forEach((bytes, idx) => {
+            if (bytes > 0) {
+                const feature = GEOJSON_DATA.features[idx];
+                locations.push(idx);
+                z_values.push(Math.log10(Math.max(1, bytes)));
+                const name = feature.properties.name;
+                const iso2 = feature.properties.iso2;
+                hover_texts.push(`${iso2}/${name}<br>${format_bytes(bytes)}`);
+            }
+        });
+
+        const plot_info = [
+            {
+                type: "choropleth",
+                geojson: GEOJSON_DATA,
+                featureidkey: "properties.id",
+                locations: locations,
+                z: z_values,
+                text: hover_texts,
+                hoverinfo: "text",
+                colorscale: "YlOrRd",
+                reversescale: true,
+                colorbar: {
+                    title: "Bytes (log scale)",
+                    tickvals: [3, 6, 9, 12],
+                    ticktext: ["KB", "MB", "GB", "TB"],
+                },
+                marker: {
+                    line: {
+                        color: "white",
+                        width: 0.2,
+                    },
+                },
+            },
+        ];
+
+        const layout = {
+            title: {
+                text: "Bytes sent by region (choropleth)",
+                font: { size: 24 },
+            },
+            geo: {
+                projection: {
+                    type: "equirectangular",
+                },
+                showframe: false,
+                showcoastlines: true,
+                coastlinecolor: "#999",
+            },
+        };
+
+        Plotly.newPlot(plot_element_id, plot_info, layout);
+    })
+    .catch((error) => {
+        console.error("Error:", error);
+        const plot_element = document.getElementById(plot_element_id);
+        if (plot_element) {
+            plot_element.innerText = "Failed to load data for geographic choropleth.";
+        }
+    });
 }
 
 // Function to format bytes into a human-readable string
