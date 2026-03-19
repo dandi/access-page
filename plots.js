@@ -183,23 +183,27 @@ fetch(ALL_DANDISET_TOTALS_URL)
             selector.appendChild(option);
         });
 
-        // Check URL for a dandiset parameter, default to "archive"
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlDandiset = urlParams.get("dandiset");
-        const initialDandiset = urlDandiset && dandiset_ids.includes(urlDandiset) ? urlDandiset : "archive";
-        selector.value = initialDandiset;
+        // Normalize a raw dandiset ID to a valid selection, falling back to "archive"
+        const validateDandisetId = (raw) => (raw && dandiset_ids.includes(raw) ? raw : "archive");
 
-        // Load the plots for the initial selection
-        update_totals(initialDandiset);
-        load_over_time_plot(initialDandiset);
-        load_histogram(initialDandiset);
-        load_aws_histogram(initialDandiset);
-        load_geographic_heatmap(initialDandiset);
+        // Update the selector and reload all plots/totals for the given dandiset ID
+        const setSelectedDandiset = (rawId) => {
+            const id = validateDandisetId(rawId);
+            selector.value = id;
+            update_totals(id);
+            load_over_time_plot(id);
+            load_histogram(id);
+            load_aws_histogram(id);
+            load_geographic_heatmap(id);
+        };
+
+        // Check URL for a dandiset parameter and load initial plots
+        const urlParams = new URLSearchParams(window.location.search);
+        setSelectedDandiset(urlParams.get("dandiset"));
 
         // Update the plots and URL when a new Dandiset ID is selected
         selector.addEventListener("change", (event) => {
-            const target = event.target;
-            const id = target.value;
+            const id = event.target.value;
             const params = new URLSearchParams(window.location.search);
             if (id === "archive") {
                 params.delete("dandiset");
@@ -209,25 +213,13 @@ fetch(ALL_DANDISET_TOTALS_URL)
             const query = params.toString();
             const newUrl = window.location.pathname + (query ? "?" + query : "");
             window.history.pushState({}, "", newUrl);
-            update_totals(id);
-            load_over_time_plot(id);
-            load_histogram(id);
-            load_aws_histogram(id);
-            load_geographic_heatmap(id);
+            setSelectedDandiset(id);
         });
 
         // Handle browser back/forward navigation
         window.addEventListener("popstate", () => {
             const params = new URLSearchParams(window.location.search);
-            const id = params.get("dandiset") || "archive";
-            if (dandiset_ids.includes(id)) {
-                selector.value = id;
-                update_totals(id);
-                load_over_time_plot(id);
-                load_histogram(id);
-                load_aws_histogram(id);
-                load_geographic_heatmap(id);
-            }
+            setSelectedDandiset(params.get("dandiset"));
         });
     })
     .catch((error) => {
