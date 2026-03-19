@@ -199,21 +199,43 @@ fetch(ALL_DANDISET_TOTALS_URL)
             selector.appendChild(option);
         });
 
-        // Load the plot for the first ID by default
-        update_totals("archive");
-        load_over_time_plot("archive");
-        load_histogram("archive");
-        load_aws_histogram("archive");
-        load_geographic_heatmap("archive");
+        // Normalize a raw dandiset ID to a valid selection, falling back to "archive"
+        const validateDandisetId = (raw) => (raw && dandiset_ids.includes(raw) ? raw : "archive");
 
-        // Update the plots when a new Dandiset ID is selected
+        // Update the selector and reload all plots/totals for the given dandiset ID
+        const setSelectedDandiset = (rawId) => {
+            const id = validateDandisetId(rawId);
+            selector.value = id;
+            update_totals(id);
+            load_over_time_plot(id);
+            load_histogram(id);
+            load_aws_histogram(id);
+            load_geographic_heatmap(id);
+        };
+
+        // Check URL for a dandiset parameter and load initial plots
+        const urlParams = new URLSearchParams(window.location.search);
+        setSelectedDandiset(urlParams.get("dandiset"));
+
+        // Update the plots and URL when a new Dandiset ID is selected
         selector.addEventListener("change", (event) => {
-            const target = event.target;
-            update_totals(target.value);
-            load_over_time_plot(target.value);
-            load_histogram(target.value);
-            load_aws_histogram(target.value);
-            load_geographic_heatmap(target.value);
+            const id = event.target.value;
+            const params = new URLSearchParams(window.location.search);
+            if (id === "archive") {
+                params.delete("dandiset");
+            } else {
+                params.set("dandiset", id);
+            }
+            const query = params.toString();
+            const newUrl = window.location.pathname + (query ? "?" + query : "");
+            window.history.pushState({}, "", newUrl);
+            setSelectedDandiset(id);
+        });
+
+        // Handle browser back/forward navigation
+        window.addEventListener("popstate", () => {
+            const params = new URLSearchParams(window.location.search);
+            setSelectedDandiset(params.get("dandiset"));
         });
     })
     .catch((error) => {
