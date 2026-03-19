@@ -167,7 +167,11 @@ fetchWithRetry(REGION_CODES_TO_LATITUDE_LONGITUDE_URL)
         console.error("Error loading YAML file:", error);
     });
 
-fetchWithRetry(ARCHIVE_TOTALS_URL)
+// Both archive totals and dandiset totals are fetched in parallel, but the dropdown
+// and initial plots are only rendered once BOTH have resolved. This prevents a race
+// condition where update_totals("archive") is called before ALL_DANDISET_TOTALS["archive"]
+// has been populated.
+const archiveTotalsPromise = fetchWithRetry(ARCHIVE_TOTALS_URL)
     .then((response) => response.text())
     .then((archive_totals_text) => {
         ALL_DANDISET_TOTALS["archive"] = JSON.parse(archive_totals_text);
@@ -175,18 +179,25 @@ fetchWithRetry(ARCHIVE_TOTALS_URL)
     .catch((error) => {
         console.error("Error:", error);
 
-        // Only overlay error message over first plot element
         const totals_element = document.getElementById("totals");
         if (totals_element) {
             totals_element.innerText = "Failed to load data for archive totals.";
         }
     });
 
-// Populate the dropdown with IDs and render initial plots
-fetchWithRetry(ALL_DANDISET_TOTALS_URL)
+const allDandisetTotalsPromise = fetchWithRetry(ALL_DANDISET_TOTALS_URL)
     .then((response) => response.text())
     .then((all_dandiset_totals_text) => {
         Object.assign(ALL_DANDISET_TOTALS, JSON.parse(all_dandiset_totals_text));
+    })
+    .catch((error) => {
+        console.error("Error:", error);
+        throw error; // Propagate so Promise.all rejects and its .catch() renders the error message
+    });
+
+// Populate the dropdown with IDs and render initial plots only after both fetches complete
+Promise.all([archiveTotalsPromise, allDandisetTotalsPromise])
+    .then(() => {
         let dandiset_ids = Object.keys(ALL_DANDISET_TOTALS);
         dandiset_ids.sort((a, b) => {
             if (a === "archive") return -1;
