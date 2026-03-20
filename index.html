@@ -7,15 +7,57 @@
     <title>Dandiset Access Summaries</title>
 
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
     <script src="errors.js" defer></script>
     <script src="plots.js" defer></script>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+
     <style>
+        :root {
+            --color-bg: #fafafa;
+            --color-surface: #ffffff;
+            --color-border: #e0e0e0;
+            --color-text: #2c2c2c;
+            --color-text-secondary: #666;
+            --color-accent: #1a6fb5;
+            --font-main: 'Source Sans 3', -apple-system, sans-serif;
+            --radius: 6px;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: var(--color-text);
+            background: var(--color-bg);
+            margin: 0;
+            padding: 0 20px 40px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1 {
+            font-weight: 300;
+            font-size: 1.8em;
+            letter-spacing: -0.01em;
+            text-align: center;
+            margin: 28px 0 16px;
+            color: var(--color-text);
+        }
+
         #totals {
             text-align: center;
-            font-size: 2em;
-            margin: 20px auto;
+            font-size: 1.5em;
+            font-weight: 300;
+            margin: 12px auto 24px;
+            line-height: 1.5;
+            max-width: 800px;
+            color: var(--color-text-secondary);
         }
 
         #geography_heatmap {
@@ -28,33 +70,195 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 20px;
-            margin: 10px 0;
+            gap: 16px;
+            margin: 0 auto;
+            padding: 10px 20px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            width: fit-content;
         }
 
         .SubControllerContainer {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
         }
+
+        label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        select {
+            font-family: var(--font-main);
+            font-size: 0.85em;
+            padding: 4px 8px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            background: var(--color-bg);
+            color: var(--color-text);
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        select:hover, select:focus {
+            border-color: var(--color-accent);
+        }
+
+        input[type="checkbox"] {
+            accent-color: var(--color-accent);
+            cursor: pointer;
+            width: 15px;
+            height: 15px;
+        }
+
+        #over_time_plot {
+            margin: 8px auto;
+            max-width: 95vw;
+            max-height: 500px;
+        }
+
+        #histogram {
+            margin: 8px auto;
+            max-width: 95vw;
+            max-height: 400px;
+        }
+
+        #geography_heatmap {
+            margin: 8px auto;
+            width: 90vw;
+            height: 50vw;
+        }
+
+        .MapControls {
+            margin: 24px auto 4px;
+            width: fit-content;
+        }
+
+        .radio-label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            letter-spacing: 0.01em;
+        }
+
+        .radio-option {
+            font-size: 0.85em;
+            font-weight: 400;
+            cursor: pointer;
+            gap: 3px;
+        }
+
+        .radio-option input[type="radio"] {
+            accent-color: var(--color-accent);
+            cursor: pointer;
+        }
+
+        .separator {
+            width: 1px;
+            height: 20px;
+            background: var(--color-border);
+        }
+
+        .tables-row {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 16px auto;
+            max-width: 1100px;
+            flex-wrap: wrap;
+        }
+
+        #top_regions_table,
+        #aws_histogram {
+            flex: 1;
+            min-width: 300px;
+            max-width: 500px;
+        }
+
+        #top_regions_table h3,
+        #aws_histogram h3 {
+            text-align: center;
+            font-weight: 300;
+            font-size: 1.1em;
+            color: var(--color-text-secondary);
+            margin: 0 0 8px;
+        }
+
+        #top_regions_table table,
+        #aws_histogram table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+        }
+
+        #top_regions_table th,
+        #aws_histogram th {
+            text-align: left;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            border-bottom: 2px solid var(--color-border);
+            padding: 6px 12px;
+        }
+
+        #top_regions_table th:last-child,
+        #aws_histogram th:last-child {
+            text-align: right;
+        }
+
+        #top_regions_table td,
+        #aws_histogram td {
+            padding: 5px 12px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        #top_regions_table td:last-child,
+        #aws_histogram td:last-child {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .attribution {
+            text-align: center;
+            font-size: 0.75em;
+            color: var(--color-text-secondary);
+            margin: 4px auto 16px;
+        }
+
+        .attribution a {
+            color: var(--color-accent);
+            text-decoration: none;
+        }
+
+        .attribution a:hover {
+            text-decoration: underline;
+        }
+
     </style>
 </head>
 <body>
     <h1>Dandiset Access Summaries</h1>
     <div class="ControllerContainer">
-        <div>
-            <label for="dandiset_selector">Select Dandiset ID:</label>
+        <div class="SubControllerContainer">
+            <label for="dandiset_selector">Dandiset:</label>
             <select id="dandiset_selector"></select>
         </div>
+        <div class="separator"></div>
         <div class="SubControllerContainer">
             <label for="log_scale">Log Scale:</label>
             <input type="checkbox" id="log_scale" />
         </div>
-        <!-- TODO: Move cumulative controller to per day plot only (needs multiple div nested to look good)  -->
         <div class="SubControllerContainer">
             <label for="cumulative">Cumulative:</label>
             <input type="checkbox" id="cumulative" />
         </div>
+        <div class="separator"></div>
         <div class="SubControllerContainer">
             <label for="prefix">Prefix:</label>
             <select id="prefix">
@@ -66,7 +270,20 @@
     <div id="totals"></div>
     <div id="over_time_plot"></div>
     <div id="histogram"></div>
-    <div id="aws_histogram"></div>
+    <div class="ControllerContainer MapControls">
+        <div class="SubControllerContainer">
+            <span class="radio-label">Map Style:</span>
+            <label class="radio-option"><input type="radio" name="map_style" value="region" checked /> Region</label>
+            <label class="radio-option"><input type="radio" name="map_style" value="dots" /> Dots</label>
+        </div>
+    </div>
     <div id="geography_heatmap"></div>
+    <div id="map_attribution" class="attribution">
+        Boundaries: <a href="https://gadm.org/" target="_blank" rel="noopener">GADM v4.1</a>
+    </div>
+    <div class="tables-row">
+        <div id="top_regions_table"></div>
+        <div id="aws_histogram"></div>
+    </div>
 </body>
 </html>
