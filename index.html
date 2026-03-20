@@ -275,6 +275,16 @@
             gap: 10px;
         }
 
+        .settings-panel .SubControllerContainer {
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .settings-panel .SubControllerContainer input,
+        .settings-panel .SubControllerContainer select {
+            margin-left: auto;
+        }
+
         .settings-panel.open {
             display: flex;
         }
@@ -444,17 +454,17 @@
                 <div class="settings-panel-title">Settings</div>
                 <div class="SubControllerContainer">
                     <label for="log_scale">Log Scale</label>
-                    <span class="info-icon" data-tooltip="Applies to the Over Time and Histogram charts" tabindex="0" role="img" aria-label="Log Scale: Applies to the Over Time and Histogram charts">i</span>
+                    <span class="info-icon" data-tooltip="Applies to non-geographic plots" tabindex="0" role="img" aria-label="Log Scale: Applies to non-geographic plots">i</span>
                     <input type="checkbox" id="log_scale" />
                 </div>
                 <div class="SubControllerContainer">
                     <label for="cumulative">Cumulative</label>
-                    <span class="info-icon" data-tooltip="Only applies to the Bytes Sent per Day plot" tabindex="0" role="img" aria-label="Cumulative: Only applies to the Bytes Sent per Day plot">i</span>
+                    <span class="info-icon" data-tooltip="Only applies to Bytes Sent per Day" tabindex="0" role="img" aria-label="Cumulative: Only applies to Bytes Sent per Day">i</span>
                     <input type="checkbox" id="cumulative" />
                 </div>
                 <div class="SubControllerContainer">
                     <label for="prefix">Prefix</label>
-                    <span class="info-icon" data-tooltip="Applies to summary totals, chart hover text, and data tables" tabindex="0" role="img" aria-label="Prefix: Applies to summary totals, chart hover text, and data tables">i</span>
+                    <span class="info-icon" data-tooltip="Applies to totals and hover values" tabindex="0" role="img" aria-label="Prefix: Applies to totals and hover values">i</span>
                     <select id="prefix">
                         <option value="decimal">Decimal</option>
                         <option value="binary">Binary</option>
