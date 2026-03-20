@@ -227,6 +227,69 @@
             background: var(--color-border);
         }
 
+        /* ── Gear / settings button ── */
+        .settings-wrapper {
+            position: relative;
+        }
+
+        .settings-btn {
+            background: none;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            padding: 3px 7px;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            transition: color 0.15s, border-color 0.15s;
+            line-height: 1;
+        }
+
+        .settings-btn:hover,
+        .settings-btn[aria-expanded="true"] {
+            color: var(--color-accent);
+            border-color: var(--color-accent);
+        }
+
+        .settings-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        /* ── Settings drop-down panel ── */
+        .settings-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            min-width: 180px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+            z-index: 150;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .settings-panel.open {
+            display: flex;
+        }
+
+        .settings-panel-title {
+            font-size: 0.75em;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--color-text-secondary);
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 6px;
+            margin-bottom: 2px;
+        }
+
         .tables-row {
             display: flex;
             justify-content: center;
@@ -325,21 +388,30 @@
             <select id="dandiset_selector"></select>
         </div>
         <div class="separator"></div>
-        <div class="SubControllerContainer">
-            <label for="log_scale">Log Scale:</label>
-            <input type="checkbox" id="log_scale" />
-        </div>
-        <div class="SubControllerContainer">
-            <label for="cumulative">Cumulative:</label>
-            <input type="checkbox" id="cumulative" />
-        </div>
-        <div class="separator"></div>
-        <div class="SubControllerContainer">
-            <label for="prefix">Prefix:</label>
-            <select id="prefix">
-                <option value="decimal">Decimal</option>
-                <option value="binary">Binary</option>
-            </select>
+        <div class="settings-wrapper">
+            <button class="settings-btn" id="settings_btn" aria-label="Open settings" aria-expanded="false" title="Settings">
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm7.07-2.07a7.07 7.07 0 0 0 .07-.93 7.07 7.07 0 0 0-.07-.93l2-1.56a.48.48 0 0 0 .11-.61l-1.9-3.28a.48.48 0 0 0-.58-.21l-2.36.95a6.93 6.93 0 0 0-1.6-.93l-.36-2.51A.47.47 0 0 0 12 1H8a.47.47 0 0 0-.47.41l-.36 2.51a6.93 6.93 0 0 0-1.6.93L3.21 3.9a.47.47 0 0 0-.58.21L.73 7.38a.47.47 0 0 0 .11.61l2 1.56A7.2 7.2 0 0 0 2.77 10a7.2 7.2 0 0 0 .07.93l-2 1.56a.48.48 0 0 0-.11.61l1.9 3.28a.48.48 0 0 0 .58.21l2.36-.95c.5.35 1.03.64 1.6.93l.36 2.51c.06.24.27.41.52.41h3.8c.25 0 .46-.17.52-.41l.36-2.51a6.93 6.93 0 0 0 1.6-.93l2.36.95c.22.08.47 0 .58-.21l1.9-3.28a.47.47 0 0 0-.11-.61l-2-1.56z"/>
+                </svg>
+            </button>
+            <div class="settings-panel" id="settings_panel" aria-hidden="true">
+                <div class="settings-panel-title">Settings</div>
+                <div class="SubControllerContainer">
+                    <label for="log_scale">Log Scale</label>
+                    <input type="checkbox" id="log_scale" />
+                </div>
+                <div class="SubControllerContainer">
+                    <label for="cumulative">Cumulative</label>
+                    <input type="checkbox" id="cumulative" />
+                </div>
+                <div class="SubControllerContainer">
+                    <label for="prefix">Prefix</label>
+                    <select id="prefix">
+                        <option value="decimal">Decimal</option>
+                        <option value="binary">Binary</option>
+                    </select>
+                </div>
+            </div>
         </div>
     </div>
     <div id="totals"></div>
@@ -348,7 +420,7 @@
     <div class="ControllerContainer MapControls">
         <div class="SubControllerContainer">
             <span class="radio-label">Map Style:</span>
-            <label class="radio-option"><input type="radio" name="map_style" value="region" checked /> Region</label>
+            <label class="radio-option"><input type="radio" name="map_style" value="region" checked /> Regions</label>
             <label class="radio-option"><input type="radio" name="map_style" value="dots" /> Dots</label>
         </div>
     </div>
