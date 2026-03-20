@@ -145,6 +145,28 @@
             height: 20px;
             background: var(--color-border);
         }
+
+        .attribution {
+            text-align: center;
+            font-size: 0.75em;
+            color: var(--color-text-secondary);
+            margin: 4px auto 16px;
+        }
+
+        .attribution a {
+            color: var(--color-accent);
+            text-decoration: none;
+        }
+
+        .attribution a:hover {
+            text-decoration: underline;
+        }
+
+        /* Hide Plotly map style selector dropdown */
+        .maplibregl-ctrl-group,
+        .mapboxgl-ctrl-group {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -183,5 +205,11 @@
         </div>
     </div>
     <div id="geography_heatmap"></div>
+    <div id="map_attribution" class="attribution" style="display:none;">
+        Boundaries: <a href="https://gadm.org/" target="_blank" rel="noopener">GADM v4.1</a>
+        &nbsp;&middot;&nbsp;
+        Basemap: <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>,
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors
+    </div>
 </body>
 </html>

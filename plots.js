@@ -133,6 +133,9 @@ window.addEventListener("load", () => {
         choroplethCheckbox.addEventListener("change", function() {
             USE_CHOROPLETH = this.checked;
 
+            const attribution = document.getElementById("map_attribution");
+            if (attribution) attribution.style.display = this.checked ? "block" : "none";
+
             const dandiset_selector = document.getElementById("dandiset_selector");
             const selected_dandiset = dandiset_selector.value;
 
@@ -1023,6 +1026,12 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
                 style: "carto-positron",
                 center: { lat: 30, lon: 0 },
                 zoom: 1,
+                bounds: {
+                    west: -180,
+                    east: 180,
+                    south: -85,
+                    north: 85,
+                },
             },
         };
 
