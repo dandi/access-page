@@ -18,12 +18,17 @@
 
     <style>
         :root {
-            --color-bg: #fafafa;
-            --color-surface: #ffffff;
-            --color-border: #e0e0e0;
-            --color-text: #2c2c2c;
-            --color-text-secondary: #666;
-            --color-accent: #1a6fb5;
+            /* ── Theme colors — adjust these variables to customize the color scheme ── */
+            --color-bg: #1a1a2e;
+            --color-surface: #16213e;
+            --color-header: #0f3460;
+            --color-border: #2a2a4a;
+            --color-text: #e0e0e0;
+            --color-text-secondary: #a0a0b0;
+            --color-accent: #53a8b6;
+            --color-accent-hover: #79c7d4;
+            --color-accent-subtle: rgba(83, 168, 182, 0.08);
+            /* ─────────────────────────────────────────────────────────────────────── */
             --font-main: 'Source Sans 3', -apple-system, sans-serif;
             --radius: 6px;
         }
@@ -37,8 +42,70 @@
             color: var(--color-text);
             background: var(--color-bg);
             margin: 0;
-            padding: 0 20px 40px;
+            padding: 0 0 40px;
             -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Site header ── */
+        .site-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 20px;
+            height: 48px;
+            background: var(--color-header);
+            border-bottom: 1px solid var(--color-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .site-brand {
+            text-decoration: none;
+            color: var(--color-accent);
+            font-size: 1em;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            transition: color 0.15s;
+        }
+
+        .site-brand:hover {
+            color: var(--color-accent-hover);
+        }
+
+        .site-title {
+            color: var(--color-text-secondary);
+            font-size: 0.9em;
+            font-weight: 400;
+        }
+
+        .site-header-spacer {
+            flex: 1;
+        }
+
+        .site-github-link {
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .site-github-link:hover {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .site-github-link svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* ── Page content ── */
+        .page-content {
+            padding: 0 20px;
         }
 
         h1 {
@@ -58,12 +125,6 @@
             line-height: 1.5;
             max-width: 800px;
             color: var(--color-text-secondary);
-        }
-
-        #geography_heatmap {
-            width: 90vw;
-            height: 80vh;
-            margin: auto;
         }
 
         .ControllerContainer {
@@ -216,12 +277,18 @@
         #aws_histogram td {
             padding: 5px 12px;
             border-bottom: 1px solid var(--color-border);
+            color: var(--color-text);
         }
 
         #top_regions_table td:last-child,
         #aws_histogram td:last-child {
             text-align: right;
             font-variant-numeric: tabular-nums;
+        }
+
+        #top_regions_table tr:hover td,
+        #aws_histogram tr:hover td {
+            background: var(--color-accent-subtle);
         }
 
         .attribution {
@@ -243,7 +310,15 @@
     </style>
 </head>
 <body>
-    <h1>Dandiset Access Summaries</h1>
+    <header class="site-header">
+        <a href="https://dandiarchive.org" class="site-brand" target="_blank" rel="noopener">DANDI</a>
+        <span class="site-title">Access Summaries</span>
+        <div class="site-header-spacer"></div>
+        <a href="https://github.com/dandi/access-page" class="site-github-link" target="_blank" rel="noopener" aria-label="View on GitHub">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        </a>
+    </header>
+    <div class="page-content">
     <div class="ControllerContainer">
         <div class="SubControllerContainer">
             <label for="dandiset_selector">Dandiset:</label>
@@ -284,6 +359,7 @@
     <div class="tables-row">
         <div id="top_regions_table"></div>
         <div id="aws_histogram"></div>
+    </div>
     </div>
 </body>
 </html>

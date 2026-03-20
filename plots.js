@@ -1,6 +1,38 @@
 // TODO: if using a proper framework/package structure, import the error helper
 // (working for the moment due to global import in the index.html file)
 
+// ── Dark-theme helpers (mirrors :root CSS variables in index.html) ──────────
+const DARK_THEME = {
+    bg:            '#1a1a2e',
+    surface:       '#16213e',
+    border:        '#2a2a4a',
+    text:          '#e0e0e0',
+    textSecondary: '#a0a0b0',
+    accent:        '#53a8b6',
+};
+
+/**
+ * Mutates `layout` in-place to apply the dark-theme colours and returns it.
+ * Axis overrides are merged so callers can still add axis-specific options.
+ */
+function applyDarkTheme(layout) {
+    layout.paper_bgcolor = DARK_THEME.surface;
+    layout.plot_bgcolor  = DARK_THEME.surface;
+    layout.font = Object.assign({ color: DARK_THEME.text }, layout.font || {});
+
+    const axisDefaults = {
+        gridcolor:     DARK_THEME.border,
+        linecolor:     DARK_THEME.border,
+        zerolinecolor: DARK_THEME.border,
+        tickfont:      { color: DARK_THEME.textSecondary },
+        titlefont:     { color: DARK_THEME.textSecondary },
+    };
+    if (layout.xaxis) Object.assign(layout.xaxis, { ...axisDefaults, ...layout.xaxis });
+    if (layout.yaxis) Object.assign(layout.yaxis, { ...axisDefaults, ...layout.yaxis });
+    return layout;
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 // Fetch with exponential backoff retry logic
 /**
  * Fetches a URL with automatic retries using exponential backoff.
@@ -388,10 +420,11 @@ function load_over_time_plot(dandiset_id) {
                     text: dates.map((date, index) => `${date}<br>${human_readable_bytes_sent[index]}`),
                     textposition: "none",
                     hoverinfo: "text",
+                    marker: { color: DARK_THEME.accent },
                 }
             ];
 
-            const layout = {
+            const layout = applyDarkTheme({
                 bargap: 0,
                 title: {
                     text: USE_CUMULATIVE ? `Total bytes sent to date` : `Bytes sent per day` ,
@@ -415,7 +448,7 @@ function load_over_time_plot(dandiset_id) {
                     tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000] : null,
                     ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null,
                 },
-            };
+            });
 
             if (USE_CUMULATIVE) {
                 const date_set = new Set(dates);
@@ -495,10 +528,11 @@ function load_dandiset_histogram() {
                 text: sorted_dandiset_ids.map((dandiset_id, index) => `${dandiset_id}<br>${human_readable_bytes_sent[index]}`),
                 textposition: "none",
                 hoverinfo: "text",
+                marker: { color: DARK_THEME.accent },
             }
         ];
 
-        const layout = {
+        const layout = applyDarkTheme({
             bargap: 0,
             title: {
                 text: `Bytes sent per Dandiset`,
@@ -522,7 +556,7 @@ function load_dandiset_histogram() {
                 tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000, 1000000000000000000] : null,
                 ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
             },
-        };
+        });
 
         Plotly.newPlot(plot_element_id, plot_data, layout);
     })
@@ -581,10 +615,11 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
                     text: sorted_asset_names.map((name, index) => `${name}<br>${human_readable_bytes_sent[index]}`),
                     textposition: "none",
                     hoverinfo: "text",
+                    marker: { color: DARK_THEME.accent },
                 }
             ];
 
-            const layout = {
+            const layout = applyDarkTheme({
                 bargap: 0,
                 title: {
                     text: `Bytes sent per asset`,
@@ -608,7 +643,7 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
                     tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000, 1000000000000000000] : null,
                     ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
                 },
-            };
+            });
 
             Plotly.newPlot(plot_element_id, plot_data, layout);
         })
@@ -949,15 +984,23 @@ function load_geographic_heatmap(dandiset_id) {
                 },
             ];
 
-            const layout = {
+            const layout = applyDarkTheme({
                 title: {
                     text: "Bytes sent by region",
                     font: { size: 24 },
                 },
                 geo: {
                     projection: { type: "equirectangular" },
+                    bgcolor: DARK_THEME.surface,
+                    lakecolor: DARK_THEME.bg,
+                    landcolor: DARK_THEME.border,
+                    showocean: true,
+                    oceancolor: DARK_THEME.bg,
+                    showlakes: true,
+                    showland: true,
+                    countrycolor: DARK_THEME.border,
                 },
-            };
+            });
 
             Plotly.newPlot(plot_element_id, plot_info, layout);
         })
@@ -1091,18 +1134,18 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
             // we need zoom = log2(width / 256) to fill the container once
             const minZoom = defaultZoom - 0.15;
 
-        const layout = {
+        const layout = applyDarkTheme({
             title: {
                 text: "Bytes sent by region",
                 font: { size: 24 },
             },
             map: {
-                style: "carto-positron",
+                style: "carto-darkmatter",
                 center: { lat: 40, lon: 0 },
                 zoom: defaultZoom,
                 minzoom: minZoom,
             },
-        };
+        });
 
         Plotly.newPlot(plot_element_id, plot_info, layout).then(() => {
             const el = document.getElementById(plot_element_id);
