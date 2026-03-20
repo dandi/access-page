@@ -104,6 +104,33 @@ window.addEventListener("load", () => {
         handlePlotlyError();
     }
 
+    // Settings panel (gear wheel) open/close
+    const settingsBtn = document.getElementById("settings_btn");
+    const settingsPanel = document.getElementById("settings_panel");
+    if (settingsBtn && settingsPanel) {
+        settingsBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            const isOpen = settingsPanel.classList.toggle("open");
+            settingsBtn.setAttribute("aria-expanded", String(isOpen));
+            settingsPanel.setAttribute("aria-hidden", String(!isOpen));
+        });
+        document.addEventListener("click", function (e) {
+            if (!settingsPanel.contains(e.target) && !settingsBtn.contains(e.target)) {
+                settingsPanel.classList.remove("open");
+                settingsBtn.setAttribute("aria-expanded", "false");
+                settingsPanel.setAttribute("aria-hidden", "true");
+            }
+        });
+        // Close on Escape key
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                settingsPanel.classList.remove("open");
+                settingsBtn.setAttribute("aria-expanded", "false");
+                settingsPanel.setAttribute("aria-hidden", "true");
+            }
+        });
+    }
+
     // Add event listener for log scale checkbox
     const logScaleCheckbox = document.getElementById("log_scale");
     if (logScaleCheckbox) {
@@ -967,14 +994,12 @@ function load_geographic_heatmap(dandiset_id) {
                     marker: {
                         symbol: "circle",
                         size: bytes_sent.map((bytes) => Math.log(bytes) * 0.5),
-                        color: USE_LOG_SCALE ? bytes_sent.map(bytes => Math.log10(Math.max(1, bytes))) : bytes_sent,
+                        color: bytes_sent.map(bytes => Math.log10(Math.max(1, bytes))),
                         colorscale: "Viridis",
                         colorbar: {
-                            title: USE_LOG_SCALE ? "Bytes (log scale)" : "Bytes",
-                            tickformat: USE_LOG_SCALE ? "" : "~s",
-                            ticksuffix: USE_LOG_SCALE ? "" : "B",
-                            tickvals: USE_LOG_SCALE ? [3, 6, 9, 12] : null,
-                            ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
+                            title: "Bytes (log scale)",
+                            tickvals: [3, 6, 9, 12],
+                            ticktext: ["KB", "MB", "GB", "TB"]
                         },
                         opacity: 1,
                     },
