@@ -145,28 +145,26 @@ window.addEventListener("load", () => {
     }
 
     // Add event listener for map style dropdown
-    const mapStyleSelector = document.getElementById("map_style");
-    if (mapStyleSelector) {
+    const mapDataSelector = document.getElementById("map_data");
+    if (mapDataSelector) {
         // Initialize from URL parameter
         const urlParams = new URLSearchParams(window.location.search);
-        const urlMapStyle = urlParams.get("map");
-        if (urlMapStyle === "choropleth") {
-            mapStyleSelector.value = "choropleth";
+        if (urlParams.get("map") === "region") {
+            mapDataSelector.value = "region";
             USE_CHOROPLETH = true;
             const attribution = document.getElementById("map_attribution");
             if (attribution) attribution.style.display = "block";
         }
 
-        mapStyleSelector.addEventListener("change", function() {
-            USE_CHOROPLETH = this.value === "choropleth";
+        mapDataSelector.addEventListener("change", function() {
+            USE_CHOROPLETH = this.value === "region";
 
             const attribution = document.getElementById("map_attribution");
             if (attribution) attribution.style.display = USE_CHOROPLETH ? "block" : "none";
 
-            // Update URL
             const params = new URLSearchParams(window.location.search);
             if (USE_CHOROPLETH) {
-                params.set("map", "choropleth");
+                params.set("map", "region");
             } else {
                 params.delete("map");
             }
@@ -174,9 +172,7 @@ window.addEventListener("load", () => {
             const newUrl = window.location.pathname + (query ? "?" + query : "");
             window.history.pushState({}, "", newUrl);
 
-            const dandiset_selector = document.getElementById("dandiset_selector");
-            const selected_dandiset = dandiset_selector.value;
-
+            const selected_dandiset = document.getElementById("dandiset_selector").value;
             load_geographic_heatmap(selected_dandiset);
         });
     }
@@ -193,6 +189,18 @@ function resizePlots() {
             Plotly.Plots.resize(el);
         }
     });
+
+    // Update min zoom for the choroplethmap based on new width
+    const mapEl = document.getElementById("geography_heatmap");
+    if (mapEl && USE_CHOROPLETH && mapEl._fullLayout && mapEl._fullLayout.map && mapEl._fullLayout.map._subplot) {
+        const mapWidth = mapEl.offsetWidth;
+        const defaultZoom = Math.max(1, Math.log2(mapWidth / 512));
+        const minZoom = defaultZoom - 0.22;
+        const map = mapEl._fullLayout.map._subplot.map;
+        if (map && map.setMinZoom) {
+            map.setMinZoom(minZoom);
+        }
+    }
 }
 
 
@@ -950,9 +958,7 @@ function load_geographic_heatmap(dandiset_id) {
                     font: { size: 24 },
                 },
                 geo: {
-                    projection: {
-                        type: "equirectangular",
-                    },
+                    projection: { type: "equirectangular" },
                 },
             };
 
@@ -1003,13 +1009,26 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
         const z_values = [];
         const hover_texts = [];
 
-        // Skip features whose geometry spans the entire map (dateline-crossing)
-        const SKIP_IDS = new Set([0, 909, 910, 2109, 2511, 3271]);
+        // Skip features that cross the antimeridian (have both very
+        // negative and very positive longitudes) as they render incorrectly
+        function hasWideLonSpan(feature) {
+            let minLon = Infinity, maxLon = -Infinity;
+            function scanCoords(coords) {
+                if (typeof coords[0] === "number") {
+                    if (coords[0] < minLon) minLon = coords[0];
+                    if (coords[0] > maxLon) maxLon = coords[0];
+                } else {
+                    for (const c of coords) scanCoords(c);
+                }
+            }
+            scanCoords(feature.geometry.coordinates);
+            return (maxLon - minLon) > 180;
+        }
 
         feature_bytes.forEach((bytes, idx) => {
             if (bytes > 0) {
                 const feature = GEOJSON_DATA.features[idx];
-                if (SKIP_IDS.has(feature.properties.id)) return;
+                if (hasWideLonSpan(feature)) return;
                 const name = feature.properties.name;
                 const iso2 = feature.properties.iso2;
                 filtered_features.push(feature);
@@ -1047,41 +1066,56 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
         })();
 
         const plot_info = [
-            {
-                type: "choroplethmap",
-                geojson: filtered_geojson,
-                featureidkey: "properties.id",
-                locations: locations,
-                z: z_values,
-                text: hover_texts,
-                hoverinfo: "text",
-                colorscale: "YlOrRd",
-                reversescale: true,
-                colorbar: colorbar_config,
-                marker: {
-                    line: {
-                        color: "white",
-                        width: 0.5,
+                {
+                    type: "choroplethmap",
+                    geojson: filtered_geojson,
+                    featureidkey: "properties.id",
+                    locations: locations,
+                    z: z_values,
+                    text: hover_texts,
+                    hoverinfo: "text",
+                    colorscale: "YlOrRd",
+                    reversescale: true,
+                    colorbar: colorbar_config,
+                    marker: {
+                        line: {
+                            color: "white",
+                            width: 0.5,
+                        },
+                        opacity: 0.8,
                     },
-                    opacity: 0.8,
                 },
-            },
-        ];
+            ];
+
+            const mapEl = document.getElementById(plot_element_id);
+            const mapWidth = mapEl ? mapEl.offsetWidth : 800;
+            const defaultZoom = Math.max(1, Math.log2(mapWidth / 512));
+            // Min zoom allows seeing the full earth: at 256px per tile at zoom 0,
+            // we need zoom = log2(width / 256) to fill the container once
+            const minZoom = defaultZoom - 0.22;
 
         const layout = {
             title: {
-                text: "Bytes sent by region (choropleth)",
+                text: "Bytes sent by region",
                 font: { size: 24 },
             },
             map: {
                 style: "carto-positron",
-                center: { lat: 30, lon: 0 },
-                zoom: 1,
-                minzoom: 1,
+                center: { lat: 40, lon: 0 },
+                zoom: defaultZoom,
+                minzoom: minZoom,
             },
         };
 
-        Plotly.newPlot(plot_element_id, plot_info, layout);
+        Plotly.newPlot(plot_element_id, plot_info, layout).then(() => {
+            const el = document.getElementById(plot_element_id);
+            if (el && el._fullLayout && el._fullLayout.map && el._fullLayout.map._subplot) {
+                const map = el._fullLayout.map._subplot.map;
+                if (map) {
+                    if (map.setMinZoom) map.setMinZoom(minZoom);
+                }
+            }
+        });
     })
     .catch((error) => {
         console.error("Error:", error);
