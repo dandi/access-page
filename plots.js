@@ -60,7 +60,7 @@ let ALL_DANDISET_TOTALS = {};
 let USE_LOG_SCALE = false;
 let USE_CUMULATIVE = false;
 let USE_BINARY = false;
-let USE_CHOROPLETH = false;
+let USE_CHOROPLETH = true;
 let GEOJSON_DATA = null;
 let NAME_ALIASES = null;
 
@@ -144,27 +144,24 @@ window.addEventListener("load", () => {
         });
     }
 
-    // Add event listener for map style dropdown
-    const mapDataSelector = document.getElementById("map_data");
-    if (mapDataSelector) {
-        // Initialize from URL parameter
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get("map") === "region") {
-            mapDataSelector.value = "region";
-            USE_CHOROPLETH = true;
-            const attribution = document.getElementById("map_attribution");
-            if (attribution) attribution.style.display = "block";
-        }
+    // Add event listener for map style radio toggle
+    const mapStyleRadios = document.querySelectorAll('input[name="map_style"]');
+    // Initialize from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlMap = urlParams.get("map");
+    if (urlMap === "dots") {
+        USE_CHOROPLETH = false;
+        const dotsRadio = document.querySelector('input[name="map_style"][value="dots"]');
+        if (dotsRadio) dotsRadio.checked = true;
+    }
 
-        mapDataSelector.addEventListener("change", function() {
+    mapStyleRadios.forEach((radio) => {
+        radio.addEventListener("change", function() {
             USE_CHOROPLETH = this.value === "region";
 
-            const attribution = document.getElementById("map_attribution");
-            if (attribution) attribution.style.display = USE_CHOROPLETH ? "block" : "none";
-
             const params = new URLSearchParams(window.location.search);
-            if (USE_CHOROPLETH) {
-                params.set("map", "region");
+            if (!USE_CHOROPLETH) {
+                params.set("map", "dots");
             } else {
                 params.delete("map");
             }
@@ -175,7 +172,7 @@ window.addEventListener("load", () => {
             const selected_dandiset = document.getElementById("dandiset_selector").value;
             load_geographic_heatmap(selected_dandiset);
         });
-    }
+    });
 });
 
 // Add an event listener for window resize
@@ -195,7 +192,7 @@ function resizePlots() {
     if (mapEl && USE_CHOROPLETH && mapEl._fullLayout && mapEl._fullLayout.map && mapEl._fullLayout.map._subplot) {
         const mapWidth = mapEl.offsetWidth;
         const defaultZoom = Math.max(1, Math.log2(mapWidth / 512));
-        const minZoom = defaultZoom - 0.22;
+        const minZoom = defaultZoom - 0.15;
         const map = mapEl._fullLayout.map._subplot.map;
         if (map && map.setMinZoom) {
             map.setMinZoom(minZoom);
@@ -1092,7 +1089,7 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
             const defaultZoom = Math.max(1, Math.log2(mapWidth / 512));
             // Min zoom allows seeing the full earth: at 256px per tile at zoom 0,
             // we need zoom = log2(width / 256) to fill the container once
-            const minZoom = defaultZoom - 0.22;
+            const minZoom = defaultZoom - 0.15;
 
         const layout = {
             title: {

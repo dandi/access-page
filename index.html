@@ -141,6 +141,25 @@
             width: fit-content;
         }
 
+        .radio-label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            letter-spacing: 0.01em;
+        }
+
+        .radio-option {
+            font-size: 0.85em;
+            font-weight: 400;
+            cursor: pointer;
+            gap: 3px;
+        }
+
+        .radio-option input[type="radio"] {
+            accent-color: var(--color-accent);
+            cursor: pointer;
+        }
+
         .separator {
             width: 1px;
             height: 20px;
@@ -253,15 +272,13 @@
     <div id="histogram"></div>
     <div class="ControllerContainer MapControls">
         <div class="SubControllerContainer">
-            <label for="map_data">Map Style:</label>
-            <select id="map_data">
-                <option value="dots">Dots</option>
-                <option value="region">Region</option>
-            </select>
+            <span class="radio-label">Map Style:</span>
+            <label class="radio-option"><input type="radio" name="map_style" value="region" checked /> Region</label>
+            <label class="radio-option"><input type="radio" name="map_style" value="dots" /> Dots</label>
         </div>
     </div>
     <div id="geography_heatmap"></div>
-    <div id="map_attribution" class="attribution" style="display:none;">
+    <div id="map_attribution" class="attribution">
         Boundaries: <a href="https://gadm.org/" target="_blank" rel="noopener">GADM v4.1</a>
     </div>
     <div class="tables-row">
