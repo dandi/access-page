@@ -275,6 +275,16 @@
             gap: 10px;
         }
 
+        .settings-panel .SubControllerContainer {
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .settings-panel .SubControllerContainer input,
+        .settings-panel .SubControllerContainer select {
+            margin-left: auto;
+        }
+
         .settings-panel.open {
             display: flex;
         }
@@ -288,6 +298,52 @@
             border-bottom: 1px solid var(--color-border);
             padding-bottom: 6px;
             margin-bottom: 2px;
+        }
+
+        /* ── Info icon & tooltip ── */
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--color-text-secondary);
+            color: var(--color-bg);
+            font-size: 0.65rem;
+            font-style: italic;
+            font-weight: 700;
+            cursor: help;
+            flex-shrink: 0;
+            user-select: none;
+            position: relative;
+        }
+
+        .info-icon::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            right: calc(100% + 8px);
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--color-header);
+            color: var(--color-text);
+            font-size: 0.8rem;
+            font-style: normal;
+            font-weight: 400;
+            padding: 5px 10px;
+            border-radius: var(--radius);
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s;
+            z-index: 200;
+            border: 1px solid var(--color-border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .info-icon:hover::after,
+        .info-icon:focus::after {
+            opacity: 1;
         }
 
         .tables-row {
@@ -398,14 +454,17 @@
                 <div class="settings-panel-title">Settings</div>
                 <div class="SubControllerContainer">
                     <label for="log_scale">Log Scale</label>
+                    <span class="info-icon" data-tooltip="Applies to non-geographic plots" tabindex="0" role="img" aria-label="Log Scale: Applies to non-geographic plots">i</span>
                     <input type="checkbox" id="log_scale" />
                 </div>
                 <div class="SubControllerContainer">
                     <label for="cumulative">Cumulative</label>
+                    <span class="info-icon" data-tooltip="Only applies to Bytes Sent per Day" tabindex="0" role="img" aria-label="Cumulative: Only applies to Bytes Sent per Day">i</span>
                     <input type="checkbox" id="cumulative" />
                 </div>
                 <div class="SubControllerContainer">
                     <label for="prefix">Prefix</label>
+                    <span class="info-icon" data-tooltip="Applies to totals and hover values" tabindex="0" role="img" aria-label="Prefix: Applies to totals and hover values">i</span>
                     <select id="prefix">
                         <option value="decimal">Decimal</option>
                         <option value="binary">Binary</option>
