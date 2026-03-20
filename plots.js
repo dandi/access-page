@@ -93,8 +93,25 @@ window.addEventListener("load", () => {
     // Add event listener for cumulative totals
     const cumulativeCheckbox = document.getElementById("cumulative");
     if (cumulativeCheckbox) {
+        // Initialize from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("cumulative") === "true") {
+            cumulativeCheckbox.checked = true;
+            USE_CUMULATIVE = true;
+        }
+
         cumulativeCheckbox.addEventListener("change", function () {
             USE_CUMULATIVE = this.checked;
+
+            const params = new URLSearchParams(window.location.search);
+            if (this.checked) {
+                params.set("cumulative", "true");
+            } else {
+                params.delete("cumulative");
+            }
+            const query = params.toString();
+            const newUrl = window.location.pathname + (query ? "?" + query : "");
+            window.history.pushState({}, "", newUrl);
 
             // Get the current dandiset ID
             const dandiset_selector = document.getElementById("dandiset_selector");
@@ -127,14 +144,35 @@ window.addEventListener("load", () => {
         });
     }
 
-    // Add event listener for choropleth toggle
-    const choroplethCheckbox = document.getElementById("choropleth");
-    if (choroplethCheckbox) {
-        choroplethCheckbox.addEventListener("change", function() {
-            USE_CHOROPLETH = this.checked;
+    // Add event listener for map style dropdown
+    const mapStyleSelector = document.getElementById("map_style");
+    if (mapStyleSelector) {
+        // Initialize from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlMapStyle = urlParams.get("map");
+        if (urlMapStyle === "choropleth") {
+            mapStyleSelector.value = "choropleth";
+            USE_CHOROPLETH = true;
+            const attribution = document.getElementById("map_attribution");
+            if (attribution) attribution.style.display = "block";
+        }
+
+        mapStyleSelector.addEventListener("change", function() {
+            USE_CHOROPLETH = this.value === "choropleth";
 
             const attribution = document.getElementById("map_attribution");
-            if (attribution) attribution.style.display = this.checked ? "block" : "none";
+            if (attribution) attribution.style.display = USE_CHOROPLETH ? "block" : "none";
+
+            // Update URL
+            const params = new URLSearchParams(window.location.search);
+            if (USE_CHOROPLETH) {
+                params.set("map", "choropleth");
+            } else {
+                params.delete("map");
+            }
+            const query = params.toString();
+            const newUrl = window.location.pathname + (query ? "?" + query : "");
+            window.history.pushState({}, "", newUrl);
 
             const dandiset_selector = document.getElementById("dandiset_selector");
             const selected_dandiset = dandiset_selector.value;
@@ -580,9 +618,11 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
         });
 }
 
-// Function to fetch and render histogram over AWS regions
+// Function to fetch and render AWS regions as a table
 function load_aws_histogram(dandiset_id) {
-    const plot_element_id = "aws_histogram";
+    const element = document.getElementById("aws_histogram");
+    if (!element) return;
+
     let by_region_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`;
 
     fetch(by_region_summary_tsv_url)
@@ -595,7 +635,8 @@ function load_aws_histogram(dandiset_id) {
         .then((text) => {
             const rows = text.split("\n").filter((row) => row.trim() !== "");
             if (rows.length < 2) {
-                throw new Error("TSV file does not contain enough data.");
+                element.innerHTML = "";
+                return;
             }
 
             const data = rows.slice(1).map((row) => row.split("\t"));
@@ -606,68 +647,29 @@ function load_aws_histogram(dandiset_id) {
                 if (!region.startsWith("AWS/")) return;
                 const region_clipped = region.replace("AWS/", "");
                 const bytes = parseInt(row[1], 10);
-                subregion_data.push({
-                    name: region_clipped,
-                    bytes: bytes,
-                    human: format_bytes(bytes)
-                });
+                subregion_data.push({ name: region_clipped, bytes: bytes });
             });
 
-            // Sort descending by bytes
             subregion_data.sort((a, b) => b.bytes - a.bytes);
 
-            const subregion_names = subregion_data.map(item => item.name);
-            const bytes_sent = subregion_data.map(item => item.bytes);
-            const human_readable_bytes_sent = subregion_data.map(item => item.human);
+            if (subregion_data.length === 0) {
+                element.innerHTML = "";
+                return;
+            }
 
-            const total_bytes_sent = subregion_data.reduce((acc, item) => acc + item.bytes, 0);
-            const summary_text = `${format_bytes(total_bytes_sent)} in total sent to AWS data centers`;
+            const total_bytes = subregion_data.reduce((acc, item) => acc + item.bytes, 0);
 
-            const plot_data = [
-                {
-                    type: "bar",
-                    x: subregion_names,
-                    y: bytes_sent,
-                    text: subregion_names.map((name, index) => `${name}<br>${human_readable_bytes_sent[index]}`),
-                    textposition: "none",
-                    hoverinfo: "text",
-                }
-            ];
-
-            const layout = {
-                bargap: 0,
-                title: {
-                    text: summary_text,
-                    font: { size: 24 }
-                },
-                xaxis: {
-                    title: {
-                        text: "(hover over an entry for AWS subregions)",
-                        font: { size: 16 }
-                    },
-                    showticklabels: false,
-                },
-                yaxis: {
-                    title: {
-                        text: USE_LOG_SCALE ? "Bytes (log scale)" : "Bytes",
-                        font: { size: 16 }
-                    },
-                    type: USE_LOG_SCALE ? "log" : "linear",
-                    tickformat: USE_LOG_SCALE ? "" : "~s",
-                    ticksuffix: USE_LOG_SCALE ? "" : "B",
-                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000, 1000000000000000000] : null,
-                    ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
-                },
-            };
-
-            Plotly.newPlot(plot_element_id, plot_data, layout);
+            let html = `<h3>${format_bytes(total_bytes)} sent to AWS data centers</h3>`;
+            html += "<table><thead><tr><th>AWS Region</th><th>Bytes Sent</th></tr></thead><tbody>";
+            subregion_data.forEach((r) => {
+                html += `<tr><td>${r.name}</td><td>${format_bytes(r.bytes)}</td></tr>`;
+            });
+            html += "</tbody></table>";
+            element.innerHTML = html;
         })
         .catch((error) => {
             console.error("Error:", error);
-            const plot_element = document.getElementById(plot_element_id);
-            if (plot_element) {
-                plot_element.innerText = "";
-            }
+            if (element) element.innerHTML = "";
         });
 }
 
@@ -814,10 +816,59 @@ function match_region_to_feature(region, lookup, country_lookup) {
     return -1;
 }
 
+// Function to populate top regions table from TSV data
+function load_top_regions_table(by_region_summary_tsv_url) {
+    const table_element = document.getElementById("top_regions_table");
+    if (!table_element) return;
+
+    fetch(by_region_summary_tsv_url)
+        .then((response) => {
+            if (!response.ok) throw new Error("Failed to fetch TSV");
+            return response.text();
+        })
+        .then((text) => {
+            const rows = text.split("\n").filter((row) => row.trim() !== "");
+            if (rows.length < 2) {
+                table_element.innerHTML = "";
+                return;
+            }
+
+            const data = rows.slice(1).map((row) => row.split("\t"));
+
+            // Filter out cloud regions, sort by bytes descending, take top 10
+            const regions = data
+                .filter((row) => {
+                    const cc = row[0].split("/")[0];
+                    return cc !== "AWS" && cc !== "GCP";
+                })
+                .map((row) => ({ region: row[0], bytes: parseInt(row[1], 10) }))
+                .sort((a, b) => b.bytes - a.bytes)
+                .slice(0, 10);
+
+            if (regions.length === 0) {
+                table_element.innerHTML = "";
+                return;
+            }
+
+            let html = "<h3>Top 10 regions</h3>";
+            html += "<table><thead><tr><th>Region</th><th>Bytes Sent</th></tr></thead><tbody>";
+            regions.forEach((r) => {
+                html += `<tr><td>${r.region}</td><td>${format_bytes(r.bytes)}</td></tr>`;
+            });
+            html += "</tbody></table>";
+            table_element.innerHTML = html;
+        })
+        .catch(() => {
+            table_element.innerHTML = "";
+        });
+}
+
 // Function to fetch and render heatmap over geography
 function load_geographic_heatmap(dandiset_id) {
     const plot_element_id = "geography_heatmap";
     let by_region_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`;
+
+    load_top_regions_table(by_region_summary_tsv_url);
 
     if (USE_CHOROPLETH) {
         load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summary_tsv_url);
@@ -1026,6 +1077,7 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
                 style: "carto-positron",
                 center: { lat: 30, lon: 0 },
                 zoom: 1,
+                minzoom: 1,
             },
         };
 

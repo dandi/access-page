@@ -124,7 +124,7 @@
             max-height: 500px;
         }
 
-        #histogram, #aws_histogram {
+        #histogram {
             margin: 8px auto;
             max-width: 95vw;
             max-height: 400px;
@@ -145,6 +145,64 @@
             width: 1px;
             height: 20px;
             background: var(--color-border);
+        }
+
+        .tables-row {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 16px auto;
+            max-width: 1100px;
+            flex-wrap: wrap;
+        }
+
+        #top_regions_table,
+        #aws_histogram {
+            flex: 1;
+            min-width: 300px;
+            max-width: 500px;
+        }
+
+        #top_regions_table h3,
+        #aws_histogram h3 {
+            text-align: center;
+            font-weight: 300;
+            font-size: 1.1em;
+            color: var(--color-text-secondary);
+            margin: 0 0 8px;
+        }
+
+        #top_regions_table table,
+        #aws_histogram table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+        }
+
+        #top_regions_table th,
+        #aws_histogram th {
+            text-align: left;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            border-bottom: 2px solid var(--color-border);
+            padding: 6px 12px;
+        }
+
+        #top_regions_table th:last-child,
+        #aws_histogram th:last-child {
+            text-align: right;
+        }
+
+        #top_regions_table td,
+        #aws_histogram td {
+            padding: 5px 12px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        #top_regions_table td:last-child,
+        #aws_histogram td:last-child {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
         }
 
         .attribution {
@@ -193,16 +251,22 @@
     <div id="totals"></div>
     <div id="over_time_plot"></div>
     <div id="histogram"></div>
-    <div id="aws_histogram"></div>
     <div class="ControllerContainer MapControls">
         <div class="SubControllerContainer">
-            <label for="choropleth">Choropleth:</label>
-            <input type="checkbox" id="choropleth" />
+            <label for="map_style">Map Style:</label>
+            <select id="map_style">
+                <option value="dots">Dots</option>
+                <option value="choropleth">Choropleth</option>
+            </select>
         </div>
     </div>
     <div id="geography_heatmap"></div>
     <div id="map_attribution" class="attribution" style="display:none;">
         Boundaries: <a href="https://gadm.org/" target="_blank" rel="noopener">GADM v4.1</a>
+    </div>
+    <div class="tables-row">
+        <div id="top_regions_table"></div>
+        <div id="aws_histogram"></div>
     </div>
 </body>
 </html>
