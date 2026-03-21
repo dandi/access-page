@@ -34,23 +34,52 @@ function applyDarkTheme(layout) {
 // ────────────────────────────────────────────────────────────────────────────
 
 /**
- * Sets (or clears) a "Data" hyperlink inside the given container element.
- * Passing a falsy `url` clears any existing link.
+ * Rebuilds the consolidated "Data sources" section at the bottom of the page
+ * for the given dandiset ID.
  *
- * @param {string} container_id - The ID of the container element.
- * @param {string|null} url - The URL to link to, or null/undefined to clear.
+ * @param {string} dandiset_id - The currently selected dandiset (or "archive"/"undetermined").
  */
-function set_data_link(container_id, url) {
-    const container = document.getElementById(container_id);
+function update_data_sources(dandiset_id) {
+    const container = document.getElementById("data_sources_links");
     if (!container) return;
+
+    const entries = [];
+
+    entries.push({
+        label: "Bytes per day",
+        url: `${BASE_TSV_URL}/${dandiset_id}/by_day.tsv`,
+    });
+
+    if (dandiset_id === "archive") {
+        entries.push({ label: "Bytes per dandiset", url: ALL_DANDISET_TOTALS_URL });
+    } else if (dandiset_id !== "undetermined") {
+        entries.push({
+            label: "Bytes per asset",
+            url: `${BASE_TSV_URL}/${dandiset_id}/by_asset.tsv`,
+        });
+    }
+
+    entries.push({
+        label: "Bytes by region",
+        url: `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`,
+    });
+
     container.innerHTML = "";
-    if (!url) return;
-    const link = document.createElement("a");
-    link.href = url;
-    link.target = "_blank";
-    link.rel = "noopener";
-    link.textContent = "Data";
-    container.appendChild(link);
+    entries.forEach((entry, index) => {
+        if (index > 0) {
+            const sep = document.createElement("span");
+            sep.className = "data-sources-sep";
+            sep.setAttribute("aria-hidden", "true");
+            sep.textContent = "·";
+            container.appendChild(sep);
+        }
+        const a = document.createElement("a");
+        a.href = entry.url;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.textContent = entry.label;
+        container.appendChild(a);
+    });
 }
 
 // Fetch with exponential backoff retry logic
@@ -356,6 +385,7 @@ Promise.all([archiveTotalsPromise, allDandisetTotalsPromise])
             const id = validateDandisetId(rawId);
             selector.value = id;
             update_totals(id);
+            update_data_sources(id);
             load_over_time_plot(id);
             load_histogram(id);
             load_aws_histogram(id);
@@ -428,8 +458,6 @@ function update_totals(dandiset_id) {
 function load_over_time_plot(dandiset_id) {
     const plot_element_id = "over_time_plot";
     let by_day_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_day.tsv`;
-
-    set_data_link("over_time_data_link", by_day_summary_tsv_url);
 
     fetch(by_day_summary_tsv_url)
         .then((response) => {
@@ -537,14 +565,11 @@ function load_histogram(dandiset_id) {
         if (plot_element) {
             plot_element.innerText = "";
         }
-        set_data_link("histogram_data_link", null);
         return "";
     } if (dandiset_id === "archive") {
-        set_data_link("histogram_data_link", ALL_DANDISET_TOTALS_URL);
         load_dandiset_histogram()
     } else {
         by_asset_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_asset.tsv`;
-        set_data_link("histogram_data_link", by_asset_summary_tsv_url);
         load_per_asset_histogram(by_asset_summary_tsv_url);
     }
 }
@@ -960,7 +985,6 @@ function load_geographic_heatmap(dandiset_id) {
     const plot_element_id = "geography_heatmap";
     let by_region_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`;
 
-    set_data_link("region_data_link", by_region_summary_tsv_url);
     load_top_regions_table(by_region_summary_tsv_url);
 
     if (USE_CHOROPLETH) {
