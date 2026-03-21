@@ -33,6 +33,26 @@ function applyDarkTheme(layout) {
 }
 // ────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Sets (or clears) a "Data" hyperlink inside the given container element.
+ * Passing a falsy `url` clears any existing link.
+ *
+ * @param {string} container_id - The ID of the container element.
+ * @param {string|null} url - The URL to link to, or null/undefined to clear.
+ */
+function set_data_link(container_id, url) {
+    const container = document.getElementById(container_id);
+    if (!container) return;
+    container.innerHTML = "";
+    if (!url) return;
+    const link = document.createElement("a");
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.textContent = "Data";
+    container.appendChild(link);
+}
+
 // Fetch with exponential backoff retry logic
 /**
  * Fetches a URL with automatic retries using exponential backoff.
@@ -409,6 +429,8 @@ function load_over_time_plot(dandiset_id) {
     const plot_element_id = "over_time_plot";
     let by_day_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_day.tsv`;
 
+    set_data_link("over_time_data_link", by_day_summary_tsv_url);
+
     fetch(by_day_summary_tsv_url)
         .then((response) => {
             if (!response.ok) {
@@ -515,11 +537,14 @@ function load_histogram(dandiset_id) {
         if (plot_element) {
             plot_element.innerText = "";
         }
+        set_data_link("histogram_data_link", null);
         return "";
     } if (dandiset_id === "archive") {
+        set_data_link("histogram_data_link", ALL_DANDISET_TOTALS_URL);
         load_dandiset_histogram()
     } else {
         by_asset_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_asset.tsv`;
+        set_data_link("histogram_data_link", by_asset_summary_tsv_url);
         load_per_asset_histogram(by_asset_summary_tsv_url);
     }
 }
@@ -935,6 +960,7 @@ function load_geographic_heatmap(dandiset_id) {
     const plot_element_id = "geography_heatmap";
     let by_region_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`;
 
+    set_data_link("region_data_link", by_region_summary_tsv_url);
     load_top_regions_table(by_region_summary_tsv_url);
 
     if (USE_CHOROPLETH) {
