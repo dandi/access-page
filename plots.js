@@ -564,6 +564,7 @@ function update_totals(dandiset_id) {
         //totals_element.innerText = `Totals: ${human_readable_bytes_sent} sent to ?(WIP)? unique requesters from
         // ${totals.number_of_unique_regions} regions of ${totals.number_of_unique_countries} countries.`;
         header = `A total of ${human_readable_bytes_sent} was sent to ${totals.number_of_unique_regions} regions across ${totals.number_of_unique_countries} countries. <sup>*</sup>`
+        totals_element.innerHTML = dandiset_id != "unassociated" ? header : header + `<br>However, the activity could not be associated with any Dandiset.<br>This can occur if a previously uploaded file was replaced prior to publication.`
         totals_element.innerHTML = dandiset_id != "undetermined" ? header : header + `<br>However, the activity could not be uniquely associated with a particular Dandiset.<br>This can occur if the same file exists within more than one Dandiset at a time.`
 
         // Add the footnote
