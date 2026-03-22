@@ -51,7 +51,7 @@ function update_data_sources(dandiset_id) {
     });
 
     if (dandiset_id === "archive") {
-        entries.push({ label: "Bytes per dandiset", url: ALL_DANDISET_TOTALS_URL });
+        entries.push({ label: "Bytes per Dandiset", url: ALL_DANDISET_TOTALS_URL });
     } else if (dandiset_id !== "undetermined") {
         entries.push({
             label: "Bytes per asset",
