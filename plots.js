@@ -1054,7 +1054,7 @@ function load_geographic_heatmap(dandiset_id) {
                             tickvals: [3, 6, 9, 12],
                             ticktext: ["KB", "MB", "GB", "TB"]
                         },
-                        opacity: 0.5,
+                        opacity: 0.75,
                     },
                     text: hover_texts,
                     textposition: "none",
