@@ -231,6 +231,7 @@ let USE_BINARY = false;
 let USE_CHOROPLETH = true;
 let USE_OVER_TIME_TABLE = false;
 let USE_HISTOGRAM_TABLE = false;
+let USE_GEO_TABLE = false;
 let GEOJSON_DATA = null;
 let NAME_ALIASES = null;
 
@@ -386,6 +387,15 @@ window.addEventListener("load", () => {
         radio.addEventListener("change", function () {
             USE_HISTOGRAM_TABLE = this.value === "table";
             apply_view_mode("histogram", "histogram_table", USE_HISTOGRAM_TABLE);
+        });
+    });
+
+    // Add event listener for geo view radio toggle (Plot vs Table)
+    const geoViewRadios = document.querySelectorAll('input[name="geo_view"]');
+    geoViewRadios.forEach((radio) => {
+        radio.addEventListener("change", function () {
+            USE_GEO_TABLE = this.value === "table";
+            apply_view_mode("geo_plot_section", "geo_table_section", USE_GEO_TABLE);
         });
     });
 });
@@ -920,13 +930,10 @@ function load_aws_histogram(dandiset_id) {
 
             const total_bytes = subregion_data.reduce((acc, item) => acc + item.bytes, 0);
 
-            let html = `<h3>${format_bytes(total_bytes)} sent to AWS data centers</h3>`;
-            html += "<table><thead><tr><th>AWS Region</th><th>Bytes Sent</th></tr></thead><tbody>";
-            subregion_data.forEach((r) => {
-                html += `<tr><td>${r.name}</td><td>${format_bytes(r.bytes)}</td></tr>`;
-            });
-            html += "</tbody></table>";
-            element.innerHTML = html;
+            render_sortable_table("aws_histogram", `${format_bytes(total_bytes)} sent to AWS data centers`, [
+                { label: "AWS Region", key: "name",  numeric: false },
+                { label: "Bytes Sent", key: "bytes", numeric: true  },
+            ], subregion_data);
         })
         .catch((error) => {
             console.error("Error:", error);
@@ -1079,9 +1086,6 @@ function match_region_to_feature(region, lookup, country_lookup) {
 
 // Function to populate top regions table from TSV data
 function load_top_regions_table(by_region_summary_tsv_url) {
-    const table_element = document.getElementById("top_regions_table");
-    if (!table_element) return;
-
     fetch(by_region_summary_tsv_url)
         .then((response) => {
             if (!response.ok) throw new Error("Failed to fetch TSV");
@@ -1090,37 +1094,35 @@ function load_top_regions_table(by_region_summary_tsv_url) {
         .then((text) => {
             const rows = text.split("\n").filter((row) => row.trim() !== "");
             if (rows.length < 2) {
-                table_element.innerHTML = "";
+                const el = document.getElementById("top_regions_table");
+                if (el) el.innerHTML = "";
                 return;
             }
 
             const data = rows.slice(1).map((row) => row.split("\t"));
 
-            // Filter out cloud regions, sort by bytes descending, take top 10
+            // Filter out cloud regions, sort by bytes descending
             const regions = data
                 .filter((row) => {
                     const cc = row[0].split("/")[0];
                     return cc !== "AWS" && cc !== "GCP";
                 })
-                .map((row) => ({ region: row[0], bytes: parseInt(row[1], 10) }))
-                .sort((a, b) => b.bytes - a.bytes)
-                .slice(0, 10);
+                .map((row) => ({ region: row[0], bytes: parseInt(row[1], 10) }));
 
             if (regions.length === 0) {
-                table_element.innerHTML = "";
+                const el = document.getElementById("top_regions_table");
+                if (el) el.innerHTML = "";
                 return;
             }
 
-            let html = "<h3>Top 10 regions</h3>";
-            html += "<table><thead><tr><th>Region</th><th>Bytes Sent</th></tr></thead><tbody>";
-            regions.forEach((r) => {
-                html += `<tr><td>${r.region}</td><td>${format_bytes(r.bytes)}</td></tr>`;
-            });
-            html += "</tbody></table>";
-            table_element.innerHTML = html;
+            render_sortable_table("top_regions_table", "Bytes sent per region", [
+                { label: "Region",     key: "region", numeric: false },
+                { label: "Bytes Sent", key: "bytes",  numeric: true  },
+            ], regions);
         })
         .catch(() => {
-            table_element.innerHTML = "";
+            const el = document.getElementById("top_regions_table");
+            if (el) el.innerHTML = "";
         });
 }
 
@@ -1130,6 +1132,9 @@ function load_geographic_heatmap(dandiset_id) {
     let by_region_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`;
 
     load_top_regions_table(by_region_summary_tsv_url);
+
+    // Apply the current view mode (map vs tables) each time geo data reloads
+    apply_view_mode("geo_plot_section", "geo_table_section", USE_GEO_TABLE);
 
     if (USE_CHOROPLETH) {
         load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summary_tsv_url);
