@@ -49,6 +49,78 @@ function apply_view_mode(plot_id, table_id, use_table) {
 // ────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Renders a sortable HTML table inside a container element.
+ * Clicking a column header re-sorts the table in place and updates the sort
+ * indicator (▲ ascending / ▼ descending / ⇅ unsorted).
+ *
+ * @param {string} container_id - ID of the container element.
+ * @param {string} title - Heading text rendered above the table.
+ * @param {Array<{label: string, key: string, numeric: boolean}>} columns
+ *        Column definitions.  `numeric: true` formats the cell value with
+ *        `format_bytes()`; otherwise the raw value is displayed as-is.
+ * @param {Array<Object>} rows - Data rows (plain objects keyed by column.key).
+ */
+function render_sortable_table(container_id, title, columns, rows) {
+    const container = document.getElementById(container_id);
+    if (!container) return;
+
+    // Default: sort by the last column (bytes) descending
+    // sort_asc: true = ascending (A→Z / low→high), false = descending (Z→A / high→low)
+    let sort_key = columns[columns.length - 1].key;
+    let sort_asc  = false; // start descending so highest values appear first
+
+    function render_table() {
+        const sorted = [...rows].sort((a, b) => {
+            const va = a[sort_key];
+            const vb = b[sort_key];
+            const factor = sort_asc ? 1 : -1;
+            if (typeof va === "number" && typeof vb === "number") {
+                return factor * (va - vb);
+            }
+            // Numeric-aware locale comparison handles Dandiset IDs like "000123"
+            return factor * String(va).localeCompare(String(vb), undefined, { numeric: true });
+        });
+
+        let html = `<h3>${title}</h3>`;
+        html += '<div class="plot-table-container"><table><thead><tr>';
+        columns.forEach((col) => {
+            const is_sorted = col.key === sort_key;
+            const indicator = is_sorted ? (sort_asc ? "▲" : "▼") : "⇅";
+            const cls = is_sorted ? "th-sorted" : "th-sortable";
+            html += `<th class="${cls}" data-key="${col.key}">${col.label} <span class="sort-indicator">${indicator}</span></th>`;
+        });
+        html += "</tr></thead><tbody>";
+        sorted.forEach((row) => {
+            html += "<tr>";
+            columns.forEach((col) => {
+                const val = col.numeric ? format_bytes(row[col.key]) : row[col.key];
+                html += `<td>${val}</td>`;
+            });
+            html += "</tr>";
+        });
+        html += "</tbody></table></div>";
+        container.innerHTML = html;
+
+        // Attach sort click handlers after innerHTML is set
+        container.querySelectorAll("th[data-key]").forEach((th) => {
+            th.addEventListener("click", () => {
+                const key = th.dataset.key;
+                if (key === sort_key) {
+                    sort_asc = !sort_asc;
+                } else {
+                    sort_key = key;
+                    sort_asc  = false; // first click on a new column → descending (high→low)
+                }
+                render_table();
+            });
+        });
+    }
+
+    render_table();
+}
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
  * Rebuilds the consolidated "Data sources" section at the bottom of the page
  * for the given dandiset ID.
  *
@@ -581,19 +653,12 @@ function load_over_time_plot(dandiset_id) {
 
             Plotly.newPlot(plot_element_id, plot_info, layout);
 
-            // Render table view (sorted by bytes descending — most active days first)
-            const table_el = document.getElementById("over_time_table");
-            if (table_el) {
-                const combined_days = dates.map((date, i) => ({ date, bytes: bytes_sent[i] }));
-                combined_days.sort((a, b) => b.bytes - a.bytes);
-                let html = "<h3>Bytes sent per day</h3>";
-                html += '<div class="plot-table-container"><table><thead><tr><th>Date</th><th>Bytes Sent</th></tr></thead><tbody>';
-                combined_days.forEach((row) => {
-                    html += `<tr><td>${row.date}</td><td>${format_bytes(row.bytes)}</td></tr>`;
-                });
-                html += "</tbody></table></div>";
-                table_el.innerHTML = html;
-            }
+            // Render table view (sortable by column header click; default: bytes descending)
+            const combined_days = dates.map((date, i) => ({ date, bytes: bytes_sent[i] }));
+            render_sortable_table("over_time_table", "Bytes sent per day", [
+                { label: "Date",       key: "date",  numeric: false },
+                { label: "Bytes Sent", key: "bytes", numeric: true  },
+            ], combined_days);
 
             apply_view_mode(plot_element_id, "over_time_table", USE_OVER_TIME_TABLE);
         })
@@ -700,17 +765,11 @@ function load_dandiset_histogram() {
 
         Plotly.newPlot(plot_element_id, plot_data, layout);
 
-        // Render table view (sorted by bytes descending — most downloaded Dandisets first)
-        const table_el = document.getElementById("histogram_table");
-        if (table_el) {
-            let html = "<h3>Bytes sent per Dandiset</h3>";
-            html += '<div class="plot-table-container"><table><thead><tr><th>Dandiset ID</th><th>Bytes Sent</th></tr></thead><tbody>';
-            combined.forEach((item) => {
-                html += `<tr><td>${item.raw_id}</td><td>${format_bytes(item.bytes)}</td></tr>`;
-            });
-            html += "</tbody></table></div>";
-            table_el.innerHTML = html;
-        }
+        // Render table view (sortable by column header click; default: bytes descending)
+        render_sortable_table("histogram_table", "Bytes sent per Dandiset", [
+            { label: "Dandiset ID", key: "raw_id", numeric: false },
+            { label: "Bytes Sent", key: "bytes",   numeric: true  },
+        ], combined);
 
         apply_view_mode(plot_element_id, "histogram_table", USE_HISTOGRAM_TABLE);
     })
@@ -801,17 +860,11 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
 
             Plotly.newPlot(plot_element_id, plot_data, layout);
 
-            // Render table view (sorted by bytes descending — most downloaded assets first)
-            const table_el = document.getElementById("histogram_table");
-            if (table_el) {
-                let html = "<h3>Bytes sent per asset</h3>";
-                html += '<div class="plot-table-container"><table><thead><tr><th>Asset</th><th>Bytes Sent</th></tr></thead><tbody>';
-                combined.forEach((item) => {
-                    html += `<tr><td>${item.name}</td><td>${format_bytes(item.bytes)}</td></tr>`;
-                });
-                html += "</tbody></table></div>";
-                table_el.innerHTML = html;
-            }
+            // Render table view (sortable by column header click; default: bytes descending)
+            render_sortable_table("histogram_table", "Bytes sent per asset", [
+                { label: "Asset",      key: "name",  numeric: false },
+                { label: "Bytes Sent", key: "bytes", numeric: true  },
+            ], combined);
 
             apply_view_mode(plot_element_id, "histogram_table", USE_HISTOGRAM_TABLE);
         })

@@ -223,10 +223,28 @@ input[type="checkbox"] {
     top: 0;
     background: var(--color-surface);
     z-index: 1;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
 }
 
 .plot-table th:last-child {
     text-align: right;
+}
+
+.th-sorted {
+    color: var(--color-accent);
+}
+
+.sort-indicator {
+    font-size: 0.7em;
+    margin-left: 3px;
+    opacity: 0.45;
+    vertical-align: middle;
+}
+
+.th-sorted .sort-indicator {
+    opacity: 1;
 }
 
 .plot-table td {
