@@ -1,0 +1,429 @@
+:root {
+    /* ── Theme colors — adjust these variables to customize the color scheme ── */
+    --color-bg: #1a1a2e;
+    --color-surface: #16213e;
+    --color-header: #0f3460;
+    --color-border: #2a2a4a;
+    --color-text: #e0e0e0;
+    --color-text-secondary: #a0a0b0;
+    --color-accent: #53a8b6;
+    --color-accent-hover: #79c7d4;
+    --color-accent-subtle: rgba(83, 168, 182, 0.08);
+    /* ─────────────────────────────────────────────────────────────────────── */
+    --font-main: 'Source Sans 3', -apple-system, sans-serif;
+    --radius: 6px;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-main);
+    color: var(--color-text);
+    background: var(--color-bg);
+    margin: 0;
+    padding: 0 0 40px;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ── Site header ── */
+.site-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 20px;
+    height: 48px;
+    background: var(--color-header);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.site-brand {
+    text-decoration: none;
+    color: var(--color-accent);
+    font-size: 1em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: color 0.15s;
+}
+
+.site-brand:hover {
+    color: var(--color-accent-hover);
+}
+
+.site-title {
+    color: var(--color-text-secondary);
+    font-size: 0.9em;
+    font-weight: 400;
+}
+
+.site-header-spacer {
+    flex: 1;
+}
+
+.site-github-link {
+    color: rgba(255, 255, 255, 0.4);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.site-github-link:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.site-github-link svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+/* ── Page content ── */
+.page-content {
+    padding: 0 20px;
+}
+
+h1 {
+    font-weight: 300;
+    font-size: 1.8em;
+    letter-spacing: -0.01em;
+    text-align: center;
+    margin: 28px 0 16px;
+    color: var(--color-text);
+}
+
+#totals {
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: 300;
+    margin: 12px auto 24px;
+    line-height: 1.5;
+    max-width: 800px;
+    color: var(--color-text-secondary);
+}
+
+.ControllerContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 0 auto;
+    padding: 10px 20px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    width: fit-content;
+}
+
+.SubControllerContainer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+label {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+select {
+    font-family: var(--font-main);
+    font-size: 0.85em;
+    padding: 4px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+select:hover, select:focus {
+    border-color: var(--color-accent);
+}
+
+input[type="checkbox"] {
+    accent-color: var(--color-accent);
+    cursor: pointer;
+    width: 15px;
+    height: 15px;
+}
+
+#over_time_plot {
+    margin: 8px auto;
+    max-width: 95vw;
+    max-height: 500px;
+}
+
+#histogram {
+    margin: 8px auto;
+    max-width: 95vw;
+    max-height: 400px;
+}
+
+#geography_heatmap {
+    margin: 8px auto;
+    width: 90vw;
+    height: 50vw;
+}
+
+.MapControls {
+    margin: 24px auto 4px;
+    width: fit-content;
+}
+
+.radio-label {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    letter-spacing: 0.01em;
+}
+
+.radio-option {
+    font-size: 0.85em;
+    font-weight: 400;
+    cursor: pointer;
+    gap: 3px;
+}
+
+.radio-option input[type="radio"] {
+    accent-color: var(--color-accent);
+    cursor: pointer;
+}
+
+.separator {
+    width: 1px;
+    height: 20px;
+    background: var(--color-border);
+}
+
+/* ── Gear / settings button ── */
+.settings-wrapper {
+    position: relative;
+}
+
+.settings-btn {
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: 3px 7px;
+    font-size: 1em;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s, border-color 0.15s;
+    line-height: 1;
+}
+
+.settings-btn:hover,
+.settings-btn[aria-expanded="true"] {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+.settings-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+/* ── Settings drop-down panel ── */
+.settings-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    min-width: 180px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    z-index: 150;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.settings-panel .SubControllerContainer {
+    justify-content: space-between;
+    width: 100%;
+}
+
+.settings-panel .SubControllerContainer input,
+.settings-panel .SubControllerContainer select {
+    margin-left: auto;
+}
+
+.settings-panel.open {
+    display: flex;
+}
+
+.settings-panel-title {
+    font-size: 0.75em;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 6px;
+    margin-bottom: 2px;
+}
+
+/* ── Info icon & tooltip ── */
+.info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--color-text-secondary);
+    color: var(--color-bg);
+    font-size: 0.65rem;
+    font-style: italic;
+    font-weight: 700;
+    cursor: help;
+    flex-shrink: 0;
+    user-select: none;
+    position: relative;
+}
+
+.info-icon::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    right: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--color-header);
+    color: var(--color-text);
+    font-size: 0.8rem;
+    font-style: normal;
+    font-weight: 400;
+    padding: 5px 10px;
+    border-radius: var(--radius);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 200;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.info-icon:hover::after,
+.info-icon:focus::after {
+    opacity: 1;
+}
+
+.tables-row {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin: 16px auto;
+    max-width: 1100px;
+    flex-wrap: wrap;
+}
+
+#top_regions_table,
+#aws_histogram {
+    flex: 1;
+    min-width: 300px;
+    max-width: 500px;
+}
+
+#top_regions_table h3,
+#aws_histogram h3 {
+    text-align: center;
+    font-weight: 300;
+    font-size: 1.1em;
+    color: var(--color-text-secondary);
+    margin: 0 0 8px;
+}
+
+#top_regions_table table,
+#aws_histogram table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+}
+
+#top_regions_table th,
+#aws_histogram th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    border-bottom: 2px solid var(--color-border);
+    padding: 6px 12px;
+}
+
+#top_regions_table th:last-child,
+#aws_histogram th:last-child {
+    text-align: right;
+}
+
+#top_regions_table td,
+#aws_histogram td {
+    padding: 5px 12px;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+}
+
+#top_regions_table td:last-child,
+#aws_histogram td:last-child {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+#top_regions_table tr:hover td,
+#aws_histogram tr:hover td {
+    background: var(--color-accent-subtle);
+}
+
+.attribution {
+    text-align: center;
+    font-size: 0.75em;
+    color: var(--color-text-secondary);
+    margin: 4px auto 16px;
+}
+
+.attribution a {
+    color: var(--color-accent);
+    text-decoration: none;
+}
+
+.attribution a:hover {
+    text-decoration: underline;
+}
+
+.data-sources-section {
+    text-align: center;
+    font-size: 0.8em;
+    color: var(--color-text-secondary);
+    margin: 24px auto 8px;
+}
+
+.data-sources-section a {
+    color: var(--color-accent);
+    text-decoration: none;
+}
+
+.data-sources-section a:hover {
+    text-decoration: underline;
+}
+
+.data-sources-sep {
+    margin: 0 6px;
+    color: var(--color-border);
+}
