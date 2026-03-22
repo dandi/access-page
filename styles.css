@@ -183,6 +183,88 @@ input[type="checkbox"] {
     width: fit-content;
 }
 
+.PlotViewControls {
+    margin: 16px auto 0;
+    width: fit-content;
+}
+
+.plot-table {
+    max-width: 1100px;
+    margin: 0 auto 16px;
+    padding: 0 16px;
+}
+
+.plot-table h3 {
+    text-align: center;
+    font-weight: 300;
+    font-size: 1.1em;
+    color: var(--color-text-secondary);
+    margin: 0 0 8px;
+}
+
+.plot-table-container {
+    max-height: 480px;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.plot-table table {
+    width: auto;
+    min-width: min(100%, 520px);
+    border-collapse: collapse;
+    font-size: 0.9em;
+    margin: 0 auto;
+}
+
+.plot-table th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    border-bottom: 2px solid var(--color-border);
+    padding: 6px 12px;
+    position: sticky;
+    top: 0;
+    background: var(--color-surface);
+    z-index: 1;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.plot-table th:last-child {
+    text-align: right;
+}
+
+.th-sorted {
+    color: var(--color-accent);
+}
+
+.sort-indicator {
+    font-size: 0.7em;
+    margin-left: 3px;
+    opacity: 0.45;
+    vertical-align: middle;
+}
+
+.th-sorted .sort-indicator {
+    opacity: 1;
+}
+
+.plot-table td {
+    padding: 5px 12px;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+}
+
+.plot-table td:last-child {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.plot-table tr:hover td {
+    background: var(--color-accent-subtle);
+}
+
 .radio-label {
     font-size: 0.85em;
     font-weight: 600;
@@ -366,6 +448,9 @@ input[type="checkbox"] {
     color: var(--color-text-secondary);
     border-bottom: 2px solid var(--color-border);
     padding: 6px 12px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
 }
 
 #top_regions_table th:last-child,

@@ -34,6 +34,108 @@ function applyDarkTheme(layout) {
 // ────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Toggles visibility between a Plotly plot element and its paired table element.
+ *
+ * @param {string} plot_id - ID of the plot container element.
+ * @param {string} table_id - ID of the table container element.
+ * @param {boolean} use_table - When true, shows the table and hides the plot.
+ */
+function apply_view_mode(plot_id, table_id, use_table) {
+    const plot_el = document.getElementById(plot_id);
+    const table_el = document.getElementById(table_id);
+    if (plot_el) plot_el.style.display = use_table ? "none" : "";
+    if (table_el) table_el.style.display = use_table ? "" : "none";
+}
+
+function apply_geo_view_mode(view) {
+    const mapEl   = document.getElementById("geography_heatmap");
+    const attrEl  = document.getElementById("map_attribution");
+    const tableEl = document.getElementById("geo_table_section");
+    const showMap = (view === "regions" || view === "dots");
+    if (mapEl)   mapEl.style.display   = showMap ? "" : "none";
+    if (attrEl)  attrEl.style.display  = showMap ? "" : "none";
+    if (tableEl) tableEl.style.display = showMap ? "none" : "";
+    // When showing a table, hide the one that isn't selected
+    const regionsEl = document.getElementById("top_regions_table");
+    const awsEl     = document.getElementById("aws_histogram");
+    if (regionsEl) regionsEl.style.display = (view === "table") ? "" : "none";
+    if (awsEl)     awsEl.style.display     = (view === "aws")   ? "" : "none";
+}
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Renders a sortable HTML table inside a container element.
+ * Clicking a column header re-sorts the table in place and updates the sort
+ * indicator (▲ ascending / ▼ descending / ⇅ unsorted).
+ *
+ * @param {string} container_id - ID of the container element.
+ * @param {string} title - Heading text rendered above the table.
+ * @param {Array<{label: string, key: string, numeric: boolean}>} columns
+ *        Column definitions.  `numeric: true` formats the cell value with
+ *        `format_bytes()`; otherwise the raw value is displayed as-is.
+ * @param {Array<Object>} rows - Data rows (plain objects keyed by column.key).
+ */
+function render_sortable_table(container_id, title, columns, rows) {
+    const container = document.getElementById(container_id);
+    if (!container) return;
+
+    // Default: sort by the last column (bytes) descending
+    // sort_asc: true = ascending (A→Z / low→high), false = descending (Z→A / high→low)
+    let sort_key = columns[columns.length - 1].key;
+    let sort_asc  = false; // start descending so highest values appear first
+
+    function render_table() {
+        const sorted = [...rows].sort((a, b) => {
+            const va = a[sort_key];
+            const vb = b[sort_key];
+            const factor = sort_asc ? 1 : -1;
+            if (typeof va === "number" && typeof vb === "number") {
+                return factor * (va - vb);
+            }
+            // Numeric-aware locale comparison handles Dandiset IDs like "000123"
+            return factor * String(va).localeCompare(String(vb), undefined, { numeric: true });
+        });
+
+        let html = `<h3>${title}</h3>`;
+        html += '<div class="plot-table-container"><table><thead><tr>';
+        columns.forEach((col) => {
+            const is_sorted = col.key === sort_key;
+            const indicator = is_sorted ? (sort_asc ? "▲" : "▼") : "⇅";
+            const cls = is_sorted ? "th-sorted" : "th-sortable";
+            html += `<th class="${cls}" data-key="${col.key}">${col.label} <span class="sort-indicator">${indicator}</span></th>`;
+        });
+        html += "</tr></thead><tbody>";
+        sorted.forEach((row) => {
+            html += "<tr>";
+            columns.forEach((col) => {
+                const val = col.numeric ? format_bytes(row[col.key]) : row[col.key];
+                html += `<td>${val}</td>`;
+            });
+            html += "</tr>";
+        });
+        html += "</tbody></table></div>";
+        container.innerHTML = html;
+
+        // Attach sort click handlers after innerHTML is set
+        container.querySelectorAll("th[data-key]").forEach((th) => {
+            th.addEventListener("click", () => {
+                const key = th.dataset.key;
+                if (key === sort_key) {
+                    sort_asc = !sort_asc;
+                } else {
+                    sort_key = key;
+                    sort_asc  = false; // first click on a new column → descending (high→low)
+                }
+                render_table();
+            });
+        });
+    }
+
+    render_table();
+}
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
  * Rebuilds the consolidated "Data sources" section at the bottom of the page
  * for the given dandiset ID.
  *
@@ -141,7 +243,9 @@ let ALL_DANDISET_TOTALS = {};
 let USE_LOG_SCALE = false;
 let USE_CUMULATIVE = false;
 let USE_BINARY = false;
-let USE_CHOROPLETH = true;
+let GEO_VIEW = "regions";  // "regions" | "dots" | "table" | "aws"
+let USE_OVER_TIME_TABLE = false;
+let USE_HISTOGRAM_TABLE = false;
 let GEOJSON_DATA = null;
 let NAME_ALIASES = null;
 
@@ -252,33 +356,55 @@ window.addEventListener("load", () => {
         });
     }
 
-    // Add event listener for map style radio toggle
-    const mapStyleRadios = document.querySelectorAll('input[name="map_style"]');
-    // Initialize from URL parameter
+    // Initialize geo view from URL parameter ("dots" maps to the dots option)
     const urlParams = new URLSearchParams(window.location.search);
     const urlMap = urlParams.get("map");
     if (urlMap === "dots") {
-        USE_CHOROPLETH = false;
-        const dotsRadio = document.querySelector('input[name="map_style"][value="dots"]');
+        GEO_VIEW = "dots";
+        const dotsRadio = document.querySelector('input[name="geo_view"][value="dots"]');
         if (dotsRadio) dotsRadio.checked = true;
     }
 
-    mapStyleRadios.forEach((radio) => {
-        radio.addEventListener("change", function() {
-            USE_CHOROPLETH = this.value === "region";
+    // Add event listener for over-time view radio toggle (Plot vs Table)
+    const overTimeViewRadios = document.querySelectorAll('input[name="over_time_view"]');
+    overTimeViewRadios.forEach((radio) => {
+        radio.addEventListener("change", function () {
+            USE_OVER_TIME_TABLE = this.value === "table";
+            apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
+        });
+    });
+
+    // Add event listener for histogram view radio toggle (Plot vs Table)
+    const histogramViewRadios = document.querySelectorAll('input[name="histogram_view"]');
+    histogramViewRadios.forEach((radio) => {
+        radio.addEventListener("change", function () {
+            USE_HISTOGRAM_TABLE = this.value === "table";
+            apply_view_mode("histogram", "histogram_table", USE_HISTOGRAM_TABLE);
+        });
+    });
+
+    // Add event listener for the single geo view toggle (Regions / Dots / Table / AWS)
+    const geoViewRadios = document.querySelectorAll('input[name="geo_view"]');
+    geoViewRadios.forEach((radio) => {
+        radio.addEventListener("change", function () {
+            GEO_VIEW = this.value;
 
             const params = new URLSearchParams(window.location.search);
-            if (!USE_CHOROPLETH) {
+            if (GEO_VIEW === "dots") {
                 params.set("map", "dots");
             } else {
                 params.delete("map");
             }
             const query = params.toString();
-            const newUrl = window.location.pathname + (query ? "?" + query : "");
-            window.history.pushState({}, "", newUrl);
+            window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
+
+            apply_geo_view_mode(GEO_VIEW);
 
             const selected_dandiset = document.getElementById("dandiset_selector").value;
-            load_geographic_heatmap(selected_dandiset);
+            // Re-render the map only when a map mode is selected
+            if (GEO_VIEW === "regions" || GEO_VIEW === "dots") {
+                load_geographic_heatmap(selected_dandiset);
+            }
         });
     });
 });
@@ -297,7 +423,7 @@ function resizePlots() {
 
     // Update min zoom for the choroplethmap based on new width
     const mapEl = document.getElementById("geography_heatmap");
-    if (mapEl && USE_CHOROPLETH && mapEl._fullLayout && mapEl._fullLayout.map && mapEl._fullLayout.map._subplot) {
+    if (mapEl && GEO_VIEW === "regions" && mapEl._fullLayout && mapEl._fullLayout.map && mapEl._fullLayout.map._subplot) {
         const mapWidth = mapEl.offsetWidth;
         const defaultZoom = Math.max(1, Math.log2(mapWidth / 512));
         const minZoom = defaultZoom - 0.15;
@@ -545,6 +671,15 @@ function load_over_time_plot(dandiset_id) {
             }
 
             Plotly.newPlot(plot_element_id, plot_info, layout);
+
+            // Render table view (sortable by column header click; default: bytes descending)
+            const combined_days = dates.map((date, i) => ({ date, bytes: bytes_sent[i] }));
+            render_sortable_table("over_time_table", "Bytes sent per day", [
+                { label: "Date",       key: "date",  numeric: false },
+                { label: "Bytes Sent", key: "bytes", numeric: true  },
+            ], combined_days);
+
+            apply_view_mode(plot_element_id, "over_time_table", USE_OVER_TIME_TABLE);
         })
         .catch((error) => {
             console.error("Error:", error);
@@ -557,17 +692,28 @@ function load_over_time_plot(dandiset_id) {
 
 // Function to fetch and render histogram over asset or Dandiset IDs
 function load_histogram(dandiset_id) {
-    let by_asset_summary_tsv_url, dandiset_totals_json_url;
+    let by_asset_summary_tsv_url;
+    const controls_el = document.getElementById("histogram_view_controls");
+    const histogram_table_el = document.getElementById("histogram_table");
 
-    // Suppress div element content if 'archive' is selected
+    // Suppress div element content if 'undetermined' is selected
     if (dandiset_id === "undetermined") {
         const plot_element = document.getElementById("histogram");
         if (plot_element) {
             plot_element.innerText = "";
+            plot_element.style.display = "none";
         }
+        if (controls_el) controls_el.style.display = "none";
+        if (histogram_table_el) histogram_table_el.style.display = "none";
         return "";
-    } if (dandiset_id === "archive") {
-        load_dandiset_histogram()
+    }
+
+    const plot_element_visible = document.getElementById("histogram");
+    if (plot_element_visible) plot_element_visible.style.display = "";
+    if (controls_el) controls_el.style.display = "";
+
+    if (dandiset_id === "archive") {
+        load_dandiset_histogram();
     } else {
         by_asset_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_asset.tsv`;
         load_per_asset_histogram(by_asset_summary_tsv_url);
@@ -585,15 +731,16 @@ function load_dandiset_histogram() {
         return response.json();
     })
     .then((data) => {
-        // Exclude 'archive' and cast IDs to strings
+        // Exclude 'archive' and cast IDs to strings; sort by bytes descending
         const combined = Object.keys(data)
             .map(dandiset_id => ({
+                raw_id: String(dandiset_id),
                 dandiset_id: "Dandiset ID " + String(dandiset_id),
                 bytes: data[dandiset_id].total_bytes_sent
             }))
             .sort((a, b) => b.bytes - a.bytes);
 
-    const sorted_dandiset_ids = combined.map(item => item.dandiset_id);
+        const sorted_dandiset_ids = combined.map(item => item.dandiset_id);
         const sorted_bytes_sent = combined.map(item => item.bytes);
         const human_readable_bytes_sent = sorted_bytes_sent.map(bytes => format_bytes(bytes));
 
@@ -636,6 +783,14 @@ function load_dandiset_histogram() {
         });
 
         Plotly.newPlot(plot_element_id, plot_data, layout);
+
+        // Render table view (sortable by column header click; default: bytes descending)
+        render_sortable_table("histogram_table", "Bytes sent per Dandiset", [
+            { label: "Dandiset ID", key: "raw_id", numeric: false },
+            { label: "Bytes Sent", key: "bytes",   numeric: true  },
+        ], combined);
+
+        apply_view_mode(plot_element_id, "histogram_table", USE_HISTOGRAM_TABLE);
     })
     .catch((error) => {
         console.error("Error:", error);
@@ -723,6 +878,14 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
             });
 
             Plotly.newPlot(plot_element_id, plot_data, layout);
+
+            // Render table view (sortable by column header click; default: bytes descending)
+            render_sortable_table("histogram_table", "Bytes sent per asset", [
+                { label: "Asset",      key: "name",  numeric: false },
+                { label: "Bytes Sent", key: "bytes", numeric: true  },
+            ], combined);
+
+            apply_view_mode(plot_element_id, "histogram_table", USE_HISTOGRAM_TABLE);
         })
         .catch((error) => {
             console.error("Error:", error);
@@ -776,13 +939,10 @@ function load_aws_histogram(dandiset_id) {
 
             const total_bytes = subregion_data.reduce((acc, item) => acc + item.bytes, 0);
 
-            let html = `<h3>${format_bytes(total_bytes)} sent to AWS data centers</h3>`;
-            html += "<table><thead><tr><th>AWS Region</th><th>Bytes Sent</th></tr></thead><tbody>";
-            subregion_data.forEach((r) => {
-                html += `<tr><td>${r.name}</td><td>${format_bytes(r.bytes)}</td></tr>`;
-            });
-            html += "</tbody></table>";
-            element.innerHTML = html;
+            render_sortable_table("aws_histogram", `${format_bytes(total_bytes)} sent to AWS data centers`, [
+                { label: "AWS Region", key: "name",  numeric: false },
+                { label: "Bytes Sent", key: "bytes", numeric: true  },
+            ], subregion_data);
         })
         .catch((error) => {
             console.error("Error:", error);
@@ -935,9 +1095,6 @@ function match_region_to_feature(region, lookup, country_lookup) {
 
 // Function to populate top regions table from TSV data
 function load_top_regions_table(by_region_summary_tsv_url) {
-    const table_element = document.getElementById("top_regions_table");
-    if (!table_element) return;
-
     fetch(by_region_summary_tsv_url)
         .then((response) => {
             if (!response.ok) throw new Error("Failed to fetch TSV");
@@ -946,37 +1103,35 @@ function load_top_regions_table(by_region_summary_tsv_url) {
         .then((text) => {
             const rows = text.split("\n").filter((row) => row.trim() !== "");
             if (rows.length < 2) {
-                table_element.innerHTML = "";
+                const el = document.getElementById("top_regions_table");
+                if (el) el.innerHTML = "";
                 return;
             }
 
             const data = rows.slice(1).map((row) => row.split("\t"));
 
-            // Filter out cloud regions, sort by bytes descending, take top 10
+            // Filter out cloud regions, sort by bytes descending
             const regions = data
                 .filter((row) => {
                     const cc = row[0].split("/")[0];
                     return cc !== "AWS" && cc !== "GCP";
                 })
-                .map((row) => ({ region: row[0], bytes: parseInt(row[1], 10) }))
-                .sort((a, b) => b.bytes - a.bytes)
-                .slice(0, 10);
+                .map((row) => ({ region: row[0], bytes: parseInt(row[1], 10) }));
 
             if (regions.length === 0) {
-                table_element.innerHTML = "";
+                const el = document.getElementById("top_regions_table");
+                if (el) el.innerHTML = "";
                 return;
             }
 
-            let html = "<h3>Top 10 regions</h3>";
-            html += "<table><thead><tr><th>Region</th><th>Bytes Sent</th></tr></thead><tbody>";
-            regions.forEach((r) => {
-                html += `<tr><td>${r.region}</td><td>${format_bytes(r.bytes)}</td></tr>`;
-            });
-            html += "</tbody></table>";
-            table_element.innerHTML = html;
+            render_sortable_table("top_regions_table", "Bytes sent per region", [
+                { label: "Region",     key: "region", numeric: false },
+                { label: "Bytes Sent", key: "bytes",  numeric: true  },
+            ], regions);
         })
         .catch(() => {
-            table_element.innerHTML = "";
+            const el = document.getElementById("top_regions_table");
+            if (el) el.innerHTML = "";
         });
 }
 
@@ -987,10 +1142,16 @@ function load_geographic_heatmap(dandiset_id) {
 
     load_top_regions_table(by_region_summary_tsv_url);
 
-    if (USE_CHOROPLETH) {
+    // Apply the current view mode each time geo data reloads
+    apply_geo_view_mode(GEO_VIEW);
+
+    if (GEO_VIEW === "regions") {
         load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summary_tsv_url);
         return;
     }
+
+    // Table / AWS view: tables already populated above, nothing more to render
+    if (GEO_VIEW !== "dots") return;
 
     if (!REGION_CODES_TO_LATITUDE_LONGITUDE) {
         console.error("Region coordinates not loaded");
