@@ -34,6 +34,21 @@ function applyDarkTheme(layout) {
 // ────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Toggles visibility between a Plotly plot element and its paired table element.
+ *
+ * @param {string} plot_id - ID of the plot container element.
+ * @param {string} table_id - ID of the table container element.
+ * @param {boolean} use_table - When true, shows the table and hides the plot.
+ */
+function apply_view_mode(plot_id, table_id, use_table) {
+    const plot_el = document.getElementById(plot_id);
+    const table_el = document.getElementById(table_id);
+    if (plot_el) plot_el.style.display = use_table ? "none" : "";
+    if (table_el) table_el.style.display = use_table ? "" : "none";
+}
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
  * Rebuilds the consolidated "Data sources" section at the bottom of the page
  * for the given dandiset ID.
  *
@@ -142,6 +157,8 @@ let USE_LOG_SCALE = false;
 let USE_CUMULATIVE = false;
 let USE_BINARY = false;
 let USE_CHOROPLETH = true;
+let USE_OVER_TIME_TABLE = false;
+let USE_HISTOGRAM_TABLE = false;
 let GEOJSON_DATA = null;
 let NAME_ALIASES = null;
 
@@ -279,6 +296,24 @@ window.addEventListener("load", () => {
 
             const selected_dandiset = document.getElementById("dandiset_selector").value;
             load_geographic_heatmap(selected_dandiset);
+        });
+    });
+
+    // Add event listener for over-time view radio toggle (Plot vs Table)
+    const overTimeViewRadios = document.querySelectorAll('input[name="over_time_view"]');
+    overTimeViewRadios.forEach((radio) => {
+        radio.addEventListener("change", function () {
+            USE_OVER_TIME_TABLE = this.value === "table";
+            apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
+        });
+    });
+
+    // Add event listener for histogram view radio toggle (Plot vs Table)
+    const histogramViewRadios = document.querySelectorAll('input[name="histogram_view"]');
+    histogramViewRadios.forEach((radio) => {
+        radio.addEventListener("change", function () {
+            USE_HISTOGRAM_TABLE = this.value === "table";
+            apply_view_mode("histogram", "histogram_table", USE_HISTOGRAM_TABLE);
         });
     });
 });
@@ -545,6 +580,22 @@ function load_over_time_plot(dandiset_id) {
             }
 
             Plotly.newPlot(plot_element_id, plot_info, layout);
+
+            // Render table view (sorted by bytes descending — most active days first)
+            const table_el = document.getElementById("over_time_table");
+            if (table_el) {
+                const combined_days = dates.map((date, i) => ({ date, bytes: bytes_sent[i] }));
+                combined_days.sort((a, b) => b.bytes - a.bytes);
+                let html = "<h3>Bytes sent per day</h3>";
+                html += '<div class="plot-table-container"><table><thead><tr><th>Date</th><th>Bytes Sent</th></tr></thead><tbody>';
+                combined_days.forEach((row) => {
+                    html += `<tr><td>${row.date}</td><td>${format_bytes(row.bytes)}</td></tr>`;
+                });
+                html += "</tbody></table></div>";
+                table_el.innerHTML = html;
+            }
+
+            apply_view_mode(plot_element_id, "over_time_table", USE_OVER_TIME_TABLE);
         })
         .catch((error) => {
             console.error("Error:", error);
@@ -557,17 +608,28 @@ function load_over_time_plot(dandiset_id) {
 
 // Function to fetch and render histogram over asset or Dandiset IDs
 function load_histogram(dandiset_id) {
-    let by_asset_summary_tsv_url, dandiset_totals_json_url;
+    let by_asset_summary_tsv_url;
+    const controls_el = document.getElementById("histogram_view_controls");
+    const histogram_table_el = document.getElementById("histogram_table");
 
-    // Suppress div element content if 'archive' is selected
+    // Suppress div element content if 'undetermined' is selected
     if (dandiset_id === "undetermined") {
         const plot_element = document.getElementById("histogram");
         if (plot_element) {
             plot_element.innerText = "";
+            plot_element.style.display = "none";
         }
+        if (controls_el) controls_el.style.display = "none";
+        if (histogram_table_el) histogram_table_el.style.display = "none";
         return "";
-    } if (dandiset_id === "archive") {
-        load_dandiset_histogram()
+    }
+
+    const plot_element_visible = document.getElementById("histogram");
+    if (plot_element_visible) plot_element_visible.style.display = "";
+    if (controls_el) controls_el.style.display = "";
+
+    if (dandiset_id === "archive") {
+        load_dandiset_histogram();
     } else {
         by_asset_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_asset.tsv`;
         load_per_asset_histogram(by_asset_summary_tsv_url);
@@ -585,15 +647,16 @@ function load_dandiset_histogram() {
         return response.json();
     })
     .then((data) => {
-        // Exclude 'archive' and cast IDs to strings
+        // Exclude 'archive' and cast IDs to strings; sort by bytes descending
         const combined = Object.keys(data)
             .map(dandiset_id => ({
+                raw_id: String(dandiset_id),
                 dandiset_id: "Dandiset ID " + String(dandiset_id),
                 bytes: data[dandiset_id].total_bytes_sent
             }))
             .sort((a, b) => b.bytes - a.bytes);
 
-    const sorted_dandiset_ids = combined.map(item => item.dandiset_id);
+        const sorted_dandiset_ids = combined.map(item => item.dandiset_id);
         const sorted_bytes_sent = combined.map(item => item.bytes);
         const human_readable_bytes_sent = sorted_bytes_sent.map(bytes => format_bytes(bytes));
 
@@ -636,6 +699,20 @@ function load_dandiset_histogram() {
         });
 
         Plotly.newPlot(plot_element_id, plot_data, layout);
+
+        // Render table view (sorted by bytes descending — most downloaded Dandisets first)
+        const table_el = document.getElementById("histogram_table");
+        if (table_el) {
+            let html = "<h3>Bytes sent per Dandiset</h3>";
+            html += '<div class="plot-table-container"><table><thead><tr><th>Dandiset ID</th><th>Bytes Sent</th></tr></thead><tbody>';
+            combined.forEach((item) => {
+                html += `<tr><td>${item.raw_id}</td><td>${format_bytes(item.bytes)}</td></tr>`;
+            });
+            html += "</tbody></table></div>";
+            table_el.innerHTML = html;
+        }
+
+        apply_view_mode(plot_element_id, "histogram_table", USE_HISTOGRAM_TABLE);
     })
     .catch((error) => {
         console.error("Error:", error);
@@ -723,6 +800,20 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
             });
 
             Plotly.newPlot(plot_element_id, plot_data, layout);
+
+            // Render table view (sorted by bytes descending — most downloaded assets first)
+            const table_el = document.getElementById("histogram_table");
+            if (table_el) {
+                let html = "<h3>Bytes sent per asset</h3>";
+                html += '<div class="plot-table-container"><table><thead><tr><th>Asset</th><th>Bytes Sent</th></tr></thead><tbody>';
+                combined.forEach((item) => {
+                    html += `<tr><td>${item.name}</td><td>${format_bytes(item.bytes)}</td></tr>`;
+                });
+                html += "</tbody></table></div>";
+                table_el.innerHTML = html;
+            }
+
+            apply_view_mode(plot_element_id, "histogram_table", USE_HISTOGRAM_TABLE);
         })
         .catch((error) => {
             console.error("Error:", error);

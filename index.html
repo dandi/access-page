@@ -63,8 +63,24 @@
         </div>
     </div>
     <div id="totals"></div>
+    <div class="ControllerContainer PlotViewControls" id="over_time_view_controls">
+        <div class="SubControllerContainer">
+            <span class="radio-label">View:</span>
+            <label class="radio-option"><input type="radio" name="over_time_view" value="plot" checked /> Plot</label>
+            <label class="radio-option"><input type="radio" name="over_time_view" value="table" /> Table</label>
+        </div>
+    </div>
     <div id="over_time_plot"></div>
+    <div id="over_time_table" class="plot-table" style="display:none;"></div>
+    <div class="ControllerContainer PlotViewControls" id="histogram_view_controls">
+        <div class="SubControllerContainer">
+            <span class="radio-label">View:</span>
+            <label class="radio-option"><input type="radio" name="histogram_view" value="plot" checked /> Plot</label>
+            <label class="radio-option"><input type="radio" name="histogram_view" value="table" /> Table</label>
+        </div>
+    </div>
     <div id="histogram"></div>
+    <div id="histogram_table" class="plot-table" style="display:none;"></div>
     <div class="ControllerContainer MapControls">
         <div class="SubControllerContainer">
             <span class="radio-label">Map Style:</span>
