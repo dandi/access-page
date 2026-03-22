@@ -33,6 +33,55 @@ function applyDarkTheme(layout) {
 }
 // ────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Rebuilds the consolidated "Data sources" section at the bottom of the page
+ * for the given dandiset ID.
+ *
+ * @param {string} dandiset_id - The currently selected dandiset (or "archive"/"undetermined").
+ */
+function update_data_sources(dandiset_id) {
+    const container = document.getElementById("data_sources_links");
+    if (!container) return;
+
+    const entries = [];
+
+    entries.push({
+        label: "Bytes per day",
+        url: `${BASE_TSV_URL}/${dandiset_id}/by_day.tsv`,
+    });
+
+    if (dandiset_id === "archive") {
+        entries.push({ label: "Bytes per Dandiset", url: ALL_DANDISET_TOTALS_URL });
+    } else if (dandiset_id !== "undetermined") {
+        entries.push({
+            label: "Bytes per asset",
+            url: `${BASE_TSV_URL}/${dandiset_id}/by_asset.tsv`,
+        });
+    }
+
+    entries.push({
+        label: "Bytes by region",
+        url: `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`,
+    });
+
+    container.innerHTML = "";
+    entries.forEach((entry, index) => {
+        if (index > 0) {
+            const sep = document.createElement("span");
+            sep.className = "data-sources-sep";
+            sep.setAttribute("aria-hidden", "true");
+            sep.textContent = "·";
+            container.appendChild(sep);
+        }
+        const a = document.createElement("a");
+        a.href = entry.url;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.textContent = entry.label;
+        container.appendChild(a);
+    });
+}
+
 // Fetch with exponential backoff retry logic
 /**
  * Fetches a URL with automatic retries using exponential backoff.
@@ -336,6 +385,7 @@ Promise.all([archiveTotalsPromise, allDandisetTotalsPromise])
             const id = validateDandisetId(rawId);
             selector.value = id;
             update_totals(id);
+            update_data_sources(id);
             load_over_time_plot(id);
             load_histogram(id);
             load_aws_histogram(id);

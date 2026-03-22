@@ -426,6 +426,27 @@
             text-decoration: underline;
         }
 
+        .data-sources-section {
+            text-align: center;
+            font-size: 0.8em;
+            color: var(--color-text-secondary);
+            margin: 24px auto 8px;
+        }
+
+        .data-sources-section a {
+            color: var(--color-accent);
+            text-decoration: none;
+        }
+
+        .data-sources-section a:hover {
+            text-decoration: underline;
+        }
+
+        .data-sources-sep {
+            margin: 0 6px;
+            color: var(--color-border);
+        }
+
     </style>
 </head>
 <body>
@@ -490,6 +511,10 @@
     <div class="tables-row">
         <div id="top_regions_table"></div>
         <div id="aws_histogram"></div>
+    </div>
+    <div id="data_sources" class="data-sources-section">
+        <span class="data-sources-label">Data sources:</span>
+        <span id="data_sources_links"></span>
     </div>
     </div>
 </body>
