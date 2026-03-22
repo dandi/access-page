@@ -251,6 +251,76 @@ let NAME_ALIASES = null;
 
 
 
+/**
+ * Sets or deletes a URL query parameter based on whether value equals the
+ * default value.  Non-default values are written to the URL; default values
+ * are omitted so that the base entry URL stays clean.
+ *
+ * @param {URLSearchParams} params - The URLSearchParams instance to mutate.
+ * @param {string} key - The query parameter name.
+ * @param {string} value - The current value.
+ * @param {string} defaultValue - The default value (omitted from URL).
+ */
+function setUrlParam(params, key, value, defaultValue) {
+    if (value === defaultValue) {
+        params.delete(key);
+    } else {
+        params.set(key, value);
+    }
+}
+
+/**
+ * Reads all URL parameters and synchronises them to the global state variables
+ * and UI elements, without triggering any plot reloads.  Call this on initial
+ * load and whenever the browser navigates back/forward.
+ */
+function syncFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+
+    // Log scale
+    const logScaleCheckbox = document.getElementById("log_scale");
+    if (logScaleCheckbox) {
+        USE_LOG_SCALE = params.get("log") === "true";
+        logScaleCheckbox.checked = USE_LOG_SCALE;
+    }
+
+    // Cumulative
+    const cumulativeCheckbox = document.getElementById("cumulative");
+    if (cumulativeCheckbox) {
+        USE_CUMULATIVE = params.get("cumulative") === "true";
+        cumulativeCheckbox.checked = USE_CUMULATIVE;
+    }
+
+    // Prefix (binary vs decimal)
+    const prefixSelector = document.getElementById("prefix");
+    if (prefixSelector) {
+        USE_BINARY = params.get("prefix") === "binary";
+        prefixSelector.value = USE_BINARY ? "binary" : "decimal";
+    }
+
+    // Geo view
+    const urlMap = params.get("map");
+    const validGeoViews = ["regions", "dots", "table", "aws"];
+    GEO_VIEW = validGeoViews.includes(urlMap) ? urlMap : "regions";
+    const geoRadio = document.querySelector(`input[name="geo_view"][value="${GEO_VIEW}"]`);
+    if (geoRadio) geoRadio.checked = true;
+    apply_geo_view_mode(GEO_VIEW);
+
+    // Over-time view (plot vs table)
+    USE_OVER_TIME_TABLE = params.get("over_time") === "table";
+    const overTimeValue = USE_OVER_TIME_TABLE ? "table" : "plot";
+    const overTimeRadio = document.querySelector(`input[name="over_time_view"][value="${overTimeValue}"]`);
+    if (overTimeRadio) overTimeRadio.checked = true;
+    apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
+
+    // Histogram view (plot vs table)
+    USE_HISTOGRAM_TABLE = params.get("histogram") === "table";
+    const histogramValue = USE_HISTOGRAM_TABLE ? "table" : "plot";
+    const histogramRadio = document.querySelector(`input[name="histogram_view"][value="${histogramValue}"]`);
+    if (histogramRadio) histogramRadio.checked = true;
+    apply_view_mode("histogram", "histogram_table", USE_HISTOGRAM_TABLE);
+}
+
 // Check if Plotly is loaded after the window loads
 window.addEventListener("load", () => {
     if (typeof Plotly === "undefined") {
@@ -290,6 +360,11 @@ window.addEventListener("load", () => {
         logScaleCheckbox.addEventListener("change", function() {
             USE_LOG_SCALE = this.checked;
 
+            const params = new URLSearchParams(window.location.search);
+            setUrlParam(params, "log", String(USE_LOG_SCALE), "false");
+            const query = params.toString();
+            window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
+
             // Get the current dandiset ID
             const dandiset_selector = document.getElementById("dandiset_selector");
             const selected_dandiset = dandiset_selector.value;
@@ -305,13 +380,6 @@ window.addEventListener("load", () => {
     // Add event listener for cumulative totals
     const cumulativeCheckbox = document.getElementById("cumulative");
     if (cumulativeCheckbox) {
-        // Initialize from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get("cumulative") === "true") {
-            cumulativeCheckbox.checked = true;
-            USE_CUMULATIVE = true;
-        }
-
         cumulativeCheckbox.addEventListener("change", function () {
             USE_CUMULATIVE = this.checked;
 
@@ -343,6 +411,11 @@ window.addEventListener("load", () => {
         prefix_selector.addEventListener("change", function () {
             USE_BINARY = this.value === "binary";
 
+            const params = new URLSearchParams(window.location.search);
+            setUrlParam(params, "prefix", this.value, "decimal");
+            const query = params.toString();
+            window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
+
             // Get the current dandiset ID
             const dandiset_selector = document.getElementById("dandiset_selector");
             const selected_dandiset = dandiset_selector.value;
@@ -356,20 +429,20 @@ window.addEventListener("load", () => {
         });
     }
 
-    // Initialize geo view from URL parameter ("dots" maps to the dots option)
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlMap = urlParams.get("map");
-    if (urlMap === "dots") {
-        GEO_VIEW = "dots";
-        const dotsRadio = document.querySelector('input[name="geo_view"][value="dots"]');
-        if (dotsRadio) dotsRadio.checked = true;
-    }
+    // Initialize all URL parameters to state and UI
+    syncFromUrl();
 
     // Add event listener for over-time view radio toggle (Plot vs Table)
     const overTimeViewRadios = document.querySelectorAll('input[name="over_time_view"]');
     overTimeViewRadios.forEach((radio) => {
         radio.addEventListener("change", function () {
             USE_OVER_TIME_TABLE = this.value === "table";
+
+            const params = new URLSearchParams(window.location.search);
+            setUrlParam(params, "over_time", this.value, "plot");
+            const query = params.toString();
+            window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
+
             apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
         });
     });
@@ -379,6 +452,12 @@ window.addEventListener("load", () => {
     histogramViewRadios.forEach((radio) => {
         radio.addEventListener("change", function () {
             USE_HISTOGRAM_TABLE = this.value === "table";
+
+            const params = new URLSearchParams(window.location.search);
+            setUrlParam(params, "histogram", this.value, "plot");
+            const query = params.toString();
+            window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
+
             apply_view_mode("histogram", "histogram_table", USE_HISTOGRAM_TABLE);
         });
     });
@@ -390,11 +469,7 @@ window.addEventListener("load", () => {
             GEO_VIEW = this.value;
 
             const params = new URLSearchParams(window.location.search);
-            if (GEO_VIEW === "dots") {
-                params.set("map", "dots");
-            } else {
-                params.delete("map");
-            }
+            setUrlParam(params, "map", GEO_VIEW, "regions");
             const query = params.toString();
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
@@ -540,6 +615,7 @@ Promise.all([archiveTotalsPromise, allDandisetTotalsPromise])
         // Handle browser back/forward navigation
         window.addEventListener("popstate", () => {
             const params = new URLSearchParams(window.location.search);
+            syncFromUrl();
             setSelectedDandiset(params.get("dandiset"));
         });
     })
