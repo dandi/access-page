@@ -205,12 +205,15 @@ input[type="checkbox"] {
 .plot-table-container {
     max-height: 480px;
     overflow-y: auto;
+    overflow-x: auto;
 }
 
 .plot-table table {
-    width: 100%;
+    width: auto;
+    min-width: min(100%, 520px);
     border-collapse: collapse;
     font-size: 0.9em;
+    margin: 0 auto;
 }
 
 .plot-table th {
