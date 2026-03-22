@@ -1014,7 +1014,10 @@ function load_geographic_heatmap(dandiset_id) {
                 throw new Error("TSV file does not contain enough data.");
             }
 
-            const data = rows.slice(1).map((row) => row.split("\t"));
+            const data = rows
+                .slice(1)
+                .map((row) => row.split("\t"))
+                .sort((a, b) => parseInt(a[1], 10) - parseInt(b[1], 10));
 
             const latitudes = [];
             const longitudes = [];
@@ -1051,7 +1054,7 @@ function load_geographic_heatmap(dandiset_id) {
                             tickvals: [3, 6, 9, 12],
                             ticktext: ["KB", "MB", "GB", "TB"]
                         },
-                        opacity: 1,
+                        opacity: 0.9,
                     },
                     text: hover_texts,
                     textposition: "none",
