@@ -84,28 +84,19 @@
     <div class="ControllerContainer PlotViewControls" id="geo_view_controls">
         <div class="SubControllerContainer">
             <span class="radio-label">View:</span>
-            <label class="radio-option"><input type="radio" name="geo_view" value="plot" checked /> Plot</label>
+            <label class="radio-option"><input type="radio" name="geo_view" value="regions" checked /> Regions</label>
+            <label class="radio-option"><input type="radio" name="geo_view" value="dots" /> Dots</label>
             <label class="radio-option"><input type="radio" name="geo_view" value="table" /> Table</label>
+            <label class="radio-option"><input type="radio" name="geo_view" value="aws" /> AWS</label>
         </div>
     </div>
-    <div id="geo_plot_section">
-        <div class="ControllerContainer MapControls">
-            <div class="SubControllerContainer">
-                <span class="radio-label">Map Style:</span>
-                <label class="radio-option"><input type="radio" name="map_style" value="region" checked /> Regions</label>
-                <label class="radio-option"><input type="radio" name="map_style" value="dots" /> Dots</label>
-            </div>
-        </div>
-        <div id="geography_heatmap"></div>
-        <div id="map_attribution" class="attribution">
-            Boundaries: <a href="https://gadm.org/" target="_blank" rel="noopener">GADM v4.1</a>
-        </div>
+    <div id="geography_heatmap"></div>
+    <div id="map_attribution" class="attribution">
+        Boundaries: <a href="https://gadm.org/" target="_blank" rel="noopener">GADM v4.1</a>
     </div>
-    <div id="geo_table_section" style="display:none;">
-        <div class="tables-row">
-            <div id="top_regions_table"></div>
-            <div id="aws_histogram"></div>
-        </div>
+    <div class="tables-row" id="geo_table_section" style="display:none;">
+        <div id="top_regions_table"></div>
+        <div id="aws_histogram"></div>
     </div>
     <div id="data_sources" class="data-sources-section">
         <span class="data-sources-label">Data sources:</span>

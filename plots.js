@@ -46,6 +46,21 @@ function apply_view_mode(plot_id, table_id, use_table) {
     if (plot_el) plot_el.style.display = use_table ? "none" : "";
     if (table_el) table_el.style.display = use_table ? "" : "none";
 }
+
+function apply_geo_view_mode(view) {
+    const mapEl   = document.getElementById("geography_heatmap");
+    const attrEl  = document.getElementById("map_attribution");
+    const tableEl = document.getElementById("geo_table_section");
+    const showMap = (view === "regions" || view === "dots");
+    if (mapEl)   mapEl.style.display   = showMap ? "" : "none";
+    if (attrEl)  attrEl.style.display  = showMap ? "" : "none";
+    if (tableEl) tableEl.style.display = showMap ? "none" : "";
+    // When showing a table, hide the one that isn't selected
+    const regionsEl = document.getElementById("top_regions_table");
+    const awsEl     = document.getElementById("aws_histogram");
+    if (regionsEl) regionsEl.style.display = (view === "table") ? "" : "none";
+    if (awsEl)     awsEl.style.display     = (view === "aws")   ? "" : "none";
+}
 // ────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -228,10 +243,9 @@ let ALL_DANDISET_TOTALS = {};
 let USE_LOG_SCALE = false;
 let USE_CUMULATIVE = false;
 let USE_BINARY = false;
-let USE_CHOROPLETH = true;
+let GEO_VIEW = "regions";  // "regions" | "dots" | "table" | "aws"
 let USE_OVER_TIME_TABLE = false;
 let USE_HISTOGRAM_TABLE = false;
-let USE_GEO_TABLE = false;
 let GEOJSON_DATA = null;
 let NAME_ALIASES = null;
 
@@ -342,35 +356,14 @@ window.addEventListener("load", () => {
         });
     }
 
-    // Add event listener for map style radio toggle
-    const mapStyleRadios = document.querySelectorAll('input[name="map_style"]');
-    // Initialize from URL parameter
+    // Initialize geo view from URL parameter ("dots" maps to the dots option)
     const urlParams = new URLSearchParams(window.location.search);
     const urlMap = urlParams.get("map");
     if (urlMap === "dots") {
-        USE_CHOROPLETH = false;
-        const dotsRadio = document.querySelector('input[name="map_style"][value="dots"]');
+        GEO_VIEW = "dots";
+        const dotsRadio = document.querySelector('input[name="geo_view"][value="dots"]');
         if (dotsRadio) dotsRadio.checked = true;
     }
-
-    mapStyleRadios.forEach((radio) => {
-        radio.addEventListener("change", function() {
-            USE_CHOROPLETH = this.value === "region";
-
-            const params = new URLSearchParams(window.location.search);
-            if (!USE_CHOROPLETH) {
-                params.set("map", "dots");
-            } else {
-                params.delete("map");
-            }
-            const query = params.toString();
-            const newUrl = window.location.pathname + (query ? "?" + query : "");
-            window.history.pushState({}, "", newUrl);
-
-            const selected_dandiset = document.getElementById("dandiset_selector").value;
-            load_geographic_heatmap(selected_dandiset);
-        });
-    });
 
     // Add event listener for over-time view radio toggle (Plot vs Table)
     const overTimeViewRadios = document.querySelectorAll('input[name="over_time_view"]');
@@ -390,12 +383,28 @@ window.addEventListener("load", () => {
         });
     });
 
-    // Add event listener for geo view radio toggle (Plot vs Table)
+    // Add event listener for the single geo view toggle (Regions / Dots / Table / AWS)
     const geoViewRadios = document.querySelectorAll('input[name="geo_view"]');
     geoViewRadios.forEach((radio) => {
         radio.addEventListener("change", function () {
-            USE_GEO_TABLE = this.value === "table";
-            apply_view_mode("geo_plot_section", "geo_table_section", USE_GEO_TABLE);
+            GEO_VIEW = this.value;
+
+            const params = new URLSearchParams(window.location.search);
+            if (GEO_VIEW === "dots") {
+                params.set("map", "dots");
+            } else {
+                params.delete("map");
+            }
+            const query = params.toString();
+            window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
+
+            apply_geo_view_mode(GEO_VIEW);
+
+            const selected_dandiset = document.getElementById("dandiset_selector").value;
+            // Re-render the map only when a map mode is selected
+            if (GEO_VIEW === "regions" || GEO_VIEW === "dots") {
+                load_geographic_heatmap(selected_dandiset);
+            }
         });
     });
 });
@@ -414,7 +423,7 @@ function resizePlots() {
 
     // Update min zoom for the choroplethmap based on new width
     const mapEl = document.getElementById("geography_heatmap");
-    if (mapEl && USE_CHOROPLETH && mapEl._fullLayout && mapEl._fullLayout.map && mapEl._fullLayout.map._subplot) {
+    if (mapEl && GEO_VIEW === "regions" && mapEl._fullLayout && mapEl._fullLayout.map && mapEl._fullLayout.map._subplot) {
         const mapWidth = mapEl.offsetWidth;
         const defaultZoom = Math.max(1, Math.log2(mapWidth / 512));
         const minZoom = defaultZoom - 0.15;
@@ -1133,13 +1142,16 @@ function load_geographic_heatmap(dandiset_id) {
 
     load_top_regions_table(by_region_summary_tsv_url);
 
-    // Apply the current view mode (map vs tables) each time geo data reloads
-    apply_view_mode("geo_plot_section", "geo_table_section", USE_GEO_TABLE);
+    // Apply the current view mode each time geo data reloads
+    apply_geo_view_mode(GEO_VIEW);
 
-    if (USE_CHOROPLETH) {
+    if (GEO_VIEW === "regions") {
         load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summary_tsv_url);
         return;
     }
+
+    // Table / AWS view: tables already populated above, nothing more to render
+    if (GEO_VIEW !== "dots") return;
 
     if (!REGION_CODES_TO_LATITUDE_LONGITUDE) {
         console.error("Region coordinates not loaded");
