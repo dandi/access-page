@@ -49,11 +49,9 @@ function apply_view_mode(plot_id, table_id, use_table) {
 
 function apply_geo_view_mode(view) {
     const mapEl   = document.getElementById("geography_heatmap");
-    const attrEl  = document.getElementById("map_attribution");
     const tableEl = document.getElementById("geo_table_section");
     const showMap = (view === "regions" || view === "dots");
     if (mapEl)   mapEl.style.display   = showMap ? "" : "none";
-    if (attrEl)  attrEl.style.display  = showMap ? "" : "none";
     if (tableEl) tableEl.style.display = showMap ? "none" : "";
     // When showing a table, hide the one that isn't selected
     const regionsEl = document.getElementById("top_regions_table");
@@ -1464,6 +1462,24 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
                 zoom: defaultZoom,
                 minzoom: minZoom,
             },
+            annotations: [
+                {
+                    text: '<a href="https://gadm.org/" target="_blank">Geographic boundaries: GADM v4.1</a>',
+                    showarrow: false,
+                    xref: "paper",
+                    yref: "paper",
+                    x: 0.01,
+                    y: 0.01,
+                    xanchor: "left",
+                    yanchor: "bottom",
+                    font: {
+                        size: 10,
+                        color: DARK_THEME.textSecondary,
+                    },
+                    bgcolor: "rgba(22, 33, 62, 0.7)",
+                    borderpad: 3,
+                },
+            ],
         });
 
         Plotly.newPlot(plot_element_id, plot_info, layout).then(() => {

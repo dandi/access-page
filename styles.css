@@ -476,22 +476,6 @@ input[type="checkbox"] {
     background: var(--color-accent-subtle);
 }
 
-.attribution {
-    text-align: center;
-    font-size: 0.75em;
-    color: var(--color-text-secondary);
-    margin: 4px auto 16px;
-}
-
-.attribution a {
-    color: var(--color-accent);
-    text-decoration: none;
-}
-
-.attribution a:hover {
-    text-decoration: underline;
-}
-
 .data-sources-section {
     text-align: center;
     font-size: 0.8em;
