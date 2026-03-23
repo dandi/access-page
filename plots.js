@@ -35,6 +35,11 @@ function applyDarkTheme(layout) {
 
 /**
  * Toggles visibility between a Plotly plot element and its paired table element.
+ * Before switching, the enclosing `.view-section` wrapper's current rendered
+ * height is stored as its `min-height`, so elements further down the page do
+ * not jump when a shorter view replaces a taller one.  The value is refreshed
+ * on every call (including each dandiset reload), so it tracks the most recent
+ * fully-rendered plot height and does not accumulate across view switches.
  *
  * @param {string} plot_id - ID of the plot container element.
  * @param {string} table_id - ID of the table container element.
@@ -43,6 +48,16 @@ function applyDarkTheme(layout) {
 function apply_view_mode(plot_id, table_id, use_table) {
     const plot_el = document.getElementById(plot_id);
     const table_el = document.getElementById(table_id);
+
+    // Lock the section height before switching to prevent layout shift on elements below
+    const section_el = plot_el && plot_el.closest('.view-section');
+    if (section_el) {
+        const current_height = section_el.offsetHeight;
+        if (current_height > 0) {
+            section_el.style.minHeight = current_height + 'px';
+        }
+    }
+
     if (plot_el) plot_el.style.display = use_table ? "none" : "";
     if (table_el) table_el.style.display = use_table ? "" : "none";
 }
@@ -51,6 +66,16 @@ function apply_geo_view_mode(view) {
     const mapEl   = document.getElementById("geography_heatmap");
     const tableEl = document.getElementById("geo_table_section");
     const showMap = (view === "regions" || view === "points");
+
+    // Lock the section height before switching to prevent layout shift on elements below
+    const section_el = mapEl && mapEl.closest('.view-section');
+    if (section_el) {
+        const current_height = section_el.offsetHeight;
+        if (current_height > 0) {
+            section_el.style.minHeight = current_height + 'px';
+        }
+    }
+
     if (mapEl)   mapEl.style.display   = showMap ? "" : "none";
     if (tableEl) tableEl.style.display = showMap ? "none" : "";
     // When showing a table, hide the one that isn't selected
