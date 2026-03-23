@@ -50,7 +50,7 @@ function apply_view_mode(plot_id, table_id, use_table) {
 function apply_geo_view_mode(view) {
     const mapEl   = document.getElementById("geography_heatmap");
     const tableEl = document.getElementById("geo_table_section");
-    const showMap = (view === "regions" || view === "dots");
+    const showMap = (view === "regions" || view === "points");
     if (mapEl)   mapEl.style.display   = showMap ? "" : "none";
     if (tableEl) tableEl.style.display = showMap ? "none" : "";
     // When showing a table, hide the one that isn't selected
@@ -198,8 +198,8 @@ let ALL_DANDISET_TOTALS = {};
 let USE_LOG_SCALE = false;
 let USE_CUMULATIVE = false;
 let USE_BINARY = false;
-let GEO_VIEW = "regions";  // "regions" | "dots" | "table" | "aws"
-let TIME_BINNING = "daily";  // "daily" | "weekly" | "monthly" | "yearly"
+let GEO_VIEW = "regions";  // "regions" | "points" | "table" | "aws"
+let TIME_AGGREGATION = "daily";  // "daily" | "weekly" | "monthly" | "yearly"
 let USE_OVER_TIME_TABLE = false;
 let USE_HISTOGRAM_TABLE = false;
 let GEOJSON_DATA = null;
@@ -256,7 +256,7 @@ function syncFromUrl() {
 
     // Geo view
     const urlMap = params.get("map");
-    const validGeoViews = ["regions", "dots", "table", "aws"];
+    const validGeoViews = ["regions", "points", "table", "aws"];
     GEO_VIEW = validGeoViews.includes(urlMap) ? urlMap : "regions";
     const geoRadio = document.querySelector(`input[name="geo_view"][value="${GEO_VIEW}"]`);
     if (geoRadio) geoRadio.checked = true;
@@ -271,12 +271,12 @@ function syncFromUrl() {
     const aggregateControlsEl = document.getElementById("over_time_aggregate_controls");
     if (aggregateControlsEl) aggregateControlsEl.style.display = USE_OVER_TIME_TABLE ? "none" : "";
 
-    // Time binning
-    const validBinnings = ["daily", "weekly", "monthly", "yearly"];
-    const urlBinning = params.get("binning");
-    TIME_BINNING = validBinnings.includes(urlBinning) ? urlBinning : "daily";
-    const binningRadio = document.querySelector(`input[name="time_binning"][value="${TIME_BINNING}"]`);
-    if (binningRadio) binningRadio.checked = true;
+    // Time aggregation
+    const validAggregations = ["daily", "weekly", "monthly", "yearly"];
+    const urlAggregation = params.get("aggregation");
+    TIME_AGGREGATION = validAggregations.includes(urlAggregation) ? urlAggregation : "daily";
+    const aggregationRadio = document.querySelector(`input[name="time_aggregation"][value="${TIME_AGGREGATION}"]`);
+    if (aggregationRadio) aggregationRadio.checked = true;
 
     // Histogram view (plot vs table)
     USE_HISTOGRAM_TABLE = params.get("histogram") === "table";
@@ -431,14 +431,14 @@ window.addEventListener("load", () => {
         });
     });
 
-    // Add event listener for time binning radio toggle (Daily / Weekly / Monthly / Yearly)
-    const timeBinningRadios = document.querySelectorAll('input[name="time_binning"]');
-    timeBinningRadios.forEach((radio) => {
+    // Add event listener for time aggregation radio toggle (Daily / Weekly / Monthly / Yearly)
+    const timeAggregationRadios = document.querySelectorAll('input[name="time_aggregation"]');
+    timeAggregationRadios.forEach((radio) => {
         radio.addEventListener("change", function () {
-            TIME_BINNING = this.value;
+            TIME_AGGREGATION = this.value;
 
             const params = new URLSearchParams(window.location.search);
-            setUrlParam(params, "binning", TIME_BINNING, "daily");
+            setUrlParam(params, "aggregation", TIME_AGGREGATION, "daily");
             const query = params.toString();
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
@@ -462,7 +462,7 @@ window.addEventListener("load", () => {
 
             const selected_dandiset = document.getElementById("dandiset_selector").value;
             // Re-render the map only when a map mode is selected
-            if (GEO_VIEW === "regions" || GEO_VIEW === "dots") {
+            if (GEO_VIEW === "regions" || GEO_VIEW === "points") {
                 load_geographic_heatmap(selected_dandiset);
             }
         });
@@ -649,11 +649,11 @@ function update_totals(dandiset_id) {
  *
  * @param {string[]} dates - ISO date strings ("YYYY-MM-DD").
  * @param {number[]} bytes_sent - Byte counts for each corresponding date.
- * @param {string} binning - One of "daily" | "weekly" | "monthly" | "yearly".
+ * @param {string} aggregation - One of "daily" | "weekly" | "monthly" | "yearly".
  * @returns {{ dates: string[], bytes_sent: number[] }}
  */
-function aggregate_by_timebin(dates, bytes_sent, binning) {
-    if (binning === "daily") {
+function aggregate_by_timebin(dates, bytes_sent, aggregation) {
+    if (aggregation === "daily") {
         return { dates, bytes_sent };
     }
 
@@ -661,14 +661,14 @@ function aggregate_by_timebin(dates, bytes_sent, binning) {
     dates.forEach((date_str, i) => {
         const date = new Date(date_str + "T00:00:00Z");
         let bin_key;
-        if (binning === "weekly") {
+        if (aggregation === "weekly") {
             // Find the Monday (ISO week start) for this date
             const day_of_week = date.getUTCDay(); // 0 = Sunday, 1 = Monday, ...
             const days_to_monday = day_of_week === 0 ? -6 : 1 - day_of_week;
             const monday = new Date(date);
             monday.setUTCDate(date.getUTCDate() + days_to_monday);
             bin_key = monday.toISOString().slice(0, 10);
-        } else if (binning === "monthly") {
+        } else if (aggregation === "monthly") {
             bin_key = date_str.slice(0, 7); // "YYYY-MM"
         } else { // "yearly"
             bin_key = date_str.slice(0, 4); // "YYYY"
@@ -708,7 +708,7 @@ function load_over_time_plot(dandiset_id) {
             const raw_bytes = raw_data.map((row) => parseInt(row[1], 10));
 
             // Aggregate raw daily data into the selected time bin
-            const aggregated = aggregate_by_timebin(raw_dates, raw_bytes, TIME_BINNING);
+            const aggregated = aggregate_by_timebin(raw_dates, raw_bytes, TIME_AGGREGATION);
             const dates = aggregated.dates;
             const bytes_sent = aggregated.bytes_sent;
 
@@ -723,13 +723,13 @@ function load_over_time_plot(dandiset_id) {
 
             const human_readable_bytes_sent = plot_data.map((bytes) => format_bytes(bytes));
 
-            // Build hover label prefix based on the selected binning
+            // Build hover label prefix based on the selected aggregation
             const bin_label_prefix = {
                 daily: "",
                 weekly: "Week of ",
                 monthly: "Month: ",
                 yearly: "Year: ",
-            }[TIME_BINNING];
+            }[TIME_AGGREGATION];
 
             const plot_info = [
                 {
@@ -743,7 +743,7 @@ function load_over_time_plot(dandiset_id) {
                 }
             ];
 
-            // Choose axis tick format and plot title based on binning
+            // Choose axis tick format and plot title based on aggregation
             const tick_formats = {
                 daily:   "%Y-%m-%d",
                 weekly:  "%Y-%m-%d",
@@ -760,7 +760,7 @@ function load_over_time_plot(dandiset_id) {
             const layout = applyDarkTheme({
                 bargap: 0,
                 title: {
-                    text: USE_CUMULATIVE ? "Total bytes sent to date" : per_bin_titles[TIME_BINNING],
+                    text: USE_CUMULATIVE ? "Total bytes sent to date" : per_bin_titles[TIME_AGGREGATION],
                     font: { size: 24 }
                 },
                 xaxis: {
@@ -768,7 +768,7 @@ function load_over_time_plot(dandiset_id) {
                         text: "Date",
                         font: { size: 16 }
                     },
-                    tickformat: tick_formats[TIME_BINNING],
+                    tickformat: tick_formats[TIME_AGGREGATION],
                 },
                 yaxis: {
                     title: {
@@ -784,7 +784,7 @@ function load_over_time_plot(dandiset_id) {
             });
 
             // For daily cumulative, remove range gaps so the line is continuous
-            if (USE_CUMULATIVE && TIME_BINNING === "daily") {
+            if (USE_CUMULATIVE && TIME_AGGREGATION === "daily") {
                 const date_set = new Set(dates);
                 const min_date = new Date(Math.min(...dates.map(d => new Date(d))));
                 const max_date = new Date(Math.max(...dates.map(d => new Date(d))));
@@ -811,8 +811,8 @@ function load_over_time_plot(dandiset_id) {
                 yearly:  "Year",
             };
             const combined_days = dates.map((date, i) => ({ date, bytes: bytes_sent[i] }));
-            render_sortable_table("over_time_table", per_bin_titles[TIME_BINNING], [
-                { label: date_col_labels[TIME_BINNING], key: "date",  numeric: false },
+            render_sortable_table("over_time_table", per_bin_titles[TIME_AGGREGATION], [
+                { label: date_col_labels[TIME_AGGREGATION], key: "date",  numeric: false },
                 { label: "Bytes Sent",                  key: "bytes", numeric: true  },
             ], combined_days, by_day_summary_tsv_url);
 
@@ -1288,7 +1288,7 @@ function load_geographic_heatmap(dandiset_id) {
     }
 
     // Table / AWS view: tables already populated above, nothing more to render
-    if (GEO_VIEW !== "dots") return;
+    if (GEO_VIEW !== "points") return;
 
     if (!REGION_CODES_TO_LATITUDE_LONGITUDE) {
         console.error("Region coordinates not loaded");
