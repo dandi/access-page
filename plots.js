@@ -1,7 +1,7 @@
 // TODO: if using a proper framework/package structure, import the error helper
 // (working for the moment due to global import in the index.html file)
 
-// ── Dark-theme helpers (mirrors :root CSS variables in index.html) ──────────
+// ── Theme helpers (mirrors :root CSS variables in styles.css) ───────────────
 const DARK_THEME = {
     bg:            '#1a1a2e',
     surface:       '#16213e',
@@ -9,27 +9,101 @@ const DARK_THEME = {
     text:          '#e0e0e0',
     textSecondary: '#a0a0b0',
     accent:        '#53a8b6',
+    mapStyle:      'carto-darkmatter',
+    annotationBg:  'rgba(22, 33, 62, 0.7)',
 };
 
+const LIGHT_THEME = {
+    bg:            '#f5f7fa',
+    surface:       '#ffffff',
+    border:        '#d1d9e0',
+    text:          '#1a1a2e',
+    textSecondary: '#5a6580',
+    accent:        '#53a8b6',
+    mapStyle:      'carto-positron',
+    annotationBg:  'rgba(245, 247, 250, 0.85)',
+};
+
+// Tracks whether the page is currently in dark mode; initialised from
+// localStorage in initTheme() on DOMContentLoaded.
+let IS_DARK_MODE = true;
+
+/** Returns the active theme colour object. */
+function getTheme() {
+    return IS_DARK_MODE ? DARK_THEME : LIGHT_THEME;
+}
+
 /**
- * Mutates `layout` in-place to apply the dark-theme colours and returns it.
+ * Mutates `layout` in-place to apply the current theme colours and returns it.
  * Axis overrides are merged so callers can still add axis-specific options.
  */
-function applyDarkTheme(layout) {
-    layout.paper_bgcolor = DARK_THEME.surface;
-    layout.plot_bgcolor  = DARK_THEME.surface;
-    layout.font = Object.assign({ color: DARK_THEME.text }, layout.font || {});
+function applyTheme(layout) {
+    const theme = getTheme();
+    layout.paper_bgcolor = theme.surface;
+    layout.plot_bgcolor  = theme.surface;
+    layout.font = Object.assign({ color: theme.text }, layout.font || {});
 
     const axisDefaults = {
-        gridcolor:     DARK_THEME.border,
-        linecolor:     DARK_THEME.border,
-        zerolinecolor: DARK_THEME.border,
-        tickfont:      { color: DARK_THEME.textSecondary },
-        titlefont:     { color: DARK_THEME.textSecondary },
+        gridcolor:     theme.border,
+        linecolor:     theme.border,
+        zerolinecolor: theme.border,
+        tickfont:      { color: theme.textSecondary },
+        titlefont:     { color: theme.textSecondary },
     };
     if (layout.xaxis) Object.assign(layout.xaxis, { ...axisDefaults, ...layout.xaxis });
     if (layout.yaxis) Object.assign(layout.yaxis, { ...axisDefaults, ...layout.yaxis });
     return layout;
+}
+
+/**
+ * Reads the saved theme preference from localStorage (defaulting to dark),
+ * applies it to the <html> element and updates IS_DARK_MODE.
+ * Call once on page load before any plots are rendered.
+ */
+function initTheme() {
+    const saved = localStorage.getItem('theme');
+    IS_DARK_MODE = saved !== 'light';
+    document.documentElement.setAttribute('data-theme', IS_DARK_MODE ? 'dark' : 'light');
+    syncThemeToggleIcon();
+}
+
+/**
+ * Flips the active theme, persists it to localStorage, updates the <html>
+ * attribute, and re-renders all visible plots so they adopt the new colours.
+ */
+function toggleTheme() {
+    IS_DARK_MODE = !IS_DARK_MODE;
+    const theme = IS_DARK_MODE ? 'dark' : 'light';
+    localStorage.setItem('theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+    syncThemeToggleIcon();
+
+    // Re-render all plots with the new theme colours
+    const selector = document.getElementById('dandiset_selector');
+    if (selector) {
+        const id = selector.value;
+        load_over_time_plot(id);
+        load_histogram(id);
+        load_aws_histogram(id);
+        load_geographic_heatmap(id);
+    }
+}
+
+/** Updates the toggle button icon to reflect the current theme. */
+function syncThemeToggleIcon() {
+    const btn = document.getElementById('theme_toggle_btn');
+    if (!btn) return;
+    if (IS_DARK_MODE) {
+        // Currently dark → clicking will switch to light → show sun icon
+        btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0-13a1 1 0 0 0 1-1V2a1 1 0 1 0-2 0v1a1 1 0 0 0 1 1zm0 14a1 1 0 0 0-1 1v1a1 1 0 1 0 2 0v-1a1 1 0 0 0-1-1zm10-5a1 1 0 0 0 0-2h-1a1 1 0 1 0 0 2h1zM3 12a1 1 0 0 0-1-1H1a1 1 0 1 0 0 2h1a1 1 0 0 0 1-1zm15.36-6.36a1 1 0 0 0 0-1.41l-.71-.71a1 1 0 0 0-1.41 1.41l.71.71a1 1 0 0 0 1.41 0zM6.05 17.95a1 1 0 0 0-1.41 0l-.71.71a1 1 0 1 0 1.41 1.41l.71-.71a1 1 0 0 0 0-1.41zm12.02 2.12-.71-.71a1 1 0 0 0-1.41 1.41l.71.71a1 1 0 0 0 1.41-1.41zM5.34 5.64a1 1 0 0 0-1.41-1.41l-.71.71a1 1 0 1 0 1.41 1.41l.71-.71z"/></svg>';
+        btn.setAttribute('aria-label', 'Switch to light mode');
+        btn.setAttribute('title', 'Switch to light mode');
+    } else {
+        // Currently light → clicking will switch to dark → show moon icon
+        btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>';
+        btn.setAttribute('aria-label', 'Switch to dark mode');
+        btn.setAttribute('title', 'Switch to dark mode');
+    }
 }
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -162,6 +236,10 @@ function render_sortable_table(container_id, title, columns, rows, data_url) {
     render_table();
 }
 // ────────────────────────────────────────────────────────────────────────────
+
+// Initialise the theme as early as possible (before plots are rendered) so
+// that CSS variables and IS_DARK_MODE are in sync from the very first paint.
+document.addEventListener("DOMContentLoaded", initTheme);
 
 // Fetch with exponential backoff retry logic
 /**
@@ -315,6 +393,12 @@ function syncFromUrl() {
 window.addEventListener("load", () => {
     if (typeof Plotly === "undefined") {
         handlePlotlyError();
+    }
+
+    // Theme toggle button
+    const themeToggleBtn = document.getElementById("theme_toggle_btn");
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener("click", toggleTheme);
     }
 
     // Settings panel (gear wheel) open/close
@@ -765,7 +849,7 @@ function load_over_time_plot(dandiset_id) {
                     text: dates.map((date, index) => `${bin_label_prefix}${date}<br>${human_readable_bytes_sent[index]}`),
                     textposition: "none",
                     hoverinfo: "text",
-                    marker: { color: DARK_THEME.accent },
+                    marker: { color: getTheme().accent },
                 }
             ];
 
@@ -783,7 +867,7 @@ function load_over_time_plot(dandiset_id) {
                 yearly:  "Bytes sent per year",
             };
 
-            const layout = applyDarkTheme({
+            const layout = applyTheme({
                 bargap: 0,
                 title: {
                     text: USE_CUMULATIVE ? "Total bytes sent to date" : per_bin_titles[TIME_AGGREGATION],
@@ -917,11 +1001,11 @@ function load_dandiset_histogram() {
                 text: sorted_dandiset_ids.map((dandiset_id, index) => `${dandiset_id}<br>${human_readable_bytes_sent[index]}`),
                 textposition: "none",
                 hoverinfo: "text",
-                marker: { color: DARK_THEME.accent },
+                marker: { color: getTheme().accent },
             }
         ];
 
-        const layout = applyDarkTheme({
+        const layout = applyTheme({
             bargap: 0,
             title: {
                 text: `Bytes sent per Dandiset`,
@@ -1012,11 +1096,11 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
                     text: sorted_asset_names.map((name, index) => `${name}<br>${human_readable_bytes_sent[index]}`),
                     textposition: "none",
                     hoverinfo: "text",
-                    marker: { color: DARK_THEME.accent },
+                    marker: { color: getTheme().accent },
                 }
             ];
 
-            const layout = applyDarkTheme({
+            const layout = applyTheme({
                 bargap: 0,
                 title: {
                     text: `Bytes sent per asset`,
@@ -1388,21 +1472,21 @@ function load_geographic_heatmap(dandiset_id) {
                 },
             ];
 
-            const layout = applyDarkTheme({
+            const layout = applyTheme({
                 title: {
                     text: "Bytes sent by region",
                     font: { size: 24 },
                 },
                 geo: {
                     projection: { type: "equirectangular" },
-                    bgcolor: DARK_THEME.surface,
-                    lakecolor: DARK_THEME.bg,
-                    landcolor: DARK_THEME.border,
+                    bgcolor: getTheme().surface,
+                    lakecolor: getTheme().bg,
+                    landcolor: getTheme().border,
                     showocean: true,
-                    oceancolor: DARK_THEME.bg,
+                    oceancolor: getTheme().bg,
                     showlakes: true,
                     showland: true,
-                    countrycolor: DARK_THEME.border,
+                    countrycolor: getTheme().border,
                 },
             });
 
@@ -1538,13 +1622,13 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
             // we need zoom = log2(width / 256) to fill the container once
             const minZoom = defaultZoom - 0.15;
 
-        const layout = applyDarkTheme({
+        const layout = applyTheme({
             title: {
                 text: "Bytes sent by region",
                 font: { size: 24 },
             },
             map: {
-                style: "carto-darkmatter",
+                style: getTheme().mapStyle,
                 center: { lat: 40, lon: 0 },
                 zoom: defaultZoom,
                 minzoom: minZoom,
@@ -1563,9 +1647,9 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
                     yanchor: "bottom",
                     font: {
                         size: 10,
-                        color: DARK_THEME.textSecondary,
+                        color: getTheme().textSecondary,
                     },
-                    bgcolor: "rgba(22, 33, 62, 0.7)",
+                    bgcolor: getTheme().annotationBg,
                     borderpad: 3,
                 },
             ],
