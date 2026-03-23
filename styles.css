@@ -15,6 +15,20 @@
     --radius: 6px;
 }
 
+/* ── Light theme overrides ── */
+[data-theme="light"] {
+    --color-bg: #f5f7fa;
+    --color-surface: #ffffff;
+    --color-header: #0f3460;
+    --color-border: #d1d9e0;
+    --color-text: #1a1a2e;
+    --color-text-secondary: #5a6580;
+    --color-accent: #53a8b6;
+    --color-accent-rgb: 83, 168, 182;
+    --color-accent-hover: #3d8a97;
+    --color-accent-subtle: rgba(var(--color-accent-rgb), 0.1);
+}
+
 *, *::before, *::after {
     box-sizing: border-box;
 }
@@ -88,6 +102,33 @@ body {
 }
 
 .site-github-link svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+/* ── Theme toggle button ──
+   Colors are hardcoded white (matching .site-github-link) because the header
+   background (--color-header) is always the same dark blue in both themes. */
+.theme-toggle-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border-radius: var(--radius);
+    transition: color 0.2s, background 0.2s;
+    line-height: 1;
+}
+
+.theme-toggle-btn:hover {
+    color: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.theme-toggle-btn svg {
     width: 20px;
     height: 20px;
     fill: currentColor;
