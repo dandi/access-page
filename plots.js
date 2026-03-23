@@ -199,6 +199,7 @@ let USE_LOG_SCALE = false;
 let USE_CUMULATIVE = false;
 let USE_BINARY = false;
 let GEO_VIEW = "regions";  // "regions" | "dots" | "table" | "aws"
+let TIME_BINNING = "daily";  // "daily" | "weekly" | "monthly" | "yearly"
 let USE_OVER_TIME_TABLE = false;
 let USE_HISTOGRAM_TABLE = false;
 let GEOJSON_DATA = null;
@@ -267,6 +268,15 @@ function syncFromUrl() {
     const overTimeRadio = document.querySelector(`input[name="over_time_view"][value="${overTimeValue}"]`);
     if (overTimeRadio) overTimeRadio.checked = true;
     apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
+    const aggregateControlsEl = document.getElementById("over_time_aggregate_controls");
+    if (aggregateControlsEl) aggregateControlsEl.style.display = USE_OVER_TIME_TABLE ? "none" : "";
+
+    // Time binning
+    const validBinnings = ["daily", "weekly", "monthly", "yearly"];
+    const urlBinning = params.get("binning");
+    TIME_BINNING = validBinnings.includes(urlBinning) ? urlBinning : "daily";
+    const binningRadio = document.querySelector(`input[name="time_binning"][value="${TIME_BINNING}"]`);
+    if (binningRadio) binningRadio.checked = true;
 
     // Histogram view (plot vs table)
     USE_HISTOGRAM_TABLE = params.get("histogram") === "table";
@@ -399,6 +409,10 @@ window.addEventListener("load", () => {
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
             apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
+
+            // Hide the aggregate controls when showing the table view
+            const aggregateEl = document.getElementById("over_time_aggregate_controls");
+            if (aggregateEl) aggregateEl.style.display = USE_OVER_TIME_TABLE ? "none" : "";
         });
     });
 
@@ -414,6 +428,22 @@ window.addEventListener("load", () => {
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
             apply_view_mode("histogram", "histogram_table", USE_HISTOGRAM_TABLE);
+        });
+    });
+
+    // Add event listener for time binning radio toggle (Daily / Weekly / Monthly / Yearly)
+    const timeBinningRadios = document.querySelectorAll('input[name="time_binning"]');
+    timeBinningRadios.forEach((radio) => {
+        radio.addEventListener("change", function () {
+            TIME_BINNING = this.value;
+
+            const params = new URLSearchParams(window.location.search);
+            setUrlParam(params, "binning", TIME_BINNING, "daily");
+            const query = params.toString();
+            window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
+
+            const selected_dandiset = document.getElementById("dandiset_selector").value;
+            load_over_time_plot(selected_dandiset);
         });
     });
 
@@ -614,6 +644,46 @@ function update_totals(dandiset_id) {
     }
 }
 
+/**
+ * Aggregates arrays of daily dates and byte counts into coarser time bins.
+ *
+ * @param {string[]} dates - ISO date strings ("YYYY-MM-DD").
+ * @param {number[]} bytes_sent - Byte counts for each corresponding date.
+ * @param {string} binning - One of "daily" | "weekly" | "monthly" | "yearly".
+ * @returns {{ dates: string[], bytes_sent: number[] }}
+ */
+function aggregate_by_timebin(dates, bytes_sent, binning) {
+    if (binning === "daily") {
+        return { dates, bytes_sent };
+    }
+
+    const bin_map = new Map();
+    dates.forEach((date_str, i) => {
+        const date = new Date(date_str + "T00:00:00Z");
+        let bin_key;
+        if (binning === "weekly") {
+            // Find the Monday (ISO week start) for this date
+            const day_of_week = date.getUTCDay(); // 0 = Sunday, 1 = Monday, ...
+            const days_to_monday = day_of_week === 0 ? -6 : 1 - day_of_week;
+            const monday = new Date(date);
+            monday.setUTCDate(date.getUTCDate() + days_to_monday);
+            bin_key = monday.toISOString().slice(0, 10);
+        } else if (binning === "monthly") {
+            bin_key = date_str.slice(0, 7); // "YYYY-MM"
+        } else { // "yearly"
+            bin_key = date_str.slice(0, 4); // "YYYY"
+        }
+        bin_map.set(bin_key, (bin_map.get(bin_key) || 0) + bytes_sent[i]);
+    });
+
+    // ISO strings sort lexicographically, so this preserves chronological order
+    const sorted_keys = Array.from(bin_map.keys()).sort();
+    return {
+        dates: sorted_keys,
+        bytes_sent: sorted_keys.map((k) => bin_map.get(k)),
+    };
+}
+
 // Function to fetch and render the over time for a given Dandiset ID
 function load_over_time_plot(dandiset_id) {
     const plot_element_id = "over_time_plot";
@@ -634,8 +704,13 @@ function load_over_time_plot(dandiset_id) {
 
             const raw_data = rows.slice(1).map((row) => row.split("\t"));
 
-            const dates = raw_data.map((row) => row[0]);
-            const bytes_sent = raw_data.map((row) => parseInt(row[1], 10));
+            const raw_dates = raw_data.map((row) => row[0]);
+            const raw_bytes = raw_data.map((row) => parseInt(row[1], 10));
+
+            // Aggregate raw daily data into the selected time bin
+            const aggregated = aggregate_by_timebin(raw_dates, raw_bytes, TIME_BINNING);
+            const dates = aggregated.dates;
+            const bytes_sent = aggregated.bytes_sent;
 
             // Convert to cumulative if the checkbox is checked
             let plot_data = bytes_sent;
@@ -647,24 +722,45 @@ function load_over_time_plot(dandiset_id) {
             }
 
             const human_readable_bytes_sent = plot_data.map((bytes) => format_bytes(bytes));
-            // TODO: cleanup code
+
+            // Build hover label prefix based on the selected binning
+            const bin_label_prefix = {
+                daily: "",
+                weekly: "Week of ",
+                monthly: "Month: ",
+                yearly: "Year: ",
+            }[TIME_BINNING];
 
             const plot_info = [
                 {
                     type: "bar",
-                    x: dates, // Use raw dates for proper alignment
+                    x: dates,
                     y: plot_data,
-                    text: dates.map((date, index) => `${date}<br>${human_readable_bytes_sent[index]}`),
+                    text: dates.map((date, index) => `${bin_label_prefix}${date}<br>${human_readable_bytes_sent[index]}`),
                     textposition: "none",
                     hoverinfo: "text",
                     marker: { color: DARK_THEME.accent },
                 }
             ];
 
+            // Choose axis tick format and plot title based on binning
+            const tick_formats = {
+                daily:   "%Y-%m-%d",
+                weekly:  "%Y-%m-%d",
+                monthly: "%Y-%m",
+                yearly:  "%Y",
+            };
+            const per_bin_titles = {
+                daily:   "Bytes sent per day",
+                weekly:  "Bytes sent per week",
+                monthly: "Bytes sent per month",
+                yearly:  "Bytes sent per year",
+            };
+
             const layout = applyDarkTheme({
                 bargap: 0,
                 title: {
-                    text: USE_CUMULATIVE ? `Total bytes sent to date` : `Bytes sent per day` ,
+                    text: USE_CUMULATIVE ? "Total bytes sent to date" : per_bin_titles[TIME_BINNING],
                     font: { size: 24 }
                 },
                 xaxis: {
@@ -672,7 +768,7 @@ function load_over_time_plot(dandiset_id) {
                         text: "Date",
                         font: { size: 16 }
                     },
-                    tickformat: "%Y-%m-%d",
+                    tickformat: tick_formats[TIME_BINNING],
                 },
                 yaxis: {
                     title: {
@@ -687,7 +783,8 @@ function load_over_time_plot(dandiset_id) {
                 },
             });
 
-            if (USE_CUMULATIVE) {
+            // For daily cumulative, remove range gaps so the line is continuous
+            if (USE_CUMULATIVE && TIME_BINNING === "daily") {
                 const date_set = new Set(dates);
                 const min_date = new Date(Math.min(...dates.map(d => new Date(d))));
                 const max_date = new Date(Math.max(...dates.map(d => new Date(d))));
@@ -707,10 +804,16 @@ function load_over_time_plot(dandiset_id) {
             Plotly.newPlot(plot_element_id, plot_info, layout);
 
             // Render table view (sortable by column header click; default: bytes descending)
+            const date_col_labels = {
+                daily:   "Date",
+                weekly:  "Week of",
+                monthly: "Month",
+                yearly:  "Year",
+            };
             const combined_days = dates.map((date, i) => ({ date, bytes: bytes_sent[i] }));
-            render_sortable_table("over_time_table", "Bytes sent per day", [
-                { label: "Date",       key: "date",  numeric: false },
-                { label: "Bytes Sent", key: "bytes", numeric: true  },
+            render_sortable_table("over_time_table", per_bin_titles[TIME_BINNING], [
+                { label: date_col_labels[TIME_BINNING], key: "date",  numeric: false },
+                { label: "Bytes Sent",                  key: "bytes", numeric: true  },
             ], combined_days, by_day_summary_tsv_url);
 
             apply_view_mode(plot_element_id, "over_time_table", USE_OVER_TIME_TABLE);
