@@ -874,17 +874,17 @@ function load_over_time_plot(dandiset_id) {
                     font: { size: 24 }
                 },
                 xaxis: {
-                    title: {
-                        text: "Date",
-                        font: { size: 16 }
-                    },
+                    //title: {
+                    //    text: "Date",
+                    //    font: { size: 16 }
+                    //},
                     tickformat: tick_formats[TIME_AGGREGATION],
                 },
                 yaxis: {
-                    title: {
-                        text: USE_LOG_SCALE ? "Bytes (log scale)" : "Bytes",
-                        font: { size: 16 }
-                    },
+                    //title: {
+                    //    text: USE_LOG_SCALE ? "Bytes (log scale)" : "Bytes",
+                    //    font: { size: 16 }
+                    //},
                     type: USE_LOG_SCALE ? "log" : "linear",
                     tickformat: USE_LOG_SCALE ? "" : "s",
                     ticksuffix: USE_LOG_SCALE ? "" : "B",
@@ -1012,17 +1012,17 @@ function load_dandiset_histogram() {
                 font: { size: 24 }
             },
             xaxis: {
-                title: {
-                    text: "(hover over an entry for Dandiset IDs)",
-                    font: { size: 16 }
-                },
+            //    title: {
+            //        text: "(hover over an entry for Dandiset IDs)",
+            //        font: { size: 16 }
+            //    },
                 showticklabels: false,
             },
             yaxis: {
-                title: {
-                    text: USE_LOG_SCALE ? "Bytes (log scale)" : "Bytes",
-                    font: { size: 16 }
-                },
+            //    title: {
+            //        text: USE_LOG_SCALE ? "Bytes (log scale)" : "Bytes",
+            //        font: { size: 16 }
+            //    },
                 type: USE_LOG_SCALE ? "log" : "linear",
                 tickformat: USE_LOG_SCALE ? "" : "~s",
                 ticksuffix: USE_LOG_SCALE ? "" : "B",
@@ -1107,17 +1107,17 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
                     font: { size: 24 }
                 },
                 xaxis: {
-                    title: {
-                        text: "(hover over an entry for asset names)",
-                        font: { size: 16 }
-                    },
+                //    title: {
+                //        text: "(hover over an entry for asset names)",
+                //        font: { size: 16 }
+                //    },
                     showticklabels: false,
                 },
                 yaxis: {
-                    title: {
-                        text: USE_LOG_SCALE ? "Bytes (log scale)" : "Bytes",
-                        font: { size: 16 }
-                    },
+                //    title: {
+                //        text: USE_LOG_SCALE ? "Bytes (log scale)" : "Bytes",
+                //        font: { size: 16 }
+                //    },
                     type: USE_LOG_SCALE ? "log" : "linear",
                     tickformat: USE_LOG_SCALE ? "" : "~s",
                     ticksuffix: USE_LOG_SCALE ? "" : "B",
