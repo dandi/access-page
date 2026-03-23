@@ -186,6 +186,12 @@ input[type="checkbox"] {
     height: 50vw;
 }
 
+/* Hide the built-in MapLibre attribution widget — credits are surfaced via
+   the custom in-plot annotation instead (GADM | © CARTO | © OSM). */
+#geography_heatmap .maplibregl-ctrl-attrib {
+    display: none;
+}
+
 .MapControls {
     margin: 24px auto 4px;
     width: fit-content;
