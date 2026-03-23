@@ -210,11 +210,29 @@ input[type="checkbox"] {
 }
 
 .plot-table h3 {
-    text-align: center;
     font-weight: 300;
     font-size: 1.1em;
     color: var(--color-text-secondary);
-    margin: 0 0 8px;
+    margin: 0;
+}
+
+.plot-table-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.table-data-link {
+    font-size: 0.8em;
+    color: var(--color-accent);
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.table-data-link:hover {
+    text-decoration: underline;
 }
 
 .plot-table-container {
@@ -482,11 +500,10 @@ input[type="checkbox"] {
 
 #top_regions_table h3,
 #aws_histogram h3 {
-    text-align: center;
     font-weight: 300;
     font-size: 1.1em;
     color: var(--color-text-secondary);
-    margin: 0 0 8px;
+    margin: 0;
 }
 
 #top_regions_table table,
