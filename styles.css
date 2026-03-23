@@ -116,6 +116,40 @@ h1 {
     color: var(--color-text-secondary);
 }
 
+/* ── Plot section headings with anchor links ── */
+section {
+    scroll-margin-top: 56px; /* offset for sticky header */
+}
+
+.section-heading {
+    text-align: center;
+    font-size: 1.1em;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    color: var(--color-text-secondary);
+    margin: 28px 0 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.section-anchor {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-size: 0.9em;
+    opacity: 0;
+    transition: opacity 0.15s;
+    line-height: 1;
+    padding: 2px 4px;
+}
+
+.section-heading:hover .section-anchor,
+.section-anchor:focus {
+    opacity: 1;
+}
+
 .ControllerContainer {
     display: flex;
     align-items: center;

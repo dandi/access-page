@@ -68,41 +68,50 @@
         </div>
     </div>
     <div id="totals"></div>
-    <div class="ControllerContainer PlotViewControls" id="over_time_view_controls">
-        <div class="SubControllerContainer">
-            <span class="radio-label">View:</span>
-            <label class="radio-option"><input type="radio" name="over_time_view" value="plot" checked /> Plot</label>
-            <label class="radio-option"><input type="radio" name="over_time_view" value="table" /> Table</label>
+    <section id="over-time">
+        <h2 class="section-heading">Bytes Over Time<a href="#over-time" class="section-anchor" aria-label="Link to Bytes Over Time section">#</a></h2>
+        <div class="ControllerContainer PlotViewControls" id="over_time_view_controls">
+            <div class="SubControllerContainer">
+                <span class="radio-label">View:</span>
+                <label class="radio-option"><input type="radio" name="over_time_view" value="plot" checked /> Plot</label>
+                <label class="radio-option"><input type="radio" name="over_time_view" value="table" /> Table</label>
+            </div>
         </div>
-    </div>
-    <div id="over_time_plot"></div>
-    <div id="over_time_table" class="plot-table" style="display:none;"></div>
-    <div class="ControllerContainer PlotViewControls" id="histogram_view_controls">
-        <div class="SubControllerContainer">
-            <span class="radio-label">View:</span>
-            <label class="radio-option"><input type="radio" name="histogram_view" value="plot" checked /> Plot</label>
-            <label class="radio-option"><input type="radio" name="histogram_view" value="table" /> Table</label>
+        <div id="over_time_plot"></div>
+        <div id="over_time_table" class="plot-table" style="display:none;"></div>
+    </section>
+    <section id="by-dandiset">
+        <h2 class="section-heading">Bytes by Dandiset<a href="#by-dandiset" class="section-anchor" aria-label="Link to Bytes by Dandiset section">#</a></h2>
+        <div class="ControllerContainer PlotViewControls" id="histogram_view_controls">
+            <div class="SubControllerContainer">
+                <span class="radio-label">View:</span>
+                <label class="radio-option"><input type="radio" name="histogram_view" value="plot" checked /> Plot</label>
+                <label class="radio-option"><input type="radio" name="histogram_view" value="table" /> Table</label>
+            </div>
         </div>
-    </div>
-    <div id="histogram"></div>
-    <div id="histogram_table" class="plot-table" style="display:none;"></div>
-    <div class="ControllerContainer PlotViewControls" id="geo_view_controls">
-        <div class="SubControllerContainer">
-            <span class="radio-label">View:</span>
-            <label class="radio-option"><input type="radio" name="geo_view" value="regions" checked /> Regions</label>
-            <label class="radio-option"><input type="radio" name="geo_view" value="dots" /> Dots</label>
-            <label class="radio-option"><input type="radio" name="geo_view" value="table" /> Table</label>
-            <label class="radio-option"><input type="radio" name="geo_view" value="aws" /> AWS</label>
+        <div id="histogram"></div>
+        <div id="histogram_table" class="plot-table" style="display:none;"></div>
+    </section>
+    <section id="geography">
+        <h2 class="section-heading">Geographic Distribution<a href="#geography" class="section-anchor" aria-label="Link to Geography section">#</a></h2>
+        <div class="ControllerContainer PlotViewControls" id="geo_view_controls">
+            <div class="SubControllerContainer">
+                <span class="radio-label">View:</span>
+                <label class="radio-option"><input type="radio" name="geo_view" value="regions" checked /> Regions</label>
+                <label class="radio-option"><input type="radio" name="geo_view" value="dots" /> Dots</label>
+                <label class="radio-option"><input type="radio" name="geo_view" value="table" /> Table</label>
+                <label class="radio-option"><input type="radio" name="geo_view" value="aws" /> AWS</label>
+            </div>
         </div>
-    </div>
-    <div id="geography_heatmap"></div>
-    <div id="map_attribution" class="attribution">
-        Geographic boundaries are defined by <a href="https://gadm.org/" target="_blank" rel="noopener">GADM v4.1</a>.
-    </div>
-    <div class="tables-row" id="geo_table_section" style="display:none;">
-        <div id="top_regions_table"></div>
-        <div id="aws_histogram"></div>
-    </div>
+        <div id="geography_heatmap"></div>
+        <div id="map_attribution" class="attribution">
+            Geographic boundaries are defined by <a href="https://gadm.org/" target="_blank" rel="noopener">GADM v4.1</a>.
+        </div>
+        <div class="tables-row" id="geo_table_section" style="display:none;">
+            <div id="top_regions_table"></div>
+            <div id="aws_histogram"></div>
+        </div>
+    </section>
     <div id="data_sources" class="data-sources-section">
         <span class="data-sources-label">Data sources:</span>
         <span id="data_sources_links"></span>
