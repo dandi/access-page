@@ -50,10 +50,18 @@ body {
     text-transform: uppercase;
     white-space: nowrap;
     transition: color 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .site-brand:hover {
     color: var(--color-accent-hover);
+}
+
+.site-logo {
+    height: 30px;
+    width: auto;
 }
 
 .site-title {
