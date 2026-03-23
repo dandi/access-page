@@ -733,11 +733,11 @@ function update_totals(dandiset_id) {
         const human_readable_bytes_sent = format_bytes(totals.total_bytes_sent);
         //totals_element.innerText = `Totals: ${human_readable_bytes_sent} sent to ?(WIP)? unique requesters from
         // ${totals.number_of_unique_regions} regions of ${totals.number_of_unique_countries} countries.`;
-        header = `A total of ${human_readable_bytes_sent} was sent to ${totals.number_of_unique_regions} regions across ${totals.number_of_unique_countries} countries. <sup>*</sup>`
+        header = `A total of ${human_readable_bytes_sent} was used by ${totals.number_of_unique_regions} regions across ${totals.number_of_unique_countries} countries. <sup>*</sup>`
         totals_element.innerHTML = dandiset_id === "unassociated"
-            ? header + `<br>However, the activity could not be associated with any Dandiset.<br>This can occur if a previously uploaded file was replaced prior to publication.`
+            ? header + `<br>However, the usage could not be associated with any Dandiset.<br>This can occur if a previously uploaded file was replaced prior to publication.`
             : dandiset_id === "undetermined"
-                ? header + `<br>However, the activity could not be uniquely associated with a particular Dandiset.<br>This can occur if the same file exists within more than one Dandiset at a time.`
+                ? header + `<br>However, the usage could not be uniquely associated with a particular Dandiset.<br>This can occur if the same file exists within more than one Dandiset at a time.`
                 : header
 
         // Add the footnote
@@ -861,16 +861,16 @@ function load_over_time_plot(dandiset_id) {
                 yearly:  "%Y",
             };
             const per_bin_titles = {
-                daily:   "Bytes sent per day",
-                weekly:  "Bytes sent per week",
-                monthly: "Bytes sent per month",
-                yearly:  "Bytes sent per year",
+                daily:   "Usage per day",
+                weekly:  "Usage per week",
+                monthly: "Usage per month",
+                yearly:  "Usage per year",
             };
 
             const layout = applyTheme({
                 bargap: 0,
                 title: {
-                    text: USE_CUMULATIVE ? "Total bytes sent to date" : per_bin_titles[TIME_AGGREGATION],
+                    text: USE_CUMULATIVE ? "Total usage to date" : per_bin_titles[TIME_AGGREGATION],
                     font: { size: 24 }
                 },
                 xaxis: {
@@ -923,7 +923,7 @@ function load_over_time_plot(dandiset_id) {
             const combined_days = dates.map((date, i) => ({ date, bytes: bytes_sent[i] }));
             render_sortable_table("over_time_table", per_bin_titles[TIME_AGGREGATION], [
                 { label: date_col_labels[TIME_AGGREGATION], key: "date",  numeric: false },
-                { label: "Bytes Sent",                  key: "bytes", numeric: true  },
+                { label: "Usage", key: "bytes", numeric: true  },
             ], combined_days, by_day_summary_tsv_url);
 
             apply_view_mode(plot_element_id, "over_time_table", USE_OVER_TIME_TABLE);
@@ -1008,7 +1008,7 @@ function load_dandiset_histogram() {
         const layout = applyTheme({
             bargap: 0,
             title: {
-                text: `Bytes sent per Dandiset`,
+                text: `Usage per Dandiset`,
                 font: { size: 24 }
             },
             xaxis: {
@@ -1034,9 +1034,9 @@ function load_dandiset_histogram() {
         Plotly.newPlot(plot_element_id, plot_data, layout);
 
         // Render table view (sortable by column header click; default: bytes descending)
-        render_sortable_table("histogram_table", "Bytes sent per Dandiset", [
+        render_sortable_table("histogram_table", "", [
             { label: "Dandiset ID", key: "raw_id", numeric: false },
-            { label: "Bytes Sent", key: "bytes",   numeric: true  },
+            { label: "Usage", key: "bytes",   numeric: true  },
         ], combined, ALL_DANDISET_TOTALS_URL);
 
         apply_view_mode(plot_element_id, "histogram_table", USE_HISTOGRAM_TABLE);
@@ -1103,7 +1103,7 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
             const layout = applyTheme({
                 bargap: 0,
                 title: {
-                    text: `Bytes sent per asset`,
+                    text: `Usage per asset`,
                     font: { size: 24 }
                 },
                 xaxis: {
@@ -1129,9 +1129,9 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
             Plotly.newPlot(plot_element_id, plot_data, layout);
 
             // Render table view (sortable by column header click; default: bytes descending)
-            render_sortable_table("histogram_table", "Bytes sent per asset", [
+            render_sortable_table("histogram_table", "Usage per asset", [
                 { label: "Asset",      key: "name",  numeric: false },
-                { label: "Bytes Sent", key: "bytes", numeric: true  },
+                { label: "Usage", key: "bytes", numeric: true  },
             ], combined, by_asset_summary_tsv_url);
 
             apply_view_mode(plot_element_id, "histogram_table", USE_HISTOGRAM_TABLE);
@@ -1190,7 +1190,7 @@ function load_aws_histogram(dandiset_id) {
 
             render_sortable_table("aws_histogram", `${format_bytes(total_bytes)} sent to AWS data centers`, [
                 { label: "AWS Region", key: "name",  numeric: false },
-                { label: "Bytes Sent", key: "bytes", numeric: true  },
+                { label: "Usage", key: "bytes", numeric: true  },
             ], subregion_data, by_region_summary_tsv_url);
         })
         .catch((error) => {
@@ -1373,9 +1373,9 @@ function load_top_regions_table(by_region_summary_tsv_url) {
                 return;
             }
 
-            render_sortable_table("top_regions_table", "Bytes sent per region", [
-                { label: "Region",     key: "region", numeric: false },
-                { label: "Bytes Sent", key: "bytes",  numeric: true  },
+            render_sortable_table("top_regions_table", "Usage per region", [
+                { label: "Region", key: "region", numeric: false },
+                { label: "Usage", key: "bytes", numeric: true },
             ], regions, by_region_summary_tsv_url);
         })
         .catch(() => {
@@ -1474,7 +1474,7 @@ function load_geographic_heatmap(dandiset_id) {
 
             const layout = applyTheme({
                 title: {
-                    text: "Bytes sent by region",
+                    text: "Usage by region",
                     font: { size: 24 },
                 },
                 geo: {
@@ -1624,7 +1624,7 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
 
         const layout = applyTheme({
             title: {
-                text: "Bytes sent by region",
+                text: "Usage by region",
                 font: { size: 24 },
             },
             map: {
