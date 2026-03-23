@@ -72,8 +72,10 @@ function apply_geo_view_mode(view) {
  *        Column definitions.  `numeric: true` formats the cell value with
  *        `format_bytes()`; otherwise the raw value is displayed as-is.
  * @param {Array<Object>} rows - Data rows (plain objects keyed by column.key).
+ * @param {string} [data_url] - Optional URL to the source data file; when
+ *        provided a "Data" hyperlink is rendered top-right in the table header.
  */
-function render_sortable_table(container_id, title, columns, rows) {
+function render_sortable_table(container_id, title, columns, rows, data_url) {
     const container = document.getElementById(container_id);
     if (!container) return;
 
@@ -94,7 +96,10 @@ function render_sortable_table(container_id, title, columns, rows) {
             return factor * String(va).localeCompare(String(vb), undefined, { numeric: true });
         });
 
-        let html = `<h3>${title}</h3>`;
+        const data_link = data_url
+            ? `<a class="table-data-link" href="${data_url}" target="_blank" rel="noopener">Data</a>`
+            : "";
+        let html = `<div class="plot-table-header"><h3>${title}</h3>${data_link}</div>`;
         html += '<div class="plot-table-container"><table><thead><tr>';
         columns.forEach((col) => {
             const is_sorted = col.key === sort_key;
@@ -132,55 +137,6 @@ function render_sortable_table(container_id, title, columns, rows) {
     render_table();
 }
 // ────────────────────────────────────────────────────────────────────────────
-
-/**
- * Rebuilds the consolidated "Data sources" section at the bottom of the page
- * for the given dandiset ID.
- *
- * @param {string} dandiset_id - The currently selected dandiset (or "archive"/"undetermined").
- */
-function update_data_sources(dandiset_id) {
-    const container = document.getElementById("data_sources_links");
-    if (!container) return;
-
-    const entries = [];
-
-    entries.push({
-        label: "Bytes per day",
-        url: `${BASE_TSV_URL}/${dandiset_id}/by_day.tsv`,
-    });
-
-    if (dandiset_id === "archive") {
-        entries.push({ label: "Bytes per Dandiset", url: ALL_DANDISET_TOTALS_URL });
-    } else if (dandiset_id !== "undetermined") {
-        entries.push({
-            label: "Bytes per asset",
-            url: `${BASE_TSV_URL}/${dandiset_id}/by_asset.tsv`,
-        });
-    }
-
-    entries.push({
-        label: "Bytes by region",
-        url: `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`,
-    });
-
-    container.innerHTML = "";
-    entries.forEach((entry, index) => {
-        if (index > 0) {
-            const sep = document.createElement("span");
-            sep.className = "data-sources-sep";
-            sep.setAttribute("aria-hidden", "true");
-            sep.textContent = "·";
-            container.appendChild(sep);
-        }
-        const a = document.createElement("a");
-        a.href = entry.url;
-        a.target = "_blank";
-        a.rel = "noopener";
-        a.textContent = entry.label;
-        container.appendChild(a);
-    });
-}
 
 // Fetch with exponential backoff retry logic
 /**
@@ -584,7 +540,6 @@ Promise.all([archiveTotalsPromise, allDandisetTotalsPromise])
             const id = validateDandisetId(rawId);
             selector.value = id;
             update_totals(id);
-            update_data_sources(id);
             load_over_time_plot(id);
             load_histogram(id);
             load_aws_histogram(id);
@@ -755,7 +710,7 @@ function load_over_time_plot(dandiset_id) {
             render_sortable_table("over_time_table", "Bytes sent per day", [
                 { label: "Date",       key: "date",  numeric: false },
                 { label: "Bytes Sent", key: "bytes", numeric: true  },
-            ], combined_days);
+            ], combined_days, by_day_summary_tsv_url);
 
             apply_view_mode(plot_element_id, "over_time_table", USE_OVER_TIME_TABLE);
         })
@@ -866,7 +821,7 @@ function load_dandiset_histogram() {
         render_sortable_table("histogram_table", "Bytes sent per Dandiset", [
             { label: "Dandiset ID", key: "raw_id", numeric: false },
             { label: "Bytes Sent", key: "bytes",   numeric: true  },
-        ], combined);
+        ], combined, ALL_DANDISET_TOTALS_URL);
 
         apply_view_mode(plot_element_id, "histogram_table", USE_HISTOGRAM_TABLE);
     })
@@ -961,7 +916,7 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
             render_sortable_table("histogram_table", "Bytes sent per asset", [
                 { label: "Asset",      key: "name",  numeric: false },
                 { label: "Bytes Sent", key: "bytes", numeric: true  },
-            ], combined);
+            ], combined, by_asset_summary_tsv_url);
 
             apply_view_mode(plot_element_id, "histogram_table", USE_HISTOGRAM_TABLE);
         })
@@ -1020,7 +975,7 @@ function load_aws_histogram(dandiset_id) {
             render_sortable_table("aws_histogram", `${format_bytes(total_bytes)} sent to AWS data centers`, [
                 { label: "AWS Region", key: "name",  numeric: false },
                 { label: "Bytes Sent", key: "bytes", numeric: true  },
-            ], subregion_data);
+            ], subregion_data, by_region_summary_tsv_url);
         })
         .catch((error) => {
             console.error("Error:", error);
@@ -1205,7 +1160,7 @@ function load_top_regions_table(by_region_summary_tsv_url) {
             render_sortable_table("top_regions_table", "Bytes sent per region", [
                 { label: "Region",     key: "region", numeric: false },
                 { label: "Bytes Sent", key: "bytes",  numeric: true  },
-            ], regions);
+            ], regions, by_region_summary_tsv_url);
         })
         .catch(() => {
             const el = document.getElementById("top_regions_table");
