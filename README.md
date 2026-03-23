@@ -12,20 +12,13 @@ Main webpage: https://usage.dandiarchive.org
 
 ## Configuration
 
-The page fetches TSV/JSON summary data from a GitHub repository.  The source
-can be customized without changing any JavaScript — in order of precedence:
+The page fetches TSV/JSON summary data from a GitHub repository.  To point a
+fork at a different data repository, change the `content` attribute of the
+`<meta name="data-source-base-url">` tag in `index.html`:
 
-1. **`?source=<url>` query parameter** — handy for one-off testing:
-   ```
-   https://usage.dandiarchive.org/?source=https://raw.githubusercontent.com/myorg/myrepo/main
-   ```
+```html
+<meta name="data-source-base-url" content="https://raw.githubusercontent.com/myorg/myrepo/main">
+```
 
-2. **`<meta name="data-source-base-url">` tag in `index.html`** — the right
-   choice when deploying a permanent fork that points at a different data
-   repository.  Change the `content` attribute to the desired base URL:
-   ```html
-   <meta name="data-source-base-url" content="https://raw.githubusercontent.com/myorg/myrepo/main">
-   ```
-
-3. **Hardcoded default** — `https://raw.githubusercontent.com/dandi/access-summaries/main`,
-   used when neither of the above is supplied.
+If the tag is absent, the page falls back to the hardcoded default:
+`https://raw.githubusercontent.com/dandi/access-summaries/main`.
