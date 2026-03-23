@@ -12,13 +12,9 @@ Main webpage: https://usage.dandiarchive.org
 
 ## Configuration
 
-The page fetches TSV/JSON summary data from a GitHub repository.  To point a
-fork at a different data repository, change the `content` attribute of the
-`<meta name="data-source-base-url">` tag in `index.html`:
+When deploying a fork that points at a different data repository, update the
+`BASE_URL` constant near the top of `plots.js`:
 
-```html
-<meta name="data-source-base-url" content="https://raw.githubusercontent.com/myorg/myrepo/main">
+```js
+const BASE_URL = "https://raw.githubusercontent.com/myorg/myrepo/main";
 ```
-
-If the tag is absent, the page falls back to the hardcoded default:
-`https://raw.githubusercontent.com/dandi/access-summaries/main`.
