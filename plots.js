@@ -185,6 +185,7 @@ async function fetchWithRetry(url, options = {}, maxRetries = 4, baseDelay = 100
 }
 
 // URLs for fetching data
+// When forking this repo for a different deployment, update BASE_URL to point at the new data repository.
 const BASE_URL = "https://raw.githubusercontent.com/dandi/access-summaries/main";
 const BASE_TSV_URL = `${BASE_URL}/content/summaries`;
 

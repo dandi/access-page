@@ -9,3 +9,12 @@
 Visualizations of data usage across the archive.
 
 Main webpage: https://usage.dandiarchive.org
+
+## Configuration
+
+When deploying a fork that points at a different data repository, update the
+`BASE_URL` constant near the top of `plots.js`:
+
+```js
+const BASE_URL = "https://raw.githubusercontent.com/myorg/myrepo/main";
+```
