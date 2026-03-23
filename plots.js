@@ -857,23 +857,25 @@ function load_over_time_plot(dandiset_id) {
 function load_histogram(dandiset_id) {
     let by_asset_summary_tsv_url;
     const controls_el = document.getElementById("histogram_view_controls");
-    const histogram_table_el = document.getElementById("histogram_table");
+    const plot_element = document.getElementById("histogram");
+    const section_el = plot_element && plot_element.closest('.view-section');
 
-    // Suppress div element content if 'undetermined' is selected
+    // Suppress entire histogram section if 'undetermined' is selected (nonsensical there)
     if (dandiset_id === "undetermined") {
-        const plot_element = document.getElementById("histogram");
         if (plot_element) {
             plot_element.innerText = "";
-            plot_element.style.display = "none";
         }
         if (controls_el) controls_el.style.display = "none";
-        if (histogram_table_el) histogram_table_el.style.display = "none";
+        if (section_el) {
+            section_el.style.minHeight = "";
+            section_el.style.display = "none";
+        }
         return "";
     }
 
-    const plot_element_visible = document.getElementById("histogram");
-    if (plot_element_visible) plot_element_visible.style.display = "";
+    if (plot_element) plot_element.style.display = "";
     if (controls_el) controls_el.style.display = "";
+    if (section_el) section_el.style.display = "";
 
     if (dandiset_id === "archive") {
         load_dandiset_histogram();
