@@ -1464,7 +1464,7 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
             },
             annotations: [
                 {
-                    text: '<a href="https://gadm.org/" target="_blank">GADM v4.1</a> | '
+                    text: 'Geographic boundaries are defined by <a href="https://gadm.org/" target="_blank">GADM v4.1</a> | '
                         + '<a href="https://carto.com/attributions" target="_blank">© CARTO</a> | '
                         + '<a href="https://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap contributors</a>',
                     showarrow: false,
