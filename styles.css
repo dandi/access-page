@@ -186,6 +186,12 @@ input[type="checkbox"] {
     height: 50vw;
 }
 
+/* Hide the built-in MapLibre attribution widget — credits are surfaced via
+   the custom in-plot annotation instead (GADM | © CARTO | © OSM). */
+#geography_heatmap .maplibregl-ctrl-attrib {
+    display: none;
+}
+
 .MapControls {
     margin: 24px auto 4px;
     width: fit-content;
@@ -482,22 +488,6 @@ input[type="checkbox"] {
 #top_regions_table tr:hover td,
 #aws_histogram tr:hover td {
     background: var(--color-accent-subtle);
-}
-
-.attribution {
-    text-align: center;
-    font-size: 0.75em;
-    color: var(--color-text-secondary);
-    margin: 4px auto 16px;
-}
-
-.attribution a {
-    color: var(--color-accent);
-    text-decoration: none;
-}
-
-.attribution a:hover {
-    text-decoration: underline;
 }
 
 .data-sources-section {
