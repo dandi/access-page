@@ -244,6 +244,12 @@ input[type="checkbox"] {
     width: fit-content;
 }
 
+/* Wrapper for each section's plot + table; min-height is locked via JS on
+   first view-switch to prevent elements below from jumping up or down. */
+.view-section {
+    width: 100%;
+}
+
 .plot-table {
     max-width: 1100px;
     margin: 0 auto 16px;
