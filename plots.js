@@ -185,7 +185,15 @@ async function fetchWithRetry(url, options = {}, maxRetries = 4, baseDelay = 100
 }
 
 // URLs for fetching data
-const BASE_URL = "https://raw.githubusercontent.com/dandi/access-summaries/main";
+// BASE_URL is resolved in order of precedence:
+//   1. `?source=<url>` query parameter (useful for testing against a different data repo)
+//   2. <meta name="data-source-base-url"> in the HTML (set this to point a deployment at its own data repo)
+//   3. Hardcoded default (dandi/access-summaries)
+const _DEFAULT_BASE_URL = "https://raw.githubusercontent.com/dandi/access-summaries/main";
+const _metaSourceEl = document.querySelector('meta[name="data-source-base-url"]');
+const _metaSource = _metaSourceEl ? _metaSourceEl.getAttribute("content") : null;
+const _querySource = new URLSearchParams(window.location.search).get("source");
+const BASE_URL = (_querySource || _metaSource || _DEFAULT_BASE_URL).replace(/\/+$/, "");
 const BASE_TSV_URL = `${BASE_URL}/content/summaries`;
 
 const ARCHIVE_TOTALS_URL = `${BASE_URL}/content/archive_totals.json`;
