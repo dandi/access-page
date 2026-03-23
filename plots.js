@@ -860,8 +860,8 @@ function load_histogram(dandiset_id) {
     const plot_element = document.getElementById("histogram");
     const section_el = plot_element && plot_element.closest('.view-section');
 
-    // Suppress entire histogram section if 'undetermined' is selected (nonsensical there)
-    if (dandiset_id === "undetermined") {
+    // Suppress entire histogram section if 'undetermined' or 'unassociated' is selected (nonsensical there)
+    if (dandiset_id === "undetermined" || dandiset_id === "unassociated") {
         if (plot_element) {
             plot_element.innerText = "";
         }
