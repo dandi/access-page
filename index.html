@@ -71,8 +71,12 @@
     <div class="ControllerContainer PlotViewControls" id="over_time_view_controls">
         <div class="SubControllerContainer">
             <span class="radio-label">View:</span>
-            <label class="radio-option"><input type="radio" name="over_time_view" value="plot" checked /> Plot</label>
-            <label class="radio-option"><input type="radio" name="over_time_view" value="table" /> Table</label>
+            <div class="radio-toggle">
+                <input type="radio" id="over_time_view_plot" name="over_time_view" value="plot" checked />
+                <label for="over_time_view_plot">Plot</label>
+                <input type="radio" id="over_time_view_table" name="over_time_view" value="table" />
+                <label for="over_time_view_table">Table</label>
+            </div>
         </div>
     </div>
     <div id="over_time_plot"></div>
@@ -80,8 +84,12 @@
     <div class="ControllerContainer PlotViewControls" id="histogram_view_controls">
         <div class="SubControllerContainer">
             <span class="radio-label">View:</span>
-            <label class="radio-option"><input type="radio" name="histogram_view" value="plot" checked /> Plot</label>
-            <label class="radio-option"><input type="radio" name="histogram_view" value="table" /> Table</label>
+            <div class="radio-toggle">
+                <input type="radio" id="histogram_view_plot" name="histogram_view" value="plot" checked />
+                <label for="histogram_view_plot">Plot</label>
+                <input type="radio" id="histogram_view_table" name="histogram_view" value="table" />
+                <label for="histogram_view_table">Table</label>
+            </div>
         </div>
     </div>
     <div id="histogram"></div>
@@ -89,10 +97,16 @@
     <div class="ControllerContainer PlotViewControls" id="geo_view_controls">
         <div class="SubControllerContainer">
             <span class="radio-label">View:</span>
-            <label class="radio-option"><input type="radio" name="geo_view" value="regions" checked /> Regions</label>
-            <label class="radio-option"><input type="radio" name="geo_view" value="dots" /> Dots</label>
-            <label class="radio-option"><input type="radio" name="geo_view" value="table" /> Table</label>
-            <label class="radio-option"><input type="radio" name="geo_view" value="aws" /> AWS</label>
+            <div class="radio-toggle">
+                <input type="radio" id="geo_view_regions" name="geo_view" value="regions" checked />
+                <label for="geo_view_regions">Regions</label>
+                <input type="radio" id="geo_view_dots" name="geo_view" value="dots" />
+                <label for="geo_view_dots">Dots</label>
+                <input type="radio" id="geo_view_table" name="geo_view" value="table" />
+                <label for="geo_view_table">Table</label>
+                <input type="radio" id="geo_view_aws" name="geo_view" value="aws" />
+                <label for="geo_view_aws">AWS</label>
+            </div>
         </div>
     </div>
     <div id="geography_heatmap"></div>

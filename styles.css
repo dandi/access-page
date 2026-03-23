@@ -7,8 +7,9 @@
     --color-text: #e0e0e0;
     --color-text-secondary: #a0a0b0;
     --color-accent: #53a8b6;
+    --color-accent-rgb: 83, 168, 182;
     --color-accent-hover: #79c7d4;
-    --color-accent-subtle: rgba(83, 168, 182, 0.08);
+    --color-accent-subtle: rgba(var(--color-accent-rgb), 0.08);
     /* ─────────────────────────────────────────────────────────────────────── */
     --font-main: 'Source Sans 3', -apple-system, sans-serif;
     --radius: 6px;
@@ -286,16 +287,56 @@ input[type="checkbox"] {
     letter-spacing: 0.01em;
 }
 
-.radio-option {
-    font-size: 0.85em;
-    font-weight: 400;
-    cursor: pointer;
-    gap: 3px;
+/* ── Segmented radio toggle ──────────────────────────────────── */
+.radio-toggle {
+    display: inline-flex;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
 }
 
-.radio-option input[type="radio"] {
-    accent-color: var(--color-accent);
+/* Hide the native radio circle, but keep it accessible */
+.radio-toggle input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+/* Each label becomes a "button" */
+.radio-toggle label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 18px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    border-radius: 6px;
     cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.radio-toggle label:hover {
+    color: var(--color-text);
+    background: rgba(var(--color-accent-rgb), 0.1);
+}
+
+/* The "active" pill — triggered purely by :checked */
+.radio-toggle input[type="radio"]:checked + label {
+    background: var(--color-accent);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(var(--color-accent-rgb), 0.35);
+}
+
+/* Focus ring for keyboard navigation */
+.radio-toggle input[type="radio"]:focus-visible + label {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
 }
 
 .separator {
