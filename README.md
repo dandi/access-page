@@ -1,8 +1,10 @@
-# DANDI usage webpage (source)
+<div align="center">
+  <picture>
+    <img alt="nwb2bids logo" src="dandi-usage-logo.svg" width="200">
+  </picture>
 
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/b74222dd-f688-4118-9d60-854bc50f322f" alt="DANDI Usage Logo" width="400">
-</p>
+  <h1 align="center">DANDI usage webpage (source)</h1>
+</div>
 
 Visualizations of data usage across the archive.
 
