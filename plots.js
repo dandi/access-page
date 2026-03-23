@@ -371,8 +371,6 @@ function syncFromUrl() {
     const overTimeRadio = document.querySelector(`input[name="over_time_view"][value="${overTimeValue}"]`);
     if (overTimeRadio) overTimeRadio.checked = true;
     apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
-    const aggregateControlsEl = document.getElementById("over_time_aggregate_controls");
-    if (aggregateControlsEl) aggregateControlsEl.style.visibility = USE_OVER_TIME_TABLE ? "hidden" : "";
 
     // Time aggregation
     const validAggregations = ["daily", "weekly", "monthly", "yearly"];
@@ -518,11 +516,6 @@ window.addEventListener("load", () => {
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
             apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
-
-            // Hide the aggregate controls when showing the table view, but keep the
-            // space they occupy so the section height does not change
-            const aggregateEl = document.getElementById("over_time_aggregate_controls");
-            if (aggregateEl) aggregateEl.style.visibility = USE_OVER_TIME_TABLE ? "hidden" : "";
         });
     });
 
