@@ -78,6 +78,20 @@
                 <label for="over_time_view_table">Table</label>
             </div>
         </div>
+        <div class="separator"></div>
+        <div class="SubControllerContainer">
+            <span class="radio-label">Binning:</span>
+            <div class="radio-toggle">
+                <input type="radio" id="binning_daily" name="time_binning" value="daily" checked />
+                <label for="binning_daily">Daily</label>
+                <input type="radio" id="binning_weekly" name="time_binning" value="weekly" />
+                <label for="binning_weekly">Weekly</label>
+                <input type="radio" id="binning_monthly" name="time_binning" value="monthly" />
+                <label for="binning_monthly">Monthly</label>
+                <input type="radio" id="binning_yearly" name="time_binning" value="yearly" />
+                <label for="binning_yearly">Yearly</label>
+            </div>
+        </div>
     </div>
     <div id="over_time_plot"></div>
     <div id="over_time_table" class="plot-table" style="display:none;"></div>
