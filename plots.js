@@ -108,6 +108,16 @@ function syncThemeToggleIcon() {
 // ────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Shows or hides the "Group by" control for the over-time plot.
+ * The control has no effect when the table view is active.
+ * @param {boolean} visible - When true, the control is shown.
+ */
+function apply_over_time_group_by_visibility(visible) {
+    const container = document.getElementById("over_time_group_by_container");
+    if (container) container.style.display = visible ? "" : "none";
+}
+
+/**
  * Toggles visibility between a Plotly plot element and its paired table element.
  * Before switching, the enclosing `.view-section` wrapper's current rendered
  * height is stored as its `min-height`, so elements further down the page do
@@ -373,6 +383,7 @@ function syncFromUrl() {
     const overTimeRadio = document.querySelector(`input[name="over_time_view"][value="${overTimeValue}"]`);
     if (overTimeRadio) overTimeRadio.checked = true;
     apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
+    apply_over_time_group_by_visibility(!USE_OVER_TIME_TABLE);
 
     // Time aggregation
     const validAggregations = ["daily", "weekly", "monthly", "yearly"];
@@ -534,6 +545,7 @@ window.addEventListener("load", () => {
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
             apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
+            apply_over_time_group_by_visibility(!USE_OVER_TIME_TABLE);
         });
     });
 
