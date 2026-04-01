@@ -210,6 +210,24 @@ input[type="checkbox"] {
     height: 15px;
 }
 
+input[type="number"] {
+    font-family: var(--font-main);
+    font-size: 0.85em;
+    padding: 4px 6px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    outline: none;
+    width: 4em;
+    transition: border-color 0.15s;
+}
+
+input[type="number"]:hover,
+input[type="number"]:focus {
+    border-color: var(--color-accent);
+}
+
 #over_time_plot {
     margin: 8px auto;
     max-width: 95vw;

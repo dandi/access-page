@@ -108,6 +108,20 @@ function syncThemeToggleIcon() {
 // ────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Shows or hides the "Group by" control for the over-time plot.
+ * The control is only relevant when the plot view is active and the archive
+ * dandiset is selected — it has no effect for individual dandiset pages or
+ * when the table view is shown.
+ */
+function apply_over_time_group_by_visibility() {
+    const container = document.getElementById("over_time_group_by_container");
+    if (!container) return;
+    const selector = document.getElementById("dandiset_selector");
+    const isArchive = !selector || selector.value === "archive";
+    container.style.display = (!USE_OVER_TIME_TABLE && isArchive) ? "" : "none";
+}
+
+/**
  * Toggles visibility between a Plotly plot element and its paired table element.
  * Before switching, the enclosing `.view-section` wrapper's current rendered
  * height is stored as its `min-height`, so elements further down the page do
@@ -303,6 +317,8 @@ let USE_CUMULATIVE = false;
 let USE_BINARY = false;
 let GEO_VIEW = "regions";  // "regions" | "points" | "table" | "aws"
 let TIME_AGGREGATION = "daily";  // "daily" | "weekly" | "monthly" | "yearly"
+let OVER_TIME_GROUP_BY = "none";  // "none" | "dandisets"
+let TOP_N_DANDISETS = 8;
 let USE_OVER_TIME_TABLE = false;
 let USE_HISTOGRAM_TABLE = false;
 let GEOJSON_DATA = null;
@@ -371,13 +387,28 @@ function syncFromUrl() {
     const overTimeRadio = document.querySelector(`input[name="over_time_view"][value="${overTimeValue}"]`);
     if (overTimeRadio) overTimeRadio.checked = true;
     apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
-
-    // Time aggregation
+    apply_over_time_group_by_visibility();
     const validAggregations = ["daily", "weekly", "monthly", "yearly"];
     const urlAggregation = params.get("aggregation");
     TIME_AGGREGATION = validAggregations.includes(urlAggregation) ? urlAggregation : "daily";
     const aggregationRadio = document.querySelector(`input[name="time_aggregation"][value="${TIME_AGGREGATION}"]`);
     if (aggregationRadio) aggregationRadio.checked = true;
+
+    // Over-time group by
+    const groupBySelector = document.getElementById("over_time_group_by");
+    if (groupBySelector) {
+        const urlGroupBy = params.get("group_by");
+        OVER_TIME_GROUP_BY = ["none", "dandisets"].includes(urlGroupBy) ? urlGroupBy : "none";
+        groupBySelector.value = OVER_TIME_GROUP_BY;
+    }
+
+    // Top N dandisets
+    const topNInput = document.getElementById("top_n_dandisets");
+    if (topNInput) {
+        const urlTopN = parseInt(params.get("top_n"), 10);
+        TOP_N_DANDISETS = (!isNaN(urlTopN) && urlTopN >= 1) ? urlTopN : 8;
+        topNInput.value = TOP_N_DANDISETS;
+    }
 
     // Histogram view (plot vs table)
     USE_HISTOGRAM_TABLE = params.get("histogram") === "table";
@@ -516,6 +547,7 @@ window.addEventListener("load", () => {
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
             apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
+            apply_over_time_group_by_visibility();
         });
     });
 
@@ -570,6 +602,42 @@ window.addEventListener("load", () => {
             }
         });
     });
+
+    // Add event listener for over-time group-by selector
+    const groupBySelector = document.getElementById("over_time_group_by");
+    if (groupBySelector) {
+        groupBySelector.addEventListener("change", function () {
+            OVER_TIME_GROUP_BY = this.value;
+
+            const params = new URLSearchParams(window.location.search);
+            setUrlParam(params, "group_by", OVER_TIME_GROUP_BY, "none");
+            const query = params.toString();
+            window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
+
+            const selected_dandiset = document.getElementById("dandiset_selector").value;
+            load_over_time_plot(selected_dandiset);
+        });
+    }
+
+    // Add event listener for top-N dandisets setting
+    const topNInput = document.getElementById("top_n_dandisets");
+    if (topNInput) {
+        topNInput.addEventListener("change", function () {
+            const val = parseInt(this.value, 10);
+            TOP_N_DANDISETS = (!isNaN(val) && val >= 1) ? val : 8;
+            this.value = TOP_N_DANDISETS;
+
+            const params = new URLSearchParams(window.location.search);
+            setUrlParam(params, "top_n", String(TOP_N_DANDISETS), "8");
+            const query = params.toString();
+            window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
+
+            if (OVER_TIME_GROUP_BY === "dandisets") {
+                const selected_dandiset = document.getElementById("dandiset_selector").value;
+                load_over_time_plot(selected_dandiset);
+            }
+        });
+    }
 });
 
 // Add an event listener for window resize
@@ -673,6 +741,7 @@ Promise.all([archiveTotalsPromise, allDandisetTotalsPromise])
         const setSelectedDandiset = (rawId) => {
             const id = validateDandisetId(rawId);
             selector.value = id;
+            apply_over_time_group_by_visibility();
             update_totals(id);
             load_over_time_plot(id);
             load_histogram(id);
@@ -785,9 +854,207 @@ function aggregate_by_timebin(dates, bytes_sent, aggregation) {
     };
 }
 
+// Categorical colour palette for the "group by Dandisets" overlay bars.
+// Colours include 0.7 alpha so overlapping bars remain visible.
+const DANDISET_BAR_COLORS = [
+    "rgba(88,174,192,0.7)",
+    "rgba(255,152,0,0.7)",
+    "rgba(76,175,80,0.7)",
+    "rgba(229,57,53,0.7)",
+    "rgba(156,39,176,0.7)",
+    "rgba(233,30,99,0.7)",
+    "rgba(0,188,212,0.7)",
+    "rgba(205,220,57,0.7)",
+    "rgba(255,87,34,0.7)",
+    "rgba(63,81,181,0.7)",
+    "rgba(0,150,136,0.7)",
+    "rgba(255,193,7,0.7)",
+    "rgba(96,125,139,0.7)",
+    "rgba(33,150,243,0.7)",
+    "rgba(139,195,74,0.7)",
+    "rgba(171,71,188,0.7)",
+    "rgba(121,85,72,0.7)",
+    "rgba(0,230,118,0.7)",
+    "rgba(244,67,54,0.7)",
+    "rgba(3,169,244,0.7)",
+];
+
+/**
+ * Parses a by_day TSV text string and returns { dates, bytes }.
+ */
+function parse_by_day_tsv(text) {
+    const rows = text.split("\n").filter((row) => row.trim() !== "");
+    if (rows.length < 2) throw new Error("TSV file does not contain enough data.");
+    const raw_data = rows.slice(1).map((row) => row.split("\t"));
+    return {
+        dates: raw_data.map((row) => row[0]),
+        bytes: raw_data.map((row) => parseInt(row[1], 10)),
+    };
+}
+
+/**
+ * Builds the shared layout options used by both single-series and grouped
+ * over-time plots.
+ */
+function build_over_time_layout(dates) {
+    const tick_formats = {
+        daily:   "%Y-%m-%d",
+        weekly:  "%Y-%m-%d",
+        monthly: "%Y-%m",
+        yearly:  "%Y",
+    };
+    const per_bin_titles = {
+        daily:   "Usage per day",
+        weekly:  "Usage per week",
+        monthly: "Usage per month",
+        yearly:  "Usage per year",
+    };
+
+    const layout = applyTheme({
+        bargap: 0,
+        title: {
+            text: USE_CUMULATIVE ? "Total usage to date" : per_bin_titles[TIME_AGGREGATION],
+            font: { size: 24 }
+        },
+        xaxis: {
+            tickformat: tick_formats[TIME_AGGREGATION],
+        },
+        yaxis: {
+            type: USE_LOG_SCALE ? "log" : "linear",
+            tickformat: USE_LOG_SCALE ? "" : "s",
+            ticksuffix: USE_LOG_SCALE ? "" : "B",
+            tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000] : null,
+            ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB", "PB"] : null,
+        },
+    });
+
+    // For daily cumulative, remove range gaps so the display is continuous
+    if (USE_CUMULATIVE && TIME_AGGREGATION === "daily") {
+        const date_set = new Set(dates);
+        const date_objects = dates.map(d => new Date(d));
+        const min_date = new Date(Math.min(...date_objects));
+        const max_date = new Date(Math.max(...date_objects));
+        const all_dates = [];
+        for (let d = new Date(min_date); d <= max_date; d.setDate(d.getDate() + 1)) {
+            all_dates.push(d.toISOString().slice(0, 10));
+        }
+        layout.xaxis.rangebreaks = [{ values: all_dates.filter(d => !date_set.has(d)) }];
+    }
+
+    return layout;
+}
+
+/**
+ * Applies cumulative transform to an array of byte counts.
+ */
+function make_cumulative(bytes_sent) {
+    return bytes_sent.reduce((acc, value, index) => {
+        acc.push((acc[index - 1] || 0) + value);
+        return acc;
+    }, []);
+}
+
 // Function to fetch and render the over time for a given Dandiset ID
 function load_over_time_plot(dandiset_id) {
     const plot_element_id = "over_time_plot";
+
+    // ── Grouped mode: overlay top-N dandisets (archive view only) ────────────
+    if (OVER_TIME_GROUP_BY === "dandisets" && dandiset_id === "archive") {
+        const top_dandiset_ids = Object.entries(ALL_DANDISET_TOTALS)
+            .filter(([id]) => id !== "archive" && id !== "undetermined" && id !== "unassociated")
+            .sort((a, b) => b[1].total_bytes_sent - a[1].total_bytes_sent)
+            .slice(0, TOP_N_DANDISETS)
+            .map(([id]) => id);
+
+        const bin_label_prefix = {
+            daily: "", weekly: "Week of ", monthly: "Month: ", yearly: "Year: ",
+        }[TIME_AGGREGATION];
+
+        const per_series_promises = top_dandiset_ids.map((id) =>
+            fetch(`${BASE_TSV_URL}/${id}/by_day.tsv`)
+                .then((r) => {
+                    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                    return r.text();
+                })
+                .then((text) => {
+                    const { dates: raw_dates, bytes: raw_bytes } = parse_by_day_tsv(text);
+                    const agg = aggregate_by_timebin(raw_dates, raw_bytes, TIME_AGGREGATION);
+                    const plot_data = USE_CUMULATIVE ? make_cumulative(agg.bytes_sent) : agg.bytes_sent;
+                    return { id, dates: agg.dates, plot_data };
+                })
+                .catch((err) => {
+                    console.warn(`Skipping dandiset ${id} in grouped view:`, err);
+                    return null;
+                })
+        );
+
+        // Also fetch the archive's by_day.tsv for the table view
+        const archive_tsv_url = `${BASE_TSV_URL}/archive/by_day.tsv`;
+        const archive_promise = fetch(archive_tsv_url)
+            .then((r) => r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status}`)))
+            .then((text) => parse_by_day_tsv(text))
+            .catch(() => null);
+
+        Promise.all([Promise.all(per_series_promises), archive_promise])
+            .then(([series_results, archive_data]) => {
+                const valid_series = series_results.filter(Boolean);
+
+                const plot_info = valid_series.map((series, i) => {
+                    const color = DANDISET_BAR_COLORS[i % DANDISET_BAR_COLORS.length];
+                    const human_readable = series.plot_data.map((b) => format_bytes(b));
+                    return {
+                        type: "bar",
+                        name: `DANDI:${series.id}`,
+                        x: series.dates,
+                        y: series.plot_data,
+                        text: series.dates.map((date, idx) =>
+                            `DANDI:${series.id}<br>${bin_label_prefix}${date}<br>${human_readable[idx]}`
+                        ),
+                        textposition: "none",
+                        hoverinfo: "text",
+                        marker: { color },
+                    };
+                });
+
+                // Collect all dates across series for range-break calculation
+                const all_series_dates = valid_series.flatMap((s) => s.dates);
+                const layout = build_over_time_layout(all_series_dates);
+                layout.barmode = "overlay";
+                layout.legend = { title: { text: "Dandiset" } };
+
+                Plotly.newPlot(plot_element_id, plot_info, layout);
+
+                // Render archive table view even in grouped mode
+                const per_bin_titles = {
+                    daily: "Usage per day", weekly: "Usage per week",
+                    monthly: "Usage per month", yearly: "Usage per year",
+                };
+                const date_col_labels = {
+                    daily: "Date", weekly: "Week of", monthly: "Month", yearly: "Year",
+                };
+                if (archive_data) {
+                    const agg = aggregate_by_timebin(archive_data.dates, archive_data.bytes, TIME_AGGREGATION);
+                    const combined_days = agg.dates.map((date, i) => ({ date, bytes: agg.bytes_sent[i] }));
+                    render_sortable_table("over_time_table", per_bin_titles[TIME_AGGREGATION], [
+                        { label: date_col_labels[TIME_AGGREGATION], key: "date",  numeric: false },
+                        { label: "Usage", key: "bytes", numeric: true },
+                    ], combined_days, archive_tsv_url);
+                }
+
+                apply_view_mode(plot_element_id, "over_time_table", USE_OVER_TIME_TABLE);
+            })
+            .catch((error) => {
+                console.error("Error in grouped over-time plot:", error);
+                const plot_element = document.getElementById(plot_element_id);
+                if (plot_element) {
+                    plot_element.innerText = "Failed to load data for grouped per day plot.";
+                }
+            });
+
+        return;
+    }
+
+    // ── Default single-series mode ────────────────────────────────────────────
     let by_day_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_day.tsv`;
 
     fetch(by_day_summary_tsv_url)
@@ -816,10 +1083,7 @@ function load_over_time_plot(dandiset_id) {
             // Convert to cumulative if the checkbox is checked
             let plot_data = bytes_sent;
             if (USE_CUMULATIVE) {
-                plot_data = bytes_sent.reduce((acc, value, index) => {
-                    acc.push((acc[index - 1] || 0) + value);
-                    return acc;
-                }, []);
+                plot_data = make_cumulative(bytes_sent);
             }
 
             const human_readable_bytes_sent = plot_data.map((bytes) => format_bytes(bytes));
@@ -844,13 +1108,6 @@ function load_over_time_plot(dandiset_id) {
                 }
             ];
 
-            // Choose axis tick format and plot title based on aggregation
-            const tick_formats = {
-                daily:   "%Y-%m-%d",
-                weekly:  "%Y-%m-%d",
-                monthly: "%Y-%m",
-                yearly:  "%Y",
-            };
             const per_bin_titles = {
                 daily:   "Usage per day",
                 weekly:  "Usage per week",
@@ -858,41 +1115,7 @@ function load_over_time_plot(dandiset_id) {
                 yearly:  "Usage per year",
             };
 
-            const layout = applyTheme({
-                bargap: 0,
-                title: {
-                    text: USE_CUMULATIVE ? "Total usage to date" : per_bin_titles[TIME_AGGREGATION],
-                    font: { size: 24 }
-                },
-                xaxis: {
-                    tickformat: tick_formats[TIME_AGGREGATION],
-                },
-                yaxis: {
-                    type: USE_LOG_SCALE ? "log" : "linear",
-                    tickformat: USE_LOG_SCALE ? "" : "s",
-                    ticksuffix: USE_LOG_SCALE ? "" : "B",
-                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000] : null,
-                    ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null,
-                },
-            });
-
-            // For daily cumulative, remove range gaps so the line is continuous
-            if (USE_CUMULATIVE && TIME_AGGREGATION === "daily") {
-                const date_set = new Set(dates);
-                const min_date = new Date(Math.min(...dates.map(d => new Date(d))));
-                const max_date = new Date(Math.max(...dates.map(d => new Date(d))));
-                let all_dates = [];
-                for (let date = new Date(min_date); date <= max_date; date.setDate(date.getDate() + 1)) {
-                    all_dates.push(date.toISOString().slice(0, 10));
-                }
-                const missing_dates = all_dates.filter(date => !date_set.has(date));
-
-                layout.xaxis.rangebreaks = [
-                    {
-                        values: missing_dates
-                    }
-                ];
-            }
+            const layout = build_over_time_layout(dates);
 
             Plotly.newPlot(plot_element_id, plot_info, layout);
 
