@@ -909,15 +909,16 @@ function build_over_time_layout(dates) {
             tickformat: USE_LOG_SCALE ? "" : "s",
             ticksuffix: USE_LOG_SCALE ? "" : "B",
             tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000] : null,
-            ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null,
+            ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB", "PB"] : null,
         },
     });
 
     // For daily cumulative, remove range gaps so the display is continuous
     if (USE_CUMULATIVE && TIME_AGGREGATION === "daily") {
         const date_set = new Set(dates);
-        const min_date = new Date(Math.min(...dates.map(d => new Date(d))));
-        const max_date = new Date(Math.max(...dates.map(d => new Date(d))));
+        const date_objects = dates.map(d => new Date(d));
+        const min_date = new Date(Math.min(...date_objects));
+        const max_date = new Date(Math.max(...date_objects));
         const all_dates = [];
         for (let d = new Date(min_date); d <= max_date; d.setDate(d.getDate() + 1)) {
             all_dates.push(d.toISOString().slice(0, 10));
