@@ -109,12 +109,16 @@ function syncThemeToggleIcon() {
 
 /**
  * Shows or hides the "Group by" control for the over-time plot.
- * The control has no effect when the table view is active.
- * @param {boolean} visible - When true, the control is shown.
+ * The control is only relevant when the plot view is active and the archive
+ * dandiset is selected — it has no effect for individual dandiset pages or
+ * when the table view is shown.
  */
-function apply_over_time_group_by_visibility(visible) {
+function apply_over_time_group_by_visibility() {
     const container = document.getElementById("over_time_group_by_container");
-    if (container) container.style.display = visible ? "" : "none";
+    if (!container) return;
+    const selector = document.getElementById("dandiset_selector");
+    const isArchive = !selector || selector.value === "archive";
+    container.style.display = (!USE_OVER_TIME_TABLE && isArchive) ? "" : "none";
 }
 
 /**
@@ -383,9 +387,7 @@ function syncFromUrl() {
     const overTimeRadio = document.querySelector(`input[name="over_time_view"][value="${overTimeValue}"]`);
     if (overTimeRadio) overTimeRadio.checked = true;
     apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
-    apply_over_time_group_by_visibility(!USE_OVER_TIME_TABLE);
-
-    // Time aggregation
+    apply_over_time_group_by_visibility();
     const validAggregations = ["daily", "weekly", "monthly", "yearly"];
     const urlAggregation = params.get("aggregation");
     TIME_AGGREGATION = validAggregations.includes(urlAggregation) ? urlAggregation : "daily";
@@ -545,7 +547,7 @@ window.addEventListener("load", () => {
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
             apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
-            apply_over_time_group_by_visibility(!USE_OVER_TIME_TABLE);
+            apply_over_time_group_by_visibility();
         });
     });
 
@@ -739,6 +741,7 @@ Promise.all([archiveTotalsPromise, allDandisetTotalsPromise])
         const setSelectedDandiset = (rawId) => {
             const id = validateDandisetId(rawId);
             selector.value = id;
+            apply_over_time_group_by_visibility();
             update_totals(id);
             load_over_time_plot(id);
             load_histogram(id);
