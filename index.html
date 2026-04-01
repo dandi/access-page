@@ -65,6 +65,11 @@
                         <option value="binary">Binary</option>
                     </select>
                 </div>
+                <div class="SubControllerContainer">
+                    <label for="top_n_dandisets">Top Dandisets</label>
+                    <span class="info-icon" data-tooltip="Number of top Dandisets shown when grouping by Dandisets" tabindex="0" role="img" aria-label="Top Dandisets: Number of top Dandisets shown when grouping by Dandisets">i</span>
+                    <input type="number" id="top_n_dandisets" min="1" value="8" />
+                </div>
             </div>
         </div>
     </div>
@@ -94,6 +99,13 @@
                 <input type="radio" id="aggregation_yearly" name="time_aggregation" value="yearly" />
                 <label for="aggregation_yearly">Yearly</label>
             </div>
+        </div>
+        <div class="SubControllerContainer">
+            <label for="over_time_group_by">Group by:</label>
+            <select id="over_time_group_by">
+                <option value="none">None</option>
+                <option value="dandisets">Dandisets</option>
+            </select>
         </div>
     </div>
     <div class="view-section">
