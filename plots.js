@@ -258,11 +258,15 @@ document.addEventListener("DOMContentLoaded", initTheme);
 // Handle section anchor link clicks: update the URL hash via pushState so the
 // address bar reflects the section link, but without triggering a popstate
 // event (which would re-render all plots and cause visible flicker).
+// Then manually scroll to the target element so the anchor behaves like a
+// normal in-page link.
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".section-anchor").forEach((anchor) => {
         anchor.addEventListener("click", (e) => {
             e.preventDefault();
-            window.history.pushState(null, "", anchor.getAttribute("href"));
+            const href = anchor.getAttribute("href");
+            window.history.pushState(null, "", href);
+            document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
         });
     });
 });
