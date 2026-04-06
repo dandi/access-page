@@ -353,10 +353,6 @@ input[type="number"]:focus {
     white-space: nowrap;
 }
 
-.plot-table th:last-child {
-    text-align: right;
-}
-
 .th-sorted {
     color: var(--color-accent);
 }
@@ -378,15 +374,12 @@ input[type="number"]:focus {
     color: var(--color-text);
 }
 
-.plot-table td:first-child,
-.plot-table th:first-child {
-    width: 100%;
-}
-
-.plot-table td:last-child {
+.plot-table td:last-child,
+.plot-table th:last-child {
     text-align: right;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+    width: 1%;
 }
 
 .plot-table tr:hover td {
