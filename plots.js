@@ -415,7 +415,7 @@ function syncFromUrl() {
     const histogramValue = USE_HISTOGRAM_TABLE ? "table" : "plot";
     const histogramRadio = document.querySelector(`input[name="histogram_view"][value="${histogramValue}"]`);
     if (histogramRadio) histogramRadio.checked = true;
-    apply_view_mode("histogram", "histogram_table", USE_HISTOGRAM_TABLE);
+    apply_view_mode("histogram_plot", "histogram_table", USE_HISTOGRAM_TABLE);
 }
 
 // Check if Plotly is loaded after the window loads
@@ -562,7 +562,7 @@ window.addEventListener("load", () => {
             const query = params.toString();
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
-            apply_view_mode("histogram", "histogram_table", USE_HISTOGRAM_TABLE);
+            apply_view_mode("histogram_plot", "histogram_table", USE_HISTOGRAM_TABLE);
         });
     });
 
@@ -644,7 +644,7 @@ window.addEventListener("load", () => {
 window.addEventListener("resize", resizePlots);
 
 function resizePlots() {
-    const plotIds = ["over_time_plot", "histogram", "aws_histogram", "geography_heatmap"];
+    const plotIds = ["over_time_plot", "histogram_plot", "aws_histogram", "geography_heatmap"];
     plotIds.forEach((id) => {
         const el = document.getElementById(id);
         if (el && el.data) {
@@ -1146,8 +1146,8 @@ function load_over_time_plot(dandiset_id) {
 // Function to fetch and render histogram over asset or Dandiset IDs
 function load_histogram(dandiset_id) {
     let by_asset_summary_tsv_url;
-    const controls_el = document.getElementById("histogram_view_controls");
-    const plot_element = document.getElementById("histogram");
+    const controls_el = document.getElementById("histogram");
+    const plot_element = document.getElementById("histogram_plot");
     const section_el = plot_element && plot_element.closest('.view-section');
 
     // Suppress entire histogram section if 'undetermined' or 'unassociated' is selected (nonsensical there)
@@ -1176,7 +1176,7 @@ function load_histogram(dandiset_id) {
 }
 
 function load_dandiset_histogram() {
-    const plot_element_id = "histogram";
+    const plot_element_id = "histogram_plot";
 
     fetch(ALL_DANDISET_TOTALS_URL)
     .then((response) => {
@@ -1255,7 +1255,7 @@ function load_dandiset_histogram() {
 }
 
 function load_per_asset_histogram(by_asset_summary_tsv_url) {
-    const plot_element_id = "histogram";
+    const plot_element_id = "histogram_plot";
 
     fetch(by_asset_summary_tsv_url)
         .then((response) => {
