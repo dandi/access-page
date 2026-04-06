@@ -343,7 +343,7 @@ input[type="number"]:focus {
     font-weight: 600;
     color: var(--color-text-secondary);
     border-bottom: 2px solid var(--color-border);
-    padding: 6px 12px;
+    padding: 6px 6px;
     position: sticky;
     top: 0;
     background: var(--color-surface);
@@ -373,7 +373,7 @@ input[type="number"]:focus {
 }
 
 .plot-table td {
-    padding: 5px 12px;
+    padding: 5px 6px;
     border-bottom: 1px solid var(--color-border);
     color: var(--color-text);
 }
