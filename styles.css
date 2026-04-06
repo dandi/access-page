@@ -331,11 +331,10 @@ input[type="number"]:focus {
 }
 
 .plot-table table {
-    width: 100%;
-    min-width: min(100%, 520px);
+    width: auto;
+    max-width: 100%;
     border-collapse: collapse;
     font-size: 0.9em;
-    margin: 0 auto;
 }
 
 .plot-table th {
@@ -379,7 +378,6 @@ input[type="number"]:focus {
     text-align: right;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
-    width: 1%;
 }
 
 .plot-table tr:hover td {
