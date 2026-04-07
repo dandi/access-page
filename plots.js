@@ -958,17 +958,48 @@ function build_over_time_layout(dates) {
         },
     });
 
-    // For daily cumulative, remove range gaps so the display is continuous
-    if (USE_CUMULATIVE && TIME_AGGREGATION === "daily") {
-        const date_set = new Set(dates);
-        const date_objects = dates.map(d => new Date(d));
-        const min_date = new Date(Math.min(...date_objects));
-        const max_date = new Date(Math.max(...date_objects));
-        const all_dates = [];
-        for (let d = new Date(min_date); d <= max_date; d.setDate(d.getDate() + 1)) {
-            all_dates.push(d.toISOString().slice(0, 10));
+    // For cumulative views, remove range gaps so the display is continuous
+    if (USE_CUMULATIVE && dates.length > 0) {
+        if (TIME_AGGREGATION === "daily") {
+            const date_set = new Set(dates);
+            const date_objects = dates.map(d => new Date(d + "T00:00:00Z"));
+            const min_date = new Date(Math.min(...date_objects));
+            const max_date = new Date(Math.max(...date_objects));
+            const all_dates = [];
+            for (let d = new Date(min_date); d <= max_date; d.setDate(d.getDate() + 1)) {
+                all_dates.push(d.toISOString().slice(0, 10));
+            }
+            layout.xaxis.rangebreaks = [{ values: all_dates.filter(d => !date_set.has(d)) }];
+        } else if (TIME_AGGREGATION === "weekly") {
+            // dates are "YYYY-MM-DD" (Mondays); keep only those, remove all other days
+            const week_set = new Set(dates);
+            const date_objects = dates.map(d => new Date(d + "T00:00:00Z"));
+            const min_date = new Date(Math.min(...date_objects));
+            const max_date = new Date(Math.max(...date_objects));
+            // Extend to end of last week (Sunday)
+            const end_date = new Date(max_date);
+            end_date.setUTCDate(end_date.getUTCDate() + 6);
+            const all_days = [];
+            for (let d = new Date(min_date); d <= end_date; d.setUTCDate(d.getUTCDate() + 1)) {
+                all_days.push(d.toISOString().slice(0, 10));
+            }
+            layout.xaxis.rangebreaks = [{ values: all_days.filter(d => !week_set.has(d)) }];
+        } else if (TIME_AGGREGATION === "monthly") {
+            // dates are "YYYY-MM" (month bin keys); map to "YYYY-MM-01" for Date operations
+            const month_starts = new Set(dates.map(d => d + "-01"));
+            const date_objects = dates.map(d => new Date(d + "-01T00:00:00Z"));
+            const min_date = new Date(Math.min(...date_objects));
+            const max_date = new Date(Math.max(...date_objects));
+            // Extend to last day of the final month
+            const end_date = new Date(max_date);
+            end_date.setUTCMonth(end_date.getUTCMonth() + 1);
+            end_date.setUTCDate(0);
+            const all_days = [];
+            for (let d = new Date(min_date); d <= end_date; d.setUTCDate(d.getUTCDate() + 1)) {
+                all_days.push(d.toISOString().slice(0, 10));
+            }
+            layout.xaxis.rangebreaks = [{ values: all_days.filter(d => !month_starts.has(d)) }];
         }
-        layout.xaxis.rangebreaks = [{ values: all_dates.filter(d => !date_set.has(d)) }];
     }
 
     return layout;
