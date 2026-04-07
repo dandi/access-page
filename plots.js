@@ -759,15 +759,29 @@ Promise.all([archiveTotalsPromise, allDandisetTotalsPromise])
             selector.value = id;
             apply_over_time_group_by_visibility();
             update_totals(id);
-            load_over_time_plot(id);
-            load_histogram(id);
-            load_aws_histogram(id);
-            load_geographic_heatmap(id);
+            return [
+                load_over_time_plot(id),
+                load_histogram(id),
+                load_aws_histogram(id),
+                load_geographic_heatmap(id),
+            ];
         };
 
         // Check URL for a dandiset parameter and load initial plots
         const urlParams = new URLSearchParams(window.location.search);
-        setSelectedDandiset(urlParams.get("dandiset"));
+        const initialHash = window.location.hash;
+        const initialPromises = setSelectedDandiset(urlParams.get("dandiset"));
+
+        // Once all initial plots have rendered, re-scroll to the URL hash anchor so
+        // that async data loading (which expands the page) doesn't leave the user at
+        // the wrong scroll position.  Use allSettled so the scroll still happens even
+        // if one or more plots fail to load.
+        if (initialHash) {
+            Promise.allSettled(initialPromises.map(p => p ?? Promise.resolve())).then(() => {
+                const target = document.querySelector(initialHash);
+                if (target) target.scrollIntoView({ behavior: "instant" });
+            });
+        }
 
         // Update the plots and URL when a new Dandiset ID is selected
         selector.addEventListener("change", (event) => {
@@ -1011,7 +1025,7 @@ function load_over_time_plot(dandiset_id) {
             .then((text) => parse_by_day_tsv(text))
             .catch(() => null);
 
-        Promise.all([Promise.all(per_series_promises), archive_promise])
+        return Promise.all([Promise.all(per_series_promises), archive_promise])
             .then(([series_results, archive_data]) => {
                 const valid_series = series_results.filter(Boolean);
 
@@ -1066,14 +1080,12 @@ function load_over_time_plot(dandiset_id) {
                     plot_element.innerText = "Failed to load data for grouped per day plot.";
                 }
             });
-
-        return;
     }
 
     // ── Default single-series mode ────────────────────────────────────────────
     let by_day_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_day.tsv`;
 
-    fetch(by_day_summary_tsv_url)
+    return fetch(by_day_summary_tsv_url)
         .then((response) => {
             if (!response.ok) {
                 throw new Error(`Failed to fetch TSV file: ${response.statusText}`);
@@ -1184,17 +1196,17 @@ function load_histogram(dandiset_id) {
     if (section_el) section_el.style.display = "";
 
     if (dandiset_id === "archive") {
-        load_dandiset_histogram();
+        return load_dandiset_histogram();
     } else {
         by_asset_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_asset.tsv`;
-        load_per_asset_histogram(by_asset_summary_tsv_url);
+        return load_per_asset_histogram(by_asset_summary_tsv_url);
     }
 }
 
 function load_dandiset_histogram() {
     const plot_element_id = "histogram_plot";
 
-    fetch(ALL_DANDISET_TOTALS_URL)
+    return fetch(ALL_DANDISET_TOTALS_URL)
     .then((response) => {
         if (!response.ok) {
             throw new Error(`Failed to fetch JSON file: ${response.statusText}`);
@@ -1273,7 +1285,7 @@ function load_dandiset_histogram() {
 function load_per_asset_histogram(by_asset_summary_tsv_url) {
     const plot_element_id = "histogram_plot";
 
-    fetch(by_asset_summary_tsv_url)
+    return fetch(by_asset_summary_tsv_url)
         .then((response) => {
             if (!response.ok) {
                 throw new Error(`Failed to fetch TSV file: ${response.statusText}`);
@@ -1360,11 +1372,11 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
 // Function to fetch and render AWS regions as a table
 function load_aws_histogram(dandiset_id) {
     const element = document.getElementById("aws_histogram");
-    if (!element) return;
+    if (!element) return Promise.resolve();
 
     let by_region_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`;
 
-    fetch(by_region_summary_tsv_url)
+    return fetch(by_region_summary_tsv_url)
         .then((response) => {
             if (!response.ok) {
                 throw new Error(`Failed to fetch TSV file: ${response.statusText}`);
@@ -1554,7 +1566,7 @@ function match_region_to_feature(region, lookup, country_lookup) {
 
 // Function to populate top regions table from TSV data
 function load_top_regions_table(by_region_summary_tsv_url) {
-    fetch(by_region_summary_tsv_url)
+    return fetch(by_region_summary_tsv_url)
         .then((response) => {
             if (!response.ok) throw new Error("Failed to fetch TSV");
             return response.text();
@@ -1599,18 +1611,20 @@ function load_geographic_heatmap(dandiset_id) {
     const plot_element_id = "geography_heatmap";
     let by_region_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`;
 
-    load_top_regions_table(by_region_summary_tsv_url);
+    const topRegionsPromise = load_top_regions_table(by_region_summary_tsv_url);
 
     // Apply the current view mode each time geo data reloads
     apply_geo_view_mode(GEO_VIEW);
 
     if (GEO_VIEW === "regions") {
-        load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summary_tsv_url);
-        return;
+        return Promise.all([
+            topRegionsPromise,
+            load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summary_tsv_url),
+        ]);
     }
 
     // Table / AWS view: tables already populated above, nothing more to render
-    if (GEO_VIEW !== "points") return;
+    if (GEO_VIEW !== "points") return topRegionsPromise;
 
     if (!REGION_CODES_TO_LATITUDE_LONGITUDE) {
         console.error("Region coordinates not loaded");
@@ -1618,10 +1632,10 @@ function load_geographic_heatmap(dandiset_id) {
         if (plot_element) {
             plot_element.innerText = "Failed to load data for geographic heatmap.";
         }
-        return ""
+        return topRegionsPromise;
     }
 
-    fetch(by_region_summary_tsv_url)
+    const pointsPromise = fetch(by_region_summary_tsv_url)
         .then((response) => {
             if (!response.ok) {
                 throw new Error(`Failed to fetch TSV file: ${response.statusText}`);
@@ -1709,11 +1723,13 @@ function load_geographic_heatmap(dandiset_id) {
                 plot_element.innerText = "Failed to load data for geographic heatmap.";
             }
         });
+
+    return Promise.all([topRegionsPromise, pointsPromise]);
 }
 
 // Function to fetch and render choropleth over geography
 function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summary_tsv_url) {
-    Promise.all([
+    return Promise.all([
         load_choropleth_data(),
         fetch(by_region_summary_tsv_url).then(r => {
             if (!r.ok) throw new Error(`Failed to fetch TSV file: ${r.statusText}`);
