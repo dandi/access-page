@@ -137,12 +137,19 @@ function apply_view_mode(plot_id, table_id, use_table) {
     const plot_el = document.getElementById(plot_id);
     const table_el = document.getElementById(table_id);
 
-    // Lock the section height before switching to prevent layout shift on elements below
     const section_el = plot_el && plot_el.closest('.view-section');
     if (section_el) {
-        const current_height = section_el.offsetHeight;
-        if (current_height > 0) {
-            section_el.style.minHeight = current_height + 'px';
+        if (use_table) {
+            // Switching to table: lock the current (plot) height so elements below
+            // don't jump while the table renders.
+            const current_height = section_el.offsetHeight;
+            if (current_height > 0) {
+                section_el.style.minHeight = current_height + 'px';
+            }
+        } else {
+            // Switching back to plot: release the lock so the section shrinks back
+            // to the plot's natural height and doesn't leave an empty gap below.
+            section_el.style.minHeight = '';
         }
     }
 
@@ -158,9 +165,17 @@ function apply_geo_view_mode(view) {
     // Lock the section height before switching to prevent layout shift on elements below
     const section_el = mapEl && mapEl.closest('.view-section');
     if (section_el) {
-        const current_height = section_el.offsetHeight;
-        if (current_height > 0) {
-            section_el.style.minHeight = current_height + 'px';
+        if (!showMap) {
+            // Switching to table: lock the current (map) height so elements below
+            // don't jump while the table renders.
+            const current_height = section_el.offsetHeight;
+            if (current_height > 0) {
+                section_el.style.minHeight = current_height + 'px';
+            }
+        } else {
+            // Switching back to map: release the lock so the section returns to its
+            // natural height and doesn't leave an empty gap below.
+            section_el.style.minHeight = '';
         }
     }
 
