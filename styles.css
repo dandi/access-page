@@ -293,6 +293,7 @@ input[type="number"]:focus {
 }
 
 .plot-table {
+    width: fit-content;
     max-width: 1100px;
     margin: 0 auto 16px;
     padding: 0 16px;
@@ -331,11 +332,9 @@ input[type="number"]:focus {
 }
 
 .plot-table table {
-    width: auto;
-    min-width: min(100%, 520px);
+    width: 100%;
     border-collapse: collapse;
     font-size: 0.9em;
-    margin: 0 auto;
 }
 
 .plot-table th {
@@ -343,7 +342,7 @@ input[type="number"]:focus {
     font-weight: 600;
     color: var(--color-text-secondary);
     border-bottom: 2px solid var(--color-border);
-    padding: 6px 12px;
+    padding: 6px 6px;
     position: sticky;
     top: 0;
     background: var(--color-surface);
@@ -351,10 +350,6 @@ input[type="number"]:focus {
     cursor: pointer;
     user-select: none;
     white-space: nowrap;
-}
-
-.plot-table th:last-child {
-    text-align: right;
 }
 
 .th-sorted {
@@ -373,14 +368,16 @@ input[type="number"]:focus {
 }
 
 .plot-table td {
-    padding: 5px 12px;
+    padding: 5px 6px;
     border-bottom: 1px solid var(--color-border);
     color: var(--color-text);
 }
 
-.plot-table td:last-child {
+.plot-table td:last-child,
+.plot-table th:last-child {
     text-align: right;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
 .plot-table tr:hover td {
