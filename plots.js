@@ -137,12 +137,19 @@ function apply_view_mode(plot_id, table_id, use_table) {
     const plot_el = document.getElementById(plot_id);
     const table_el = document.getElementById(table_id);
 
-    // Lock the section height before switching to prevent layout shift on elements below
     const section_el = plot_el && plot_el.closest('.view-section');
     if (section_el) {
-        const current_height = section_el.offsetHeight;
-        if (current_height > 0) {
-            section_el.style.minHeight = current_height + 'px';
+        if (use_table) {
+            // Switching to table: lock the current (plot) height so elements below
+            // don't jump while the table renders.
+            const current_height = section_el.offsetHeight;
+            if (current_height > 0) {
+                section_el.style.minHeight = current_height + 'px';
+            }
+        } else {
+            // Switching back to plot: release the lock so the section shrinks back
+            // to the plot's natural height and doesn't leave an empty gap below.
+            section_el.style.minHeight = '';
         }
     }
 
@@ -158,9 +165,17 @@ function apply_geo_view_mode(view) {
     // Lock the section height before switching to prevent layout shift on elements below
     const section_el = mapEl && mapEl.closest('.view-section');
     if (section_el) {
-        const current_height = section_el.offsetHeight;
-        if (current_height > 0) {
-            section_el.style.minHeight = current_height + 'px';
+        if (!showMap) {
+            // Switching to table: lock the current (map) height so elements below
+            // don't jump while the table renders.
+            const current_height = section_el.offsetHeight;
+            if (current_height > 0) {
+                section_el.style.minHeight = current_height + 'px';
+            }
+        } else {
+            // Switching back to map: release the lock so the section returns to its
+            // natural height and doesn't leave an empty gap below.
+            section_el.style.minHeight = '';
         }
     }
 
@@ -1019,6 +1034,11 @@ function make_cumulative(bytes_sent) {
 function load_over_time_plot(dandiset_id) {
     const plot_element_id = "over_time_plot";
 
+    // Clear any locked height from the previous dandiset to avoid a stale gap
+    const over_time_el = document.getElementById(plot_element_id);
+    const section_el = over_time_el && over_time_el.closest('.view-section');
+    if (section_el) section_el.style.minHeight = "";
+
     // ── Grouped mode: overlay top-N dandisets (archive view only) ────────────
     if (OVER_TIME_GROUP_BY === "dandisets" && dandiset_id === "archive") {
         const top_dandiset_ids = Object.entries(ALL_DANDISET_TOTALS)
@@ -1224,7 +1244,12 @@ function load_histogram(dandiset_id) {
 
     if (plot_element) plot_element.style.display = "";
     if (controls_el) controls_el.style.display = "";
-    if (section_el) section_el.style.display = "";
+    if (section_el) {
+        section_el.style.display = "";
+        // Clear any locked height from the previous dandiset so the section
+        // doesn't retain a stale tall gap when a new (shorter) dataset loads.
+        section_el.style.minHeight = "";
+    }
 
     if (dandiset_id === "archive") {
         return load_dandiset_histogram();
@@ -1641,6 +1666,11 @@ function load_top_regions_table(by_region_summary_tsv_url) {
 function load_geographic_heatmap(dandiset_id) {
     const plot_element_id = "geography_heatmap";
     let by_region_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`;
+
+    // Clear any locked height from the previous dandiset before reapplying view mode
+    const mapEl = document.getElementById(plot_element_id);
+    const section_el = mapEl && mapEl.closest('.view-section');
+    if (section_el) section_el.style.minHeight = "";
 
     const topRegionsPromise = load_top_regions_table(by_region_summary_tsv_url);
 
