@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --config configs/vite.config.js",
-    "build": "vite build --config configs/vite.config.js",
+    "build": "vite build --config configs/vite.config.js && cp CNAME dist/CNAME",
     "preview": "vite preview --config configs/vite.config.js"
   },
   "repository": {
