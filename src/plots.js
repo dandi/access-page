@@ -1,5 +1,4 @@
-// TODO: if using a proper framework/package structure, import the error helper
-// (working for the moment due to global import in the index.html file)
+import { handlePlotlyError } from "./errors.js";
 
 // ── Theme helpers (mirrors :root CSS variables in styles.css) ───────────────
 const DARK_THEME = {

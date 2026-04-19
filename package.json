@@ -1,0 +1,26 @@
+{
+  "name": "access-page",
+  "version": "1.0.0",
+  "description": "Visualizations of data usage across the archive.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config configs/vite.config.js",
+    "build": "vite build --config configs/vite.config.js",
+    "preview": "vite preview --config configs/vite.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dandi/access-page.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dandi/access-page/issues"
+  },
+  "homepage": "https://github.com/dandi/access-page#readme",
+  "devDependencies": {
+    "vite": "^8.0.8"
+  }
+}
