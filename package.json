@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --config configs/vite.config.js",
-    "build": "vite build --config configs/vite.config.js && node -e \"require('fs').copyFileSync('CNAME','dist/CNAME')\"",
+    "build": "vite build --config configs/vite.config.js && node --input-type=module -e \"import { copyFileSync } from 'node:fs'; copyFileSync('CNAME', 'dist/CNAME');\"",
     "preview": "vite preview --config configs/vite.config.js"
   },
   "repository": {
