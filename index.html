@@ -28,7 +28,8 @@
           if (window.gtag) return;
 
           window.dataLayer = window.dataLayer || [];
-          window.gtag = function(){ window.dataLayer.push(arguments); };
+          function gtag(){ window.dataLayer.push(arguments); }
+          window.gtag = gtag;
           window.gtag('js', new Date());
           window.gtag('config', GA_MEASUREMENT_ID);
 
@@ -214,7 +215,7 @@
     </div>
     </div>
     <div id="cookie_consent_banner" class="cookie-banner" hidden role="region" aria-label="Analytics consent">
-        <p class="cookie-banner-text">We use analytics tracking to understand how this page is used.</p>
+        <p class="cookie-banner-text">We use analytics tracking to understand how this page is used. No tracking is enabled unless you accept.</p>
         <div class="cookie-banner-actions">
             <button type="button" id="cookie_accept_btn" class="cookie-btn cookie-btn-accept">Accept</button>
             <button type="button" id="cookie_decline_btn" class="cookie-btn">Decline</button>
