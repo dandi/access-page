@@ -40,9 +40,9 @@
       }
 
       document.addEventListener('DOMContentLoaded', () => {
-          const banner = document.getElementById('cookie_consent_banner');
-          const acceptBtn = document.getElementById('cookie_accept_btn');
-          const declineBtn = document.getElementById('cookie_decline_btn');
+          const banner = document.getElementById('analytics_consent_banner');
+          const acceptBtn = document.getElementById('analytics_accept_btn');
+          const declineBtn = document.getElementById('analytics_decline_btn');
           if (!banner || !acceptBtn || !declineBtn) return;
 
           const consent = getAnalyticsConsent();
@@ -214,11 +214,11 @@
         </div>
     </div>
     </div>
-    <div id="cookie_consent_banner" class="consent-banner" hidden role="region" aria-label="Analytics consent">
+    <div id="analytics_consent_banner" class="consent-banner" hidden role="region" aria-label="Analytics consent">
         <p class="consent-banner-text">We use analytics tracking to understand how this page is used. No tracking is enabled unless you accept.</p>
         <div class="consent-banner-actions">
-            <button type="button" id="cookie_accept_btn" class="consent-btn consent-btn-accept">Accept</button>
-            <button type="button" id="cookie_decline_btn" class="consent-btn">Decline</button>
+            <button type="button" id="analytics_accept_btn" class="consent-btn consent-btn-accept">Accept</button>
+            <button type="button" id="analytics_decline_btn" class="consent-btn">Decline</button>
         </div>
     </div>
 </body>
