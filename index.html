@@ -6,14 +6,65 @@
 
     <title>Dandiset Usage Summaries</title>
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-25PBWE3SLK"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+      const GA_MEASUREMENT_ID = 'G-25PBWE3SLK';
+      const ANALYTICS_CONSENT_KEY = 'analytics_consent';
 
-      gtag('config', 'G-25PBWE3SLK');
+      function getAnalyticsConsent() {
+          try {
+              return localStorage.getItem(ANALYTICS_CONSENT_KEY);
+          } catch {
+              return null;
+          }
+      }
+
+      function setAnalyticsConsent(value) {
+          try {
+              localStorage.setItem(ANALYTICS_CONSENT_KEY, value);
+          } catch {}
+      }
+
+      function loadGoogleAnalytics() {
+          if (window.gtag) return;
+
+          window.dataLayer = window.dataLayer || [];
+          window.gtag = function(){ window.dataLayer.push(arguments); };
+          window.gtag('js', new Date());
+          window.gtag('config', GA_MEASUREMENT_ID);
+
+          const gtagScript = document.createElement('script');
+          gtagScript.async = true;
+          gtagScript.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+          document.head.appendChild(gtagScript);
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+          const banner = document.getElementById('cookie_consent_banner');
+          const acceptBtn = document.getElementById('cookie_accept_btn');
+          const declineBtn = document.getElementById('cookie_decline_btn');
+          if (!banner || !acceptBtn || !declineBtn) return;
+
+          const consent = getAnalyticsConsent();
+          if (consent === 'accepted') {
+              loadGoogleAnalytics();
+              banner.hidden = true;
+          } else if (consent === 'declined') {
+              banner.hidden = true;
+          } else {
+              banner.hidden = false;
+          }
+
+          acceptBtn.addEventListener('click', () => {
+              setAnalyticsConsent('accepted');
+              loadGoogleAnalytics();
+              banner.hidden = true;
+          });
+
+          declineBtn.addEventListener('click', () => {
+              setAnalyticsConsent('declined');
+              banner.hidden = true;
+          });
+      });
     </script>
 
     <link rel="icon" href="dandi-usage-favicon.ico" type="image/x-icon">
@@ -161,6 +212,13 @@
             <div id="aws_histogram"></div>
         </div>
     </div>
+    </div>
+    <div id="cookie_consent_banner" class="cookie-banner" hidden role="dialog" aria-live="polite" aria-label="Cookie consent">
+        <p class="cookie-banner-text">We use cookies for analytics to understand how this page is used.</p>
+        <div class="cookie-banner-actions">
+            <button type="button" id="cookie_accept_btn" class="cookie-btn cookie-btn-accept">Accept</button>
+            <button type="button" id="cookie_decline_btn" class="cookie-btn cookie-btn-decline">Decline</button>
+        </div>
     </div>
 </body>
 </html>
