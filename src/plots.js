@@ -1,4 +1,7 @@
 import { handlePlotlyError } from "./errors.js";
+import { load as loadYaml } from "js-yaml";
+import Plotly from "plotly.js-dist-min";
+import { feature as topojsonFeature } from "topojson-client";
 
 // ── Theme helpers (mirrors :root CSS variables in styles.css) ───────────────
 const DARK_THEME = {
@@ -700,7 +703,7 @@ function resizePlots() {
 fetchWithRetry(REGION_CODES_TO_LATITUDE_LONGITUDE_URL)
     .then((response) => response.text())
     .then((data) => {
-        REGION_CODES_TO_LATITUDE_LONGITUDE = jsyaml.load(data);
+        REGION_CODES_TO_LATITUDE_LONGITUDE = loadYaml(data);
     })
     .catch((error) => {
         console.error("Error loading YAML file:", error);
@@ -1529,7 +1532,7 @@ function load_choropleth_data() {
                 .then(r => { if (!r.ok) throw new Error("Failed to fetch TopoJSON"); return r.json(); })
                 .then(topoData => {
                     const objectName = Object.keys(topoData.objects)[0];
-                    GEOJSON_DATA = topojson.feature(topoData, topoData.objects[objectName]);
+                    GEOJSON_DATA = topojsonFeature(topoData, topoData.objects[objectName]);
                 })
         );
     }
