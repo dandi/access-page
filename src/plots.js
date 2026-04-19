@@ -1,5 +1,7 @@
-// TODO: if using a proper framework/package structure, import the error helper
-// (working for the moment due to global import in the index.html file)
+import { handlePlotlyError } from "./errors.js";
+import { load as loadYaml } from "js-yaml";
+import Plotly from "plotly.js-dist-min";
+import { feature as topojsonFeature } from "topojson-client";
 
 // ── Theme helpers (mirrors :root CSS variables in styles.css) ───────────────
 const DARK_THEME = {
@@ -701,7 +703,7 @@ function resizePlots() {
 fetchWithRetry(REGION_CODES_TO_LATITUDE_LONGITUDE_URL)
     .then((response) => response.text())
     .then((data) => {
-        REGION_CODES_TO_LATITUDE_LONGITUDE = jsyaml.load(data);
+        REGION_CODES_TO_LATITUDE_LONGITUDE = loadYaml(data);
     })
     .catch((error) => {
         console.error("Error loading YAML file:", error);
@@ -838,7 +840,7 @@ function update_totals(dandiset_id) {
 
     try {
         const human_readable_bytes_sent = format_bytes(totals.total_bytes_sent);
-        header = `A total of ${human_readable_bytes_sent} was used by ${totals.number_of_unique_regions} regions across ${totals.number_of_unique_countries} countries. <sup>*</sup>`
+        const header = `A total of ${human_readable_bytes_sent} was used by ${totals.number_of_unique_regions} regions across ${totals.number_of_unique_countries} countries. <sup>*</sup>`;
         totals_element.innerHTML = dandiset_id === "unassociated"
             ? header + `<br>However, the usage could not be associated with any Dandiset.<br>This can occur if a previously uploaded file was replaced prior to publication.`
             : dandiset_id === "undetermined"
@@ -1530,7 +1532,7 @@ function load_choropleth_data() {
                 .then(r => { if (!r.ok) throw new Error("Failed to fetch TopoJSON"); return r.json(); })
                 .then(topoData => {
                     const objectName = Object.keys(topoData.objects)[0];
-                    GEOJSON_DATA = topojson.feature(topoData, topoData.objects[objectName]);
+                    GEOJSON_DATA = topojsonFeature(topoData, topoData.objects[objectName]);
                 })
         );
     }

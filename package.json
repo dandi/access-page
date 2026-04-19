@@ -1,0 +1,31 @@
+{
+  "name": "access-page",
+  "version": "1.0.0",
+  "description": "Visualizations of data usage across the archive.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config configs/vite.config.js",
+    "build": "vite build --config configs/vite.config.js && node --input-type=module -e \"import { copyFileSync } from 'node:fs'; copyFileSync('CNAME', 'dist/CNAME');\"",
+    "preview": "vite preview --config configs/vite.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dandi/access-page.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dandi/access-page/issues"
+  },
+  "homepage": "https://github.com/dandi/access-page#readme",
+  "devDependencies": {
+    "vite": "^8.0.8"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.1",
+    "plotly.js-dist-min": "^3.0.1",
+    "topojson-client": "^3.1.0"
+  }
+}
