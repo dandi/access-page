@@ -660,7 +660,7 @@ input[type="number"]:focus {
     color: var(--color-border);
 }
 
-.cookie-banner {
+.consent-banner {
     position: fixed;
     bottom: 16px;
     left: 50%;
@@ -678,23 +678,23 @@ input[type="number"]:focus {
     z-index: 300;
 }
 
-.cookie-banner[hidden] {
+.consent-banner[hidden] {
     display: none;
 }
 
-.cookie-banner-text {
+.consent-banner-text {
     margin: 0;
     color: var(--color-text-secondary);
     font-size: 0.9em;
 }
 
-.cookie-banner-actions {
+.consent-banner-actions {
     display: flex;
     gap: 8px;
     flex-shrink: 0;
 }
 
-.cookie-btn {
+.consent-btn {
     border: 1px solid var(--color-border);
     border-radius: 4px;
     background: var(--color-bg);
@@ -707,25 +707,25 @@ input[type="number"]:focus {
     transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
 
-.cookie-btn:hover {
+.consent-btn:hover {
     border-color: var(--color-accent);
     color: var(--color-accent);
 }
 
-.cookie-btn-accept {
+.consent-btn-accept {
     background: var(--color-accent);
     border-color: var(--color-accent);
     color: #fff;
 }
 
-.cookie-btn-accept:hover {
+.consent-btn-accept:hover {
     background: var(--color-accent-hover);
     border-color: var(--color-accent-hover);
     color: #fff;
 }
 
 @media (max-width: 700px) {
-    .cookie-banner {
+    .consent-banner {
         align-items: flex-start;
         flex-direction: column;
     }
