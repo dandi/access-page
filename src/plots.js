@@ -840,7 +840,7 @@ function update_totals(dandiset_id) {
 
     try {
         const human_readable_bytes_sent = format_bytes(totals.total_bytes_sent);
-        header = `A total of ${human_readable_bytes_sent} was used by ${totals.number_of_unique_regions} regions across ${totals.number_of_unique_countries} countries. <sup>*</sup>`
+        const header = `A total of ${human_readable_bytes_sent} was used by ${totals.number_of_unique_regions} regions across ${totals.number_of_unique_countries} countries. <sup>*</sup>`;
         totals_element.innerHTML = dandiset_id === "unassociated"
             ? header + `<br>However, the usage could not be associated with any Dandiset.<br>This can occur if a previously uploaded file was replaced prior to publication.`
             : dandiset_id === "undetermined"
