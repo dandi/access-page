@@ -28,7 +28,7 @@
           if (window.gtag) return;
 
           window.dataLayer = window.dataLayer || [];
-          window.gtag = function(){ window.dataLayer.push(arguments); };
+          window.gtag = (...args) => { window.dataLayer.push(args); };
           window.gtag('js', new Date());
           window.gtag('config', GA_MEASUREMENT_ID);
 
@@ -213,7 +213,7 @@
         </div>
     </div>
     </div>
-    <div id="cookie_consent_banner" class="cookie-banner" hidden role="dialog" aria-modal="false" aria-live="polite" aria-label="Analytics consent">
+    <div id="cookie_consent_banner" class="cookie-banner" hidden role="region" aria-live="polite" aria-label="Analytics consent">
         <p class="cookie-banner-text">We use analytics tracking to understand how this page is used.</p>
         <div class="cookie-banner-actions">
             <button type="button" id="cookie_accept_btn" class="cookie-btn cookie-btn-accept">Accept</button>
