@@ -110,13 +110,30 @@ function syncThemeToggleIcon() {
 // ────────────────────────────────────────────────────────────────────────────
 
 /**
- * Shows or hides the "Group by" control for the over-time plot.
- * The control is hidden only when the table view is active.
+ * Shows or hides the "Group by" control for the over-time plot, and
+ * shows/hides the "Dandisets" option based on whether the archive is selected.
+ * When a non-archive dandiset is selected, the "Dandisets" option is hidden and
+ * any active "dandisets" group-by is reset to "none".
+ * The whole control is hidden when the table view is active.
  */
 function apply_over_time_group_by_visibility() {
     const container = document.getElementById("over_time_group_by_container");
     if (!container) return;
     container.style.display = !USE_OVER_TIME_TABLE ? "" : "none";
+
+    const selector = document.getElementById("dandiset_selector");
+    const isArchive = !selector || selector.value === "archive";
+    const dandisets_option = document.querySelector('#over_time_group_by option[value="dandisets"]');
+    if (dandisets_option) {
+        dandisets_option.hidden = !isArchive;
+    }
+
+    // If "dandisets" was selected but a non-archive dandiset is now active, reset to "none"
+    const groupBySelector = document.getElementById("over_time_group_by");
+    if (!isArchive && groupBySelector && groupBySelector.value === "dandisets") {
+        groupBySelector.value = "none";
+        OVER_TIME_GROUP_BY = "none";
+    }
 }
 
 /**
@@ -1103,6 +1120,7 @@ function load_over_time_plot(dandiset_id) {
                 const unique_dates = [...new Set(all_dates_for_layout)].sort();
                 const layout = build_over_time_layout(unique_dates);
                 layout.barmode = "overlay";
+                layout.showlegend = true;
                 layout.legend = { title: { text: "Asset type" } };
 
                 // Override title for "daily" since we show weekly granularity
