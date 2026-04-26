@@ -1075,7 +1075,7 @@ function load_over_time_plot(dandiset_id) {
 
                 const bin_label_prefix = {
                     daily: "Week of ", weekly: "Week of ", monthly: "Month: ", yearly: "Year: ",
-                }[TIME_AGGREGATION];
+                }[effective_aggregation];
 
                 const all_dates_for_layout = [];
 
@@ -1119,14 +1119,14 @@ function load_over_time_plot(dandiset_id) {
                 const agg_total = aggregate_by_timebin(raw_dates, total_bytes, effective_aggregation);
                 const combined = agg_total.dates.map((date, i) => ({ date, bytes: agg_total.bytes_sent[i] }));
                 const per_bin_titles = {
-                    daily: "Usage per week", weekly: "Usage per week",
+                    weekly: "Usage per week",
                     monthly: "Usage per month", yearly: "Usage per year",
                 };
                 const date_col_labels = {
-                    daily: "Week of", weekly: "Week of", monthly: "Month", yearly: "Year",
+                    weekly: "Week of", monthly: "Month", yearly: "Year",
                 };
-                render_sortable_table("over_time_table", per_bin_titles[TIME_AGGREGATION], [
-                    { label: date_col_labels[TIME_AGGREGATION], key: "date", numeric: false },
+                render_sortable_table("over_time_table", per_bin_titles[effective_aggregation], [
+                    { label: date_col_labels[effective_aggregation], key: "date", numeric: false },
                     { label: "Usage", key: "bytes", numeric: true },
                 ], combined, tsv_url);
 
