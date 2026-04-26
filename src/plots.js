@@ -111,16 +111,12 @@ function syncThemeToggleIcon() {
 
 /**
  * Shows or hides the "Group by" control for the over-time plot.
- * The control is only relevant when the plot view is active and the archive
- * dandiset is selected — it has no effect for individual dandiset pages or
- * when the table view is shown.
+ * The control is hidden only when the table view is active.
  */
 function apply_over_time_group_by_visibility() {
     const container = document.getElementById("over_time_group_by_container");
     if (!container) return;
-    const selector = document.getElementById("dandiset_selector");
-    const isArchive = !selector || selector.value === "archive";
-    container.style.display = (!USE_OVER_TIME_TABLE && isArchive) ? "" : "none";
+    container.style.display = !USE_OVER_TIME_TABLE ? "" : "none";
 }
 
 /**
@@ -431,7 +427,7 @@ function syncFromUrl() {
     const groupBySelector = document.getElementById("over_time_group_by");
     if (groupBySelector) {
         const urlGroupBy = params.get("group_by");
-        OVER_TIME_GROUP_BY = ["none", "dandisets"].includes(urlGroupBy) ? urlGroupBy : "none";
+        OVER_TIME_GROUP_BY = ["none", "dandisets", "asset_type"].includes(urlGroupBy) ? urlGroupBy : "none";
         groupBySelector.value = OVER_TIME_GROUP_BY;
     }
 
@@ -940,6 +936,27 @@ function parse_by_day_tsv(text) {
 }
 
 /**
+ * Parses a by_asset_type_per_week TSV text string.
+ * Returns { dates, asset_types, series_map } where:
+ *   - dates: string[] of week_start dates
+ *   - asset_types: string[] of column names (excluding week_start)
+ *   - series_map: Map from asset_type -> number[] of weekly bytes
+ */
+function parse_by_asset_type_per_week_tsv(text) {
+    const rows = text.split("\n").filter((row) => row.trim() !== "");
+    if (rows.length < 2) throw new Error("TSV file does not contain enough data.");
+    const headers = rows[0].split("\t");
+    const asset_types = headers.slice(1);
+    const data_rows = rows.slice(1).map((row) => row.split("\t"));
+    const dates = data_rows.map((row) => row[0]);
+    const series_map = new Map();
+    asset_types.forEach((type, col_idx) => {
+        series_map.set(type, data_rows.map((row) => parseInt(row[col_idx + 1], 10) || 0));
+    });
+    return { dates, asset_types, series_map };
+}
+
+/**
  * Builds the shared layout options used by both single-series and grouped
  * over-time plots.
  */
@@ -1040,6 +1057,89 @@ function load_over_time_plot(dandiset_id) {
     const over_time_el = document.getElementById(plot_element_id);
     const section_el = over_time_el && over_time_el.closest('.view-section');
     if (section_el) section_el.style.minHeight = "";
+
+    // ── Grouped mode: overlay asset types ────────────────────────────────────
+    if (OVER_TIME_GROUP_BY === "asset_type") {
+        const tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_asset_type_per_week.tsv`;
+
+        return fetch(tsv_url)
+            .then((r) => {
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.text();
+            })
+            .then((text) => {
+                const { dates: raw_dates, asset_types, series_map } = parse_by_asset_type_per_week_tsv(text);
+
+                // Data is weekly; treat "daily" aggregation as weekly since no finer data exists
+                const effective_aggregation = TIME_AGGREGATION === "daily" ? "weekly" : TIME_AGGREGATION;
+
+                const bin_label_prefix = {
+                    daily: "Week of ", weekly: "Week of ", monthly: "Month: ", yearly: "Year: ",
+                }[TIME_AGGREGATION];
+
+                const all_dates_for_layout = [];
+
+                const plot_info = asset_types.map((type, i) => {
+                    const raw_bytes = series_map.get(type);
+                    const agg = aggregate_by_timebin(raw_dates, raw_bytes, effective_aggregation);
+                    const plot_data = USE_CUMULATIVE ? make_cumulative(agg.bytes_sent) : agg.bytes_sent;
+                    const human_readable = plot_data.map((b) => format_bytes(b));
+                    const color = DANDISET_BAR_COLORS[i % DANDISET_BAR_COLORS.length];
+                    all_dates_for_layout.push(...agg.dates);
+                    return {
+                        type: "bar",
+                        name: type,
+                        x: agg.dates,
+                        y: plot_data,
+                        text: agg.dates.map((date, idx) =>
+                            `${type}<br>${bin_label_prefix}${date}<br>${human_readable[idx]}`
+                        ),
+                        textposition: "none",
+                        hoverinfo: "text",
+                        marker: { color },
+                    };
+                });
+
+                const unique_dates = [...new Set(all_dates_for_layout)].sort();
+                const layout = build_over_time_layout(unique_dates);
+                layout.barmode = "overlay";
+                layout.legend = { title: { text: "Asset type" } };
+
+                // Override title for "daily" since we show weekly granularity
+                if (!USE_CUMULATIVE && TIME_AGGREGATION === "daily") {
+                    layout.title.text = "Usage per week";
+                }
+
+                Plotly.newPlot(plot_element_id, plot_info, layout);
+
+                // Table: show total bytes per time bin (sum across all asset types)
+                const total_bytes = raw_dates.map((_, i) =>
+                    asset_types.reduce((sum, type) => sum + (series_map.get(type)[i] || 0), 0)
+                );
+                const agg_total = aggregate_by_timebin(raw_dates, total_bytes, effective_aggregation);
+                const combined = agg_total.dates.map((date, i) => ({ date, bytes: agg_total.bytes_sent[i] }));
+                const per_bin_titles = {
+                    daily: "Usage per week", weekly: "Usage per week",
+                    monthly: "Usage per month", yearly: "Usage per year",
+                };
+                const date_col_labels = {
+                    daily: "Week of", weekly: "Week of", monthly: "Month", yearly: "Year",
+                };
+                render_sortable_table("over_time_table", per_bin_titles[TIME_AGGREGATION], [
+                    { label: date_col_labels[TIME_AGGREGATION], key: "date", numeric: false },
+                    { label: "Usage", key: "bytes", numeric: true },
+                ], combined, tsv_url);
+
+                apply_view_mode(plot_element_id, "over_time_table", USE_OVER_TIME_TABLE);
+            })
+            .catch((error) => {
+                console.error("Error in asset type grouped over-time plot:", error);
+                const plot_element = document.getElementById(plot_element_id);
+                if (plot_element) {
+                    plot_element.innerText = "Failed to load data for asset type grouped plot.";
+                }
+            });
+    }
 
     // ── Grouped mode: overlay top-N dandisets (archive view only) ────────────
     if (OVER_TIME_GROUP_BY === "dandisets" && dandiset_id === "archive") {
