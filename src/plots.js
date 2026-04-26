@@ -1074,7 +1074,7 @@ function load_over_time_plot(dandiset_id) {
                 const effective_aggregation = TIME_AGGREGATION === "daily" ? "weekly" : TIME_AGGREGATION;
 
                 const bin_label_prefix = {
-                    daily: "Week of ", weekly: "Week of ", monthly: "Month: ", yearly: "Year: ",
+                    weekly: "Week of ", monthly: "Month: ", yearly: "Year: ",
                 }[effective_aggregation];
 
                 const all_dates_for_layout = [];
