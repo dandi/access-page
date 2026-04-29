@@ -1120,13 +1120,20 @@ function load_over_time_plot(dandiset_id) {
     // ── Grouped mode: overlay asset types ────────────────────────────────────
     if (OVER_TIME_GROUP_BY === "asset_type") {
         const tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_asset_type_per_week.tsv`;
+        const archive_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_day.tsv`;
 
-        return fetch(tsv_url)
+        const asset_type_promise = fetch(tsv_url)
             .then((r) => {
                 if (!r.ok) throw new Error(`HTTP ${r.status}`);
                 return r.text();
-            })
-            .then((text) => {
+            });
+        const archive_promise = fetch(archive_tsv_url)
+            .then((r) => r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status}`)))
+            .then((text) => parse_by_day_tsv(text))
+            .catch(() => null);
+
+        return Promise.all([asset_type_promise, archive_promise])
+            .then(([text, archive_data]) => {
                 const { dates: raw_dates, asset_types, series_map } = parse_by_asset_type_per_week_tsv(text);
 
                 // Data is weekly; treat "daily" aggregation as weekly since no finer data exists
@@ -1159,9 +1166,42 @@ function load_over_time_plot(dandiset_id) {
                     };
                 });
 
+                // Build an "Other" series: archive total minus the sum of all asset types
+                if (archive_data) {
+                    const archive_agg = aggregate_by_timebin(archive_data.dates, archive_data.bytes, effective_aggregation);
+                    const archive_plot_data = USE_CUMULATIVE
+                        ? make_cumulative(archive_agg.bytes_sent)
+                        : archive_agg.bytes_sent;
+                    // Build per-date lookup for the sum of all asset-type series (already cumulative if USE_CUMULATIVE)
+                    const series_by_date = new Map();
+                    for (const series of plot_info) {
+                        series.x.forEach((date, idx) => {
+                            series_by_date.set(date, (series_by_date.get(date) || 0) + series.y[idx]);
+                        });
+                    }
+                    const other_y = archive_agg.dates.map((date, i) => {
+                        const asset_type_total = series_by_date.get(date) || 0;
+                        return Math.max(0, archive_plot_data[i] - asset_type_total);
+                    });
+                    const other_human_readable = other_y.map((b) => format_bytes(b));
+                    plot_info.push({
+                        type: "bar",
+                        name: "Other",
+                        x: archive_agg.dates,
+                        y: other_y,
+                        text: archive_agg.dates.map((date, idx) =>
+                            `Other<br>${bin_label_prefix}${date}<br>${other_human_readable[idx]}`
+                        ),
+                        textposition: "none",
+                        hoverinfo: "text",
+                        marker: { color: "rgba(150,150,150,0.7)" },
+                    });
+                    all_dates_for_layout.push(...archive_agg.dates);
+                }
+
                 const unique_dates = [...new Set(all_dates_for_layout)].sort();
                 const layout = build_over_time_layout(unique_dates);
-                layout.barmode = "overlay";
+                layout.barmode = "stack";
                 layout.showlegend = true;
                 layout.legend = { title: { text: "Asset type" } };
 
@@ -1260,10 +1300,42 @@ function load_over_time_plot(dandiset_id) {
                     };
                 });
 
+                // Build an "Other" series: archive total minus the sum of all top-N dandisets
+                if (archive_data) {
+                    const archive_agg = aggregate_by_timebin(archive_data.dates, archive_data.bytes, TIME_AGGREGATION);
+                    const archive_plot_data = USE_CUMULATIVE
+                        ? make_cumulative(archive_agg.bytes_sent)
+                        : archive_agg.bytes_sent;
+                    // Build per-date lookup for the sum of top-N series (already cumulative if USE_CUMULATIVE)
+                    const series_by_date = new Map();
+                    for (const series of valid_series) {
+                        series.dates.forEach((date, idx) => {
+                            series_by_date.set(date, (series_by_date.get(date) || 0) + series.plot_data[idx]);
+                        });
+                    }
+                    const other_y = archive_agg.dates.map((date, i) => {
+                        const top_n_total = series_by_date.get(date) || 0;
+                        return Math.max(0, archive_plot_data[i] - top_n_total);
+                    });
+                    const other_human_readable = other_y.map((b) => format_bytes(b));
+                    plot_info.push({
+                        type: "bar",
+                        name: "Other",
+                        x: archive_agg.dates,
+                        y: other_y,
+                        text: archive_agg.dates.map((date, idx) =>
+                            `Other<br>${bin_label_prefix}${date}<br>${other_human_readable[idx]}`
+                        ),
+                        textposition: "none",
+                        hoverinfo: "text",
+                        marker: { color: "rgba(150,150,150,0.7)" },
+                    });
+                }
+
                 // Collect all dates across series for range-break calculation
                 const all_series_dates = valid_series.flatMap((s) => s.dates);
                 const layout = build_over_time_layout(all_series_dates);
-                layout.barmode = "overlay";
+                layout.barmode = "stack";
                 layout.legend = { title: { text: "Dandiset" } };
 
                 Plotly.newPlot(plot_element_id, plot_info, layout);
