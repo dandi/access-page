@@ -137,6 +137,31 @@ function apply_over_time_group_by_visibility() {
 }
 
 /**
+ * Disables the 'Daily' aggregation radio button when grouping by 'asset type',
+ * because the underlying data is only available at weekly granularity.
+ * If 'Daily' is currently selected, it is automatically switched to 'Weekly'.
+ */
+function apply_daily_aggregation_restriction() {
+    const daily_radio = document.getElementById("aggregation_daily");
+    const daily_label = document.querySelector('label[for="aggregation_daily"]');
+    if (!daily_radio) return;
+
+    const restrict = OVER_TIME_GROUP_BY === "asset_type";
+    daily_radio.disabled = restrict;
+    if (daily_label) {
+        daily_label.title = restrict
+            ? "Daily data is not available when grouping by asset type"
+            : "";
+    }
+
+    if (restrict && TIME_AGGREGATION === "daily") {
+        TIME_AGGREGATION = "weekly";
+        const weekly_radio = document.getElementById("aggregation_weekly");
+        if (weekly_radio) weekly_radio.checked = true;
+    }
+}
+
+/**
  * Toggles visibility between a Plotly plot element and its paired table element.
  * Before switching, the enclosing `.view-section` wrapper's current rendered
  * height is stored as its `min-height`, so elements further down the page do
@@ -447,6 +472,7 @@ function syncFromUrl() {
         OVER_TIME_GROUP_BY = ["none", "dandisets", "asset_type"].includes(urlGroupBy) ? urlGroupBy : "none";
         groupBySelector.value = OVER_TIME_GROUP_BY;
     }
+    apply_daily_aggregation_restriction();
 
     // Top N dandisets
     const topNInput = document.getElementById("top_n_dandisets");
@@ -654,9 +680,11 @@ window.addEventListener("load", () => {
     if (groupBySelector) {
         groupBySelector.addEventListener("change", function () {
             OVER_TIME_GROUP_BY = this.value;
+            apply_daily_aggregation_restriction();
 
             const params = new URLSearchParams(window.location.search);
             setUrlParam(params, "group_by", OVER_TIME_GROUP_BY, "none");
+            setUrlParam(params, "aggregation", TIME_AGGREGATION, "daily");
             const query = params.toString();
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
