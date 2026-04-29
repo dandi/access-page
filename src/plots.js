@@ -914,6 +914,15 @@ function aggregate_by_timebin(dates, bytes_sent, aggregation) {
     };
 }
 
+// Abbreviated descriptions shown as tooltip text on legend items when the
+// over-time plot is grouped by asset type.
+const ASSET_TYPE_DESCRIPTIONS = {
+    Neurophysiology: "NWB files",
+    Microscopy:      "OME-Zarr, NIfTI, TIFF",
+    Videos:          "AVI, MKV, MP4, MOV, WMV",
+    Miscellany:      "TXT, TSV, JSON, code, etc.",
+};
+
 // Categorical colour palette for the "group by Dandisets" overlay bars.
 // Colours include 0.7 alpha so overlapping bars remain visible.
 const DANDISET_BAR_COLORS = [
@@ -971,6 +980,39 @@ function parse_by_asset_type_per_week_tsv(text) {
         series_map.set(type, data_rows.map((row) => parseInt(row[col_idx + 1], 10) || 0));
     });
     return { dates, asset_types, series_map };
+}
+
+/**
+ * Adds SVG <title> tooltip elements to Plotly legend items whose display name
+ * appears in `label_to_tooltip`.  Attaches to the plotly_afterplot event so
+ * tooltips survive redraws (theme switches, resizes, trace toggles, etc.).
+ *
+ * @param {string} plot_element_id - ID of the Plotly graph div.
+ * @param {Object} label_to_tooltip - Map of legend label → tooltip string.
+ */
+function attach_legend_tooltips(plot_element_id, label_to_tooltip) {
+    const el = document.getElementById(plot_element_id);
+    if (!el) return;
+
+    function inject_titles() {
+        el.querySelectorAll(".legendtext").forEach((text_el) => {
+            const desc = label_to_tooltip[text_el.textContent];
+            if (!desc) return;
+            const group = text_el.closest(".traces");
+            if (!group) return;
+            // Replace any stale title so re-renders always have the correct text.
+            const existing = group.querySelector("title");
+            if (existing) existing.remove();
+            const title_el = document.createElementNS("http://www.w3.org/2000/svg", "title");
+            title_el.textContent = desc;
+            group.appendChild(title_el);
+        });
+    }
+
+    inject_titles();
+    // `el.on()` is Plotly's own event-emitter API (added to the graph div by
+    // Plotly.newPlot); it is the documented way to subscribe to plotly_* events.
+    el.on("plotly_afterplot", inject_titles);
 }
 
 /**
@@ -1129,6 +1171,7 @@ function load_over_time_plot(dandiset_id) {
                 }
 
                 Plotly.newPlot(plot_element_id, plot_info, layout);
+                attach_legend_tooltips(plot_element_id, ASSET_TYPE_DESCRIPTIONS);
 
                 // Table: show total bytes per time bin (sum across all asset types)
                 const total_bytes = raw_dates.map((_, i) =>
