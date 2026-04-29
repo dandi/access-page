@@ -1261,9 +1261,12 @@ function load_over_time_plot(dandiset_id) {
                 });
 
                 // Build an "Other" series: archive total minus the sum of all top-N dandisets
-                if (archive_data && !USE_CUMULATIVE) {
+                if (archive_data) {
                     const archive_agg = aggregate_by_timebin(archive_data.dates, archive_data.bytes, TIME_AGGREGATION);
-                    // Build per-date lookup for each top-N series
+                    const archive_plot_data = USE_CUMULATIVE
+                        ? make_cumulative(archive_agg.bytes_sent)
+                        : archive_agg.bytes_sent;
+                    // Build per-date lookup for the sum of top-N series (already cumulative if USE_CUMULATIVE)
                     const series_by_date = new Map();
                     for (const series of valid_series) {
                         series.dates.forEach((date, idx) => {
@@ -1272,7 +1275,7 @@ function load_over_time_plot(dandiset_id) {
                     }
                     const other_y = archive_agg.dates.map((date, i) => {
                         const top_n_total = series_by_date.get(date) || 0;
-                        return Math.max(0, archive_agg.bytes_sent[i] - top_n_total);
+                        return Math.max(0, archive_plot_data[i] - top_n_total);
                     });
                     const other_human_readable = other_y.map((b) => format_bytes(b));
                     plot_info.push({
