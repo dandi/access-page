@@ -448,6 +448,13 @@ input[type="number"]:focus {
     outline-offset: 2px;
 }
 
+/* Disabled state */
+.radio-toggle input[type="radio"]:disabled + label {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .separator {
     width: 1px;
     height: 20px;
