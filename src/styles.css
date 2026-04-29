@@ -741,7 +741,7 @@ input[type="number"]:focus {
 /* ── Site footer ── */
 .site-footer {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
     padding: 12px 20px 20px;
     margin-top: 24px;
@@ -752,6 +752,7 @@ input[type="number"]:focus {
     color: var(--color-text-secondary);
     font-size: 0.8em;
     font-family: monospace;
+    align-self: flex-end;
 }
 
 .con-brand {
@@ -766,7 +767,7 @@ input[type="number"]:focus {
 }
 
 .con-logo {
-    height: 32px;
+    height: 64px;
     width: auto;
     filter: brightness(0) invert(1);
 }
