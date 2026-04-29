@@ -919,8 +919,8 @@ function aggregate_by_timebin(dates, bytes_sent, aggregation) {
 const ASSET_TYPE_DESCRIPTIONS = {
     Neurophysiology: "NWB files",
     Microscopy:      "OME-Zarr, NIfTI, TIFF",
-    Videos:          "AVI, MKV, MP4, MOV, WMV",
-    Miscellany:      "TXT, TSV, JSON, code, etc.",
+    Video:          "AVI, MKV, MP4, MOV, WMV",
+    Miscellaneous:      "TXT, TSV, JSON, code, etc.",
 };
 
 // Categorical colour palette for the "group by Dandisets" overlay bars.
