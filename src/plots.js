@@ -57,6 +57,26 @@ function applyTheme(layout) {
     return layout;
 }
 
+// ── Shared Plotly config ─────────────────────────────────────────────────────
+// Adds a "Download as SVG" button to every plot's modebar alongside the
+// default "Download plot as a png" camera button.
+const PLOTLY_CONFIG = {
+    modeBarButtonsToAdd: [
+        {
+            name: 'Download plot as SVG',
+            icon: {
+                // Simple download-arrow icon (Material Design "file_download")
+                width: 24,
+                height: 24,
+                path: 'M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z',
+            },
+            click: function (gd) {
+                Plotly.downloadImage(gd, { format: 'svg', filename: gd.id || 'dandi-plot' });
+            },
+        },
+    ],
+};
+
 /**
  * Reads the saved theme preference from localStorage (defaulting to dark),
  * applies it to the <html> element and updates IS_DARK_MODE.
@@ -1238,7 +1258,7 @@ function load_over_time_plot(dandiset_id) {
                     layout.title.text = "Usage per week";
                 }
 
-                Plotly.newPlot(plot_element_id, plot_info, layout);
+                Plotly.newPlot(plot_element_id, plot_info, layout, PLOTLY_CONFIG);
                 attach_legend_tooltips(plot_element_id, ASSET_TYPE_DESCRIPTIONS);
 
                 // Table: show total bytes per time bin (sum across all asset types)
@@ -1366,7 +1386,7 @@ function load_over_time_plot(dandiset_id) {
                 layout.barmode = "stack";
                 layout.legend = { title: { text: "Dandiset" } };
 
-                Plotly.newPlot(plot_element_id, plot_info, layout);
+                Plotly.newPlot(plot_element_id, plot_info, layout, PLOTLY_CONFIG);
 
                 // Render archive table view even in grouped mode
                 const per_bin_titles = {
@@ -1459,7 +1479,7 @@ function load_over_time_plot(dandiset_id) {
 
             const layout = build_over_time_layout(dates);
 
-            Plotly.newPlot(plot_element_id, plot_info, layout);
+            Plotly.newPlot(plot_element_id, plot_info, layout, PLOTLY_CONFIG);
 
             // Render table view (sortable by column header click; default: bytes descending)
             const date_col_labels = {
@@ -1580,7 +1600,7 @@ function load_dandiset_histogram() {
             },
         });
 
-        Plotly.newPlot(plot_element_id, plot_data, layout);
+        Plotly.newPlot(plot_element_id, plot_data, layout, PLOTLY_CONFIG);
 
         // Render table view (sortable by column header click; default: bytes descending)
         render_sortable_table("histogram_table", "", [
@@ -1667,7 +1687,7 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
                 },
             });
 
-            Plotly.newPlot(plot_element_id, plot_data, layout);
+            Plotly.newPlot(plot_element_id, plot_data, layout, PLOTLY_CONFIG);
 
             // Render table view (sortable by column header click; default: bytes descending)
             render_sortable_table("histogram_table", "Usage per asset", [
@@ -2038,7 +2058,7 @@ function load_geographic_heatmap(dandiset_id) {
                 },
             });
 
-            Plotly.newPlot(plot_element_id, plot_info, layout);
+            Plotly.newPlot(plot_element_id, plot_info, layout, PLOTLY_CONFIG);
         })
         .catch((error) => {
             console.error("Error:", error);
@@ -2205,7 +2225,7 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
             ],
         });
 
-        Plotly.newPlot(plot_element_id, plot_info, layout).then(() => {
+        Plotly.newPlot(plot_element_id, plot_info, layout, PLOTLY_CONFIG).then(() => {
             const el = document.getElementById(plot_element_id);
             if (el && el._fullLayout && el._fullLayout.map && el._fullLayout.map._subplot) {
                 const map = el._fullLayout.map._subplot.map;
