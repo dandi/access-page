@@ -1219,7 +1219,9 @@ function load_over_time_plot(dandiset_id) {
                     const color = DANDISET_BAR_COLORS[i % DANDISET_BAR_COLORS.length];
                     all_dates_for_layout.push(...agg.dates);
                     return {
-                        type: "bar",
+                        ...(USE_CUMULATIVE
+                            ? { type: "scatter", mode: "lines", line: { color } }
+                            : { type: "bar", marker: { color } }),
                         name: type,
                         x: agg.dates,
                         y: plot_data,
@@ -1228,7 +1230,6 @@ function load_over_time_plot(dandiset_id) {
                         ),
                         textposition: "none",
                         hoverinfo: "text",
-                        marker: { color },
                     };
                 });
 
@@ -1251,7 +1252,9 @@ function load_over_time_plot(dandiset_id) {
                     });
                     const other_human_readable = other_y.map((b) => format_bytes(b));
                     plot_info.push({
-                        type: "bar",
+                        ...(USE_CUMULATIVE
+                            ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" } }
+                            : { type: "bar", marker: { color: "rgba(150,150,150,0.7)" } }),
                         name: "Other",
                         x: archive_agg.dates,
                         y: other_y,
@@ -1260,14 +1263,13 @@ function load_over_time_plot(dandiset_id) {
                         ),
                         textposition: "none",
                         hoverinfo: "text",
-                        marker: { color: "rgba(150,150,150,0.7)" },
                     });
                     all_dates_for_layout.push(...archive_agg.dates);
                 }
 
                 const unique_dates = [...new Set(all_dates_for_layout)].sort();
                 const layout = build_over_time_layout(unique_dates);
-                layout.barmode = "stack";
+                if (!USE_CUMULATIVE) layout.barmode = "stack";
                 layout.showlegend = true;
                 layout.legend = { title: { text: "Asset type" } };
 
@@ -1353,7 +1355,9 @@ function load_over_time_plot(dandiset_id) {
                     const color = DANDISET_BAR_COLORS[i % DANDISET_BAR_COLORS.length];
                     const human_readable = series.plot_data.map((b) => format_bytes(b));
                     return {
-                        type: "bar",
+                        ...(USE_CUMULATIVE
+                            ? { type: "scatter", mode: "lines", line: { color } }
+                            : { type: "bar", marker: { color } }),
                         name: `DANDI:${series.id}`,
                         x: series.dates,
                         y: series.plot_data,
@@ -1362,7 +1366,6 @@ function load_over_time_plot(dandiset_id) {
                         ),
                         textposition: "none",
                         hoverinfo: "text",
-                        marker: { color },
                     };
                 });
 
@@ -1385,7 +1388,9 @@ function load_over_time_plot(dandiset_id) {
                     });
                     const other_human_readable = other_y.map((b) => format_bytes(b));
                     plot_info.push({
-                        type: "bar",
+                        ...(USE_CUMULATIVE
+                            ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" } }
+                            : { type: "bar", marker: { color: "rgba(150,150,150,0.7)" } }),
                         name: "Other",
                         x: archive_agg.dates,
                         y: other_y,
@@ -1394,14 +1399,13 @@ function load_over_time_plot(dandiset_id) {
                         ),
                         textposition: "none",
                         hoverinfo: "text",
-                        marker: { color: "rgba(150,150,150,0.7)" },
                     });
                 }
 
                 // Collect all dates across series for range-break calculation
                 const all_series_dates = valid_series.flatMap((s) => s.dates);
                 const layout = build_over_time_layout(all_series_dates);
-                layout.barmode = "stack";
+                if (!USE_CUMULATIVE) layout.barmode = "stack";
                 layout.legend = { title: { text: "Dandiset" } };
 
                 Plotly.newPlot(plot_element_id, plot_info, layout, PLOTLY_CONFIG);
@@ -1478,13 +1482,14 @@ function load_over_time_plot(dandiset_id) {
 
             const plot_info = [
                 {
-                    type: "bar",
+                    ...(USE_CUMULATIVE
+                        ? { type: "scatter", mode: "lines", line: { color: getTheme().accent } }
+                        : { type: "bar", marker: { color: getTheme().accent } }),
                     x: dates,
                     y: plot_data,
                     text: dates.map((date, index) => `${bin_label_prefix}${date}<br>${human_readable_bytes_sent[index]}`),
                     textposition: "none",
                     hoverinfo: "text",
-                    marker: { color: getTheme().accent },
                 }
             ];
 
