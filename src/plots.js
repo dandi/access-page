@@ -58,22 +58,32 @@ function applyTheme(layout) {
 }
 
 // ── Shared Plotly config ─────────────────────────────────────────────────────
-// Adds a "Download as SVG" button to every plot's modebar alongside the
-// default "Download plot as a png" camera button.
+// Replaces the default PNG camera button with a paired group containing both
+// PNG and SVG download buttons, keeping them side-by-side in the modebar.
 const PLOTLY_CONFIG = {
+    modeBarButtonsToRemove: ['toImage'],
     modeBarButtonsToAdd: [
-        {
-            name: 'Download plot as SVG',
-            icon: {
-                // Simple download-arrow icon (Material Design "file_download")
-                width: 24,
-                height: 24,
-                path: 'M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z',
+        [
+            {
+                name: 'Download plot as PNG',
+                icon: Plotly.Icons.camera,
+                click: function (gd) {
+                    Plotly.downloadImage(gd, { format: 'png', filename: gd.id || 'dandi-plot' });
+                },
             },
-            click: function (gd) {
-                Plotly.downloadImage(gd, { format: 'svg', filename: gd.id || 'dandi-plot' });
+            {
+                name: 'Download plot as SVG',
+                icon: {
+                    // Material Design "file_download" arrow icon
+                    width: 24,
+                    height: 24,
+                    path: 'M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z',
+                },
+                click: function (gd) {
+                    Plotly.downloadImage(gd, { format: 'svg', filename: gd.id || 'dandi-plot' });
+                },
             },
-        },
+        ],
     ],
 };
 
