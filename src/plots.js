@@ -338,7 +338,15 @@ function render_sortable_table(container_id, title, columns, rows, data_url) {
 
 // Initialise the theme as early as possible (before plots are rendered) so
 // that CSS variables and IS_DARK_MODE are in sync from the very first paint.
-document.addEventListener("DOMContentLoaded", initTheme);
+document.addEventListener("DOMContentLoaded", () => {
+    initTheme();
+
+    // Set the version tag in the footer
+    const versionEl = document.getElementById("site_version");
+    if (versionEl) {
+        versionEl.textContent = `v${__APP_VERSION__}`;
+    }
+});
 
 // Handle section anchor link clicks: update the URL hash via pushState so the
 // address bar reflects the section link, but without triggering a popstate
