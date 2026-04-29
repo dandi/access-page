@@ -1015,6 +1015,25 @@ const DANDISET_BAR_COLORS = [
 ];
 
 /**
+ * Converts a color string (hex or rgba) to an rgba string with the given alpha.
+ * Used to produce semi-transparent fill colors from line colors.
+ */
+function color_with_alpha(color, alpha) {
+    const rgba_match = color.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (rgba_match) {
+        return `rgba(${rgba_match[1]},${rgba_match[2]},${rgba_match[3]},${alpha})`;
+    }
+    const hex_match = color.match(/^#([0-9a-fA-F]{6})$/);
+    if (hex_match) {
+        const r = parseInt(hex_match[1].slice(0, 2), 16);
+        const g = parseInt(hex_match[1].slice(2, 4), 16);
+        const b = parseInt(hex_match[1].slice(4, 6), 16);
+        return `rgba(${r},${g},${b},${alpha})`;
+    }
+    return color;
+}
+
+/**
  * Parses a by_day TSV text string and returns { dates, bytes }.
  */
 function parse_by_day_tsv(text) {
@@ -1220,7 +1239,7 @@ function load_over_time_plot(dandiset_id) {
                     all_dates_for_layout.push(...agg.dates);
                     return {
                         ...(USE_CUMULATIVE
-                            ? { type: "scatter", mode: "lines", line: { color } }
+                            ? { type: "scatter", mode: "lines", line: { color }, fill: "tozeroy", fillcolor: color_with_alpha(color, 0.2) }
                             : { type: "bar", marker: { color } }),
                         name: type,
                         x: agg.dates,
@@ -1253,7 +1272,7 @@ function load_over_time_plot(dandiset_id) {
                     const other_human_readable = other_y.map((b) => format_bytes(b));
                     plot_info.push({
                         ...(USE_CUMULATIVE
-                            ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" } }
+                            ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" }, fill: "tozeroy", fillcolor: "rgba(150,150,150,0.15)" }
                             : { type: "bar", marker: { color: "rgba(150,150,150,0.7)" } }),
                         name: "Other",
                         x: archive_agg.dates,
@@ -1356,7 +1375,7 @@ function load_over_time_plot(dandiset_id) {
                     const human_readable = series.plot_data.map((b) => format_bytes(b));
                     return {
                         ...(USE_CUMULATIVE
-                            ? { type: "scatter", mode: "lines", line: { color } }
+                            ? { type: "scatter", mode: "lines", line: { color }, fill: "tozeroy", fillcolor: color_with_alpha(color, 0.2) }
                             : { type: "bar", marker: { color } }),
                         name: `DANDI:${series.id}`,
                         x: series.dates,
@@ -1389,7 +1408,7 @@ function load_over_time_plot(dandiset_id) {
                     const other_human_readable = other_y.map((b) => format_bytes(b));
                     plot_info.push({
                         ...(USE_CUMULATIVE
-                            ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" } }
+                            ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" }, fill: "tozeroy", fillcolor: "rgba(150,150,150,0.15)" }
                             : { type: "bar", marker: { color: "rgba(150,150,150,0.7)" } }),
                         name: "Other",
                         x: archive_agg.dates,
@@ -1483,7 +1502,7 @@ function load_over_time_plot(dandiset_id) {
             const plot_info = [
                 {
                     ...(USE_CUMULATIVE
-                        ? { type: "scatter", mode: "lines", line: { color: getTheme().accent } }
+                        ? { type: "scatter", mode: "lines", line: { color: getTheme().accent }, fill: "tozeroy", fillcolor: color_with_alpha(getTheme().accent, 0.2) }
                         : { type: "bar", marker: { color: getTheme().accent } }),
                     x: dates,
                     y: plot_data,
