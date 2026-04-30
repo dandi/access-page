@@ -1342,8 +1342,7 @@ function load_over_time_plot(dandiset_id) {
                 .then((text) => {
                     const { dates: raw_dates, bytes: raw_bytes } = parse_by_day_tsv(text);
                     const agg = aggregate_by_timebin(raw_dates, raw_bytes, TIME_AGGREGATION);
-                    const plot_data = USE_CUMULATIVE ? make_cumulative(agg.bytes_sent) : agg.bytes_sent;
-                    return { id, dates: agg.dates, plot_data };
+                    return { id, dates: agg.dates, bytes_sent: agg.bytes_sent };
                 })
                 .catch((err) => {
                     console.warn(`Skipping dandiset ${id} in grouped view:`, err);
@@ -1362,15 +1361,29 @@ function load_over_time_plot(dandiset_id) {
             .then(([series_results, archive_data]) => {
                 const valid_series = series_results.filter(Boolean);
 
+                // Compute global bin edges: union of all dandiset bins and archive bins.
+                // Aligning every series to the same x-axis eliminates gaps between bars
+                // that would otherwise appear when dandisets have different date ranges.
+                const global_bin_set = new Set(valid_series.flatMap((s) => s.dates));
+                let archive_agg = null;
+                if (archive_data) {
+                    archive_agg = aggregate_by_timebin(archive_data.dates, archive_data.bytes, TIME_AGGREGATION);
+                    archive_agg.dates.forEach((d) => global_bin_set.add(d));
+                }
+                const global_bins = [...global_bin_set].sort();
+
                 const plot_info = valid_series.map((series, i) => {
                     const color = DANDISET_BAR_COLORS[i % DANDISET_BAR_COLORS.length];
-                    const human_readable = series.plot_data.map((b) => format_bytes(b));
+                    const date_to_bytes = new Map(series.dates.map((d, idx) => [d, series.bytes_sent[idx]]));
+                    const aligned_bytes = global_bins.map((k) => date_to_bytes.get(k) || 0);
+                    const plot_data = USE_CUMULATIVE ? make_cumulative(aligned_bytes) : aligned_bytes;
+                    const human_readable = plot_data.map((b) => format_bytes(b));
                     return {
                         type: "bar",
                         name: `DANDI:${series.id}`,
-                        x: series.dates,
-                        y: series.plot_data,
-                        text: series.dates.map((date, idx) =>
+                        x: global_bins,
+                        y: plot_data,
+                        text: global_bins.map((date, idx) =>
                             `DANDI:${series.id}<br>${bin_label_prefix}${date}<br>${human_readable[idx]}`
                         ),
                         textposition: "none",
@@ -1380,19 +1393,22 @@ function load_over_time_plot(dandiset_id) {
                 });
 
                 // Build an "Other" series: archive total minus the sum of all top-N dandisets
-                if (archive_data) {
-                    const archive_agg = aggregate_by_timebin(archive_data.dates, archive_data.bytes, TIME_AGGREGATION);
+                if (archive_agg) {
+                    const date_to_archive_bytes = new Map(
+                        archive_agg.dates.map((d, i) => [d, archive_agg.bytes_sent[i]])
+                    );
+                    const aligned_archive_bytes = global_bins.map((k) => date_to_archive_bytes.get(k) || 0);
                     const archive_plot_data = USE_CUMULATIVE
-                        ? make_cumulative(archive_agg.bytes_sent)
-                        : archive_agg.bytes_sent;
+                        ? make_cumulative(aligned_archive_bytes)
+                        : aligned_archive_bytes;
                     // Build per-date lookup for the sum of top-N series (already cumulative if USE_CUMULATIVE)
                     const series_by_date = new Map();
-                    for (const series of valid_series) {
-                        series.dates.forEach((date, idx) => {
-                            series_by_date.set(date, (series_by_date.get(date) || 0) + series.plot_data[idx]);
+                    for (const trace of plot_info) {
+                        trace.x.forEach((date, idx) => {
+                            series_by_date.set(date, (series_by_date.get(date) || 0) + trace.y[idx]);
                         });
                     }
-                    const other_y = archive_agg.dates.map((date, i) => {
+                    const other_y = global_bins.map((date, i) => {
                         const top_n_total = series_by_date.get(date) || 0;
                         return Math.max(0, archive_plot_data[i] - top_n_total);
                     });
@@ -1400,9 +1416,9 @@ function load_over_time_plot(dandiset_id) {
                     plot_info.push({
                         type: "bar",
                         name: "Other",
-                        x: archive_agg.dates,
+                        x: global_bins,
                         y: other_y,
-                        text: archive_agg.dates.map((date, idx) =>
+                        text: global_bins.map((date, idx) =>
                             `Other<br>${bin_label_prefix}${date}<br>${other_human_readable[idx]}`
                         ),
                         textposition: "none",
@@ -1411,9 +1427,7 @@ function load_over_time_plot(dandiset_id) {
                     });
                 }
 
-                // Collect all dates across series for range-break calculation
-                const all_series_dates = valid_series.flatMap((s) => s.dates);
-                const layout = build_over_time_layout(all_series_dates);
+                const layout = build_over_time_layout(global_bins);
                 layout.barmode = "stack";
                 layout.legend = { title: { text: "Dandiset" } };
 
