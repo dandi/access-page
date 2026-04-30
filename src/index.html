@@ -116,9 +116,12 @@
                     <input type="checkbox" id="cumulative" />
                 </div>
                 <div class="SubControllerContainer">
-                    <label for="line_plot">Line Plot</label>
-                    <span class="info-icon" data-tooltip="Use line plot instead of bar chart for usage over time" tabindex="0" role="img" aria-label="Line Plot: Use line plot instead of bar chart for usage over time">i</span>
-                    <input type="checkbox" id="line_plot" />
+                    <label for="plot_type">Plot Type</label>
+                    <span class="info-icon" data-tooltip="Choose bar or line chart for usage over time" tabindex="0" role="img" aria-label="Plot Type: Choose bar or line chart for usage over time">i</span>
+                    <select id="plot_type">
+                        <option value="bar">Bar</option>
+                        <option value="line">Line</option>
+                    </select>
                 </div>
                 <div class="SubControllerContainer">
                     <label for="top_n_dandisets">Top Dandisets</label>

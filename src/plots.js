@@ -485,11 +485,11 @@ function syncFromUrl() {
         cumulativeCheckbox.checked = USE_CUMULATIVE;
     }
 
-    // Line plot
-    const linePlotCheckbox = document.getElementById("line_plot");
-    if (linePlotCheckbox) {
-        USE_LINE_PLOT = params.get("line_plot") === "true";
-        linePlotCheckbox.checked = USE_LINE_PLOT;
+    // Plot type (bar vs line)
+    const plotTypeSelect = document.getElementById("plot_type");
+    if (plotTypeSelect) {
+        USE_LINE_PLOT = params.get("plot_type") === "line";
+        plotTypeSelect.value = USE_LINE_PLOT ? "line" : "bar";
     }
 
     // Prefix (binary vs decimal)
@@ -635,18 +635,14 @@ window.addEventListener("load", () => {
         });
     }
 
-    // Add event listener for line plot toggle
-    const linePlotCheckbox = document.getElementById("line_plot");
-    if (linePlotCheckbox) {
-        linePlotCheckbox.addEventListener("change", function () {
-            USE_LINE_PLOT = this.checked;
+    // Add event listener for plot type toggle (bar vs line)
+    const plotTypeSelect = document.getElementById("plot_type");
+    if (plotTypeSelect) {
+        plotTypeSelect.addEventListener("change", function () {
+            USE_LINE_PLOT = this.value === "line";
 
             const params = new URLSearchParams(window.location.search);
-            if (this.checked) {
-                params.set("line_plot", "true");
-            } else {
-                params.delete("line_plot");
-            }
+            setUrlParam(params, "plot_type", this.value, "bar");
             const query = params.toString();
             const newUrl = window.location.pathname + (query ? "?" + query : "");
             window.history.pushState({}, "", newUrl);
@@ -1323,11 +1319,11 @@ function load_over_time_plot(dandiset_id) {
                         ...(USE_LINE_PLOT
                             ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" }, stackgroup: "one" }
                             : { type: "bar", marker: { color: "rgba(150,150,150,0.7)" } }),
-                        name: "Other",
+                        name: "Undetermined file types",
                         x: archive_agg.dates,
                         y: other_y,
                         text: archive_agg.dates.map((date, idx) =>
-                            `Other<br>${bin_label_prefix}${date}<br>${other_human_readable[idx]}`
+                            `Undetermined file types<br>${bin_label_prefix}${date}<br>${other_human_readable[idx]}`
                         ),
                         textposition: "none",
                         hoverinfo: "text",
