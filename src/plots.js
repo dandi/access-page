@@ -432,6 +432,7 @@ let REGION_CODES_TO_LATITUDE_LONGITUDE = {};
 let ALL_DANDISET_TOTALS = {};
 let USE_LOG_SCALE = false;
 let USE_CUMULATIVE = false;
+let USE_LINE_PLOT = false;
 let USE_BINARY = false;
 let GEO_VIEW = "regions";  // "regions" | "points" | "table" | "aws"
 let TIME_AGGREGATION = "daily";  // "daily" | "weekly" | "monthly" | "yearly"
@@ -482,6 +483,13 @@ function syncFromUrl() {
     if (cumulativeCheckbox) {
         USE_CUMULATIVE = params.get("cumulative") === "true";
         cumulativeCheckbox.checked = USE_CUMULATIVE;
+    }
+
+    // Line plot
+    const linePlotCheckbox = document.getElementById("line_plot");
+    if (linePlotCheckbox) {
+        USE_LINE_PLOT = params.get("line_plot") === "true";
+        linePlotCheckbox.checked = USE_LINE_PLOT;
     }
 
     // Prefix (binary vs decimal)
@@ -610,6 +618,34 @@ window.addEventListener("load", () => {
                 params.set("cumulative", "true");
             } else {
                 params.delete("cumulative");
+            }
+            const query = params.toString();
+            const newUrl = window.location.pathname + (query ? "?" + query : "");
+            window.history.pushState({}, "", newUrl);
+
+            // Get the current dandiset ID
+            const dandiset_selector = document.getElementById("dandiset_selector");
+            const selected_dandiset = dandiset_selector.value;
+
+            // Reload plots with the current dandiset ID
+            load_over_time_plot(selected_dandiset);
+            load_histogram(selected_dandiset);
+            load_aws_histogram(selected_dandiset);
+            load_geographic_heatmap(selected_dandiset);
+        });
+    }
+
+    // Add event listener for line plot toggle
+    const linePlotCheckbox = document.getElementById("line_plot");
+    if (linePlotCheckbox) {
+        linePlotCheckbox.addEventListener("change", function () {
+            USE_LINE_PLOT = this.checked;
+
+            const params = new URLSearchParams(window.location.search);
+            if (this.checked) {
+                params.set("line_plot", "true");
+            } else {
+                params.delete("line_plot");
             }
             const query = params.toString();
             const newUrl = window.location.pathname + (query ? "?" + query : "");
@@ -1251,11 +1287,9 @@ function load_over_time_plot(dandiset_id) {
                     const color = DANDISET_BAR_COLORS[i % DANDISET_BAR_COLORS.length];
                     all_dates_for_layout.push(...agg.dates);
                     return {
-                        ...(USE_CUMULATIVE
+                        ...(USE_LINE_PLOT
                             ? { type: "scatter", mode: "lines", line: { color }, stackgroup: "one" }
                             : { type: "bar", marker: { color } }),
-                        name: type,
-                        x: agg.dates,
                         y: plot_data,
                         text: agg.dates.map((date, idx) =>
                             `${type}<br>${bin_label_prefix}${date}<br>${human_readable[idx]}`
@@ -1284,7 +1318,7 @@ function load_over_time_plot(dandiset_id) {
                     });
                     const other_human_readable = other_y.map((b) => format_bytes(b));
                     plot_info.push({
-                        ...(USE_CUMULATIVE
+                        ...(USE_LINE_PLOT
                             ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" }, stackgroup: "one" }
                             : { type: "bar", marker: { color: "rgba(150,150,150,0.7)" } }),
                         name: "Other",
@@ -1301,12 +1335,12 @@ function load_over_time_plot(dandiset_id) {
 
                 const unique_dates = [...new Set(all_dates_for_layout)].sort();
                 const layout = build_over_time_layout(unique_dates);
-                if (!USE_CUMULATIVE) layout.barmode = "stack";
+                if (!USE_LINE_PLOT) layout.barmode = "stack";
                 layout.showlegend = true;
                 layout.legend = { title: { text: "Asset type" } };
 
                 // Override title for "daily" since we show weekly granularity
-                if (!USE_CUMULATIVE && TIME_AGGREGATION === "daily") {
+                if (!USE_LINE_PLOT && TIME_AGGREGATION === "daily") {
                     layout.title.text = "Usage per week";
                 }
 
@@ -1387,7 +1421,7 @@ function load_over_time_plot(dandiset_id) {
                     const color = DANDISET_BAR_COLORS[i % DANDISET_BAR_COLORS.length];
                     const human_readable = series.plot_data.map((b) => format_bytes(b));
                     return {
-                        ...(USE_CUMULATIVE
+                        ...(USE_LINE_PLOT
                             ? { type: "scatter", mode: "lines", line: { color }, stackgroup: "one" }
                             : { type: "bar", marker: { color } }),
                         name: `DANDI:${series.id}`,
@@ -1420,7 +1454,7 @@ function load_over_time_plot(dandiset_id) {
                     });
                     const other_human_readable = other_y.map((b) => format_bytes(b));
                     plot_info.push({
-                        ...(USE_CUMULATIVE
+                        ...(USE_LINE_PLOT
                             ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" }, stackgroup: "one" }
                             : { type: "bar", marker: { color: "rgba(150,150,150,0.7)" } }),
                         name: "Other",
@@ -1437,7 +1471,7 @@ function load_over_time_plot(dandiset_id) {
                 // Collect all dates across series for range-break calculation
                 const all_series_dates = valid_series.flatMap((s) => s.dates);
                 const layout = build_over_time_layout(all_series_dates);
-                if (!USE_CUMULATIVE) layout.barmode = "stack";
+                if (!USE_LINE_PLOT) layout.barmode = "stack";
                 layout.legend = { title: { text: "Dandiset" } };
 
                 Plotly.newPlot(plot_element_id, plot_info, layout, PLOTLY_CONFIG);
@@ -1514,7 +1548,7 @@ function load_over_time_plot(dandiset_id) {
 
             const plot_info = [
                 {
-                    ...(USE_CUMULATIVE
+                    ...(USE_LINE_PLOT
                         ? { type: "scatter", mode: "lines", line: { color: getTheme().accent }, fill: "tozeroy", fillcolor: color_with_alpha(getTheme().accent, 0.2) }
                         : { type: "bar", marker: { color: getTheme().accent } }),
                     x: dates,
