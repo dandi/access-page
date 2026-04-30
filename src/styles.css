@@ -33,10 +33,17 @@
     box-sizing: border-box;
 }
 
-/* Suppress all CSS transitions/animations during initial page load so that
-   JS-driven state changes (theme, URL-param sync) don't play as animations.
-   The 'preload' class is added by the inline script in <head> and removed by
-   plots.js after the initial state is fully applied. */
+/* ── Anti-FOUC / preload guard ───────────────────────────────────────────────
+   The 'preload' class is added synchronously by the inline <head> script and
+   removed by plots.js (via requestAnimationFrame) after initTheme() and
+   syncFromUrl() have both completed.  During this window:
+   • body is invisible so the scrambled intermediate state is never seen.
+   • all transitions/animations are suppressed so state changes don't play as
+     animations (e.g. theme application, URL-param sync of form controls). */
+html.preload body {
+    visibility: hidden;
+}
+
 html.preload,
 html.preload * {
     transition: none !important;
@@ -242,12 +249,20 @@ input[type="number"]:focus {
     margin: 8px auto;
     max-width: 95vw;
     max-height: 500px;
+    /* Reserve vertical space so the layout doesn't shift when Plotly renders
+       (Plotly default plot height is 450 px). */
+    min-height: 450px;
 }
 
 #histogram {
     margin: 8px auto;
     max-width: 95vw;
     max-height: 400px;
+}
+
+#histogram_plot {
+    /* Reserve vertical space so the layout doesn't shift when Plotly renders. */
+    min-height: 350px;
 }
 
 #geography_heatmap {
