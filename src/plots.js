@@ -1669,13 +1669,14 @@ function load_dandiset_histogram() {
 
         const plot_data = [
             {
-                type: "bar",
+                ...(USE_LINE_PLOT
+                    ? { type: "scatter", mode: "lines", line: { color: getTheme().accent }, fill: "tozeroy", fillcolor: color_with_alpha(getTheme().accent, 0.2) }
+                    : { type: "bar", marker: { color: getTheme().accent } }),
                 x: sorted_dandiset_ids,
                 y: sorted_bytes_sent,
                 text: sorted_dandiset_ids.map((dandiset_id, index) => `${dandiset_id}<br>${human_readable_bytes_sent[index]}`),
                 textposition: "none",
                 hoverinfo: "text",
-                marker: { color: getTheme().accent },
             }
         ];
 
@@ -1760,13 +1761,14 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
             // Use sorted arrays in the plot
             const plot_data = [
                 {
-                    type: "bar",
+                    ...(USE_LINE_PLOT
+                        ? { type: "scatter", mode: "lines", line: { color: getTheme().accent }, fill: "tozeroy", fillcolor: color_with_alpha(getTheme().accent, 0.2) }
+                        : { type: "bar", marker: { color: getTheme().accent } }),
                     x: sorted_asset_names,
                     y: sorted_bytes_sent,
                     text: sorted_asset_names.map((name, index) => `${name}<br>${human_readable_bytes_sent[index]}`),
                     textposition: "none",
                     hoverinfo: "text",
-                    marker: { color: getTheme().accent },
                 }
             ];
 
