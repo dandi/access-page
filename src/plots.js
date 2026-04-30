@@ -91,6 +91,9 @@ const PLOTLY_CONFIG = {
  * Reads the saved theme preference from localStorage (defaulting to dark),
  * applies it to the <html> element and updates IS_DARK_MODE.
  * Call once on page load before any plots are rendered.
+ *
+ * NOTE: The defaulting logic (anything other than 'light' → dark) must stay
+ * in sync with the inline anti-FOUC script in index.html <head>.
  */
 function initTheme() {
     const saved = localStorage.getItem('theme');
@@ -355,6 +358,14 @@ document.addEventListener("DOMContentLoaded", () => {
     // time, the correct settings (cumulative, group_by, etc.) are already in
     // effect.
     syncFromUrl();
+
+    // Remove the 'preload' class added by the inline <head> script so that CSS
+    // transitions are re-enabled for all subsequent user interactions (theme
+    // toggle, settings changes, etc.).  Using rAF ensures the class is removed
+    // after the browser has committed the initial paint with the correct state.
+    window.requestAnimationFrame(() => {
+        document.documentElement.classList.remove('preload');
+    });
 });
 
 // Handle section anchor link clicks: update the URL hash via pushState so the

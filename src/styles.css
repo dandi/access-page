@@ -33,6 +33,16 @@
     box-sizing: border-box;
 }
 
+/* Suppress all CSS transitions/animations during initial page load so that
+   JS-driven state changes (theme, URL-param sync) don't play as animations.
+   The 'preload' class is added by the inline script in <head> and removed by
+   plots.js after the initial state is fully applied. */
+html.preload,
+html.preload * {
+    transition: none !important;
+    animation: none !important;
+}
+
 body {
     font-family: var(--font-main);
     color: var(--color-text);
