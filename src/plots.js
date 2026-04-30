@@ -336,8 +336,11 @@ function render_sortable_table(container_id, title, columns, rows, data_url) {
 }
 // ────────────────────────────────────────────────────────────────────────────
 
-// Initialise the theme as early as possible (before plots are rendered) so
-// that CSS variables and IS_DARK_MODE are in sync from the very first paint.
+// Initialise the theme and URL-driven state as early as possible (before plots
+// are rendered) so that CSS variables, global flags, and form controls are all
+// in sync from the very first paint.  syncFromUrl() is called here instead of
+// inside the window "load" handler so it always runs before any async data
+// fetch can resolve and trigger the first plot render.
 document.addEventListener("DOMContentLoaded", () => {
     initTheme();
 
@@ -346,6 +349,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (versionEl) {
         versionEl.textContent = `v${__APP_VERSION__}`;
     }
+
+    // Sync global state and form controls from URL parameters early so that
+    // when the data fetch Promise resolves and plots are rendered for the first
+    // time, the correct settings (cumulative, group_by, etc.) are already in
+    // effect.
+    syncFromUrl();
 });
 
 // Handle section anchor link clicks: update the URL hash via pushState so the
@@ -642,9 +651,6 @@ window.addEventListener("load", () => {
         });
     }
 
-    // Initialize all URL parameters to state and UI
-    syncFromUrl();
-
     // Add event listener for over-time view radio toggle (Plot vs Table)
     const overTimeViewRadios = document.querySelectorAll('input[name="over_time_view"]');
     overTimeViewRadios.forEach((radio) => {
@@ -819,6 +825,13 @@ const allDandisetTotalsPromise = fetchWithRetry(ALL_DANDISET_TOTALS_URL)
 // Populate the dropdown with IDs and render initial plots only after both fetches complete
 Promise.all([archiveTotalsPromise, allDandisetTotalsPromise])
     .then(() => {
+        // Re-sync from URL here as a safety net: if DOMContentLoaded fired
+        // before the data was ready, the global state is already correct, but
+        // if (in edge cases such as Service Worker caching) the fetch resolved
+        // before DOMContentLoaded, this call ensures the URL-driven settings
+        // are applied before any plot is rendered for the first time.
+        syncFromUrl();
+
         let dandiset_ids = Object.keys(ALL_DANDISET_TOTALS);
         dandiset_ids.sort((a, b) => {
             if (a === "archive") return -1;
