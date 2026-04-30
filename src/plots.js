@@ -1290,6 +1290,8 @@ function load_over_time_plot(dandiset_id) {
                         ...(USE_LINE_PLOT
                             ? { type: "scatter", mode: "lines", line: { color }, stackgroup: "one" }
                             : { type: "bar", marker: { color } }),
+                        name: type,
+                        x: agg.dates,
                         y: plot_data,
                         text: agg.dates.map((date, idx) =>
                             `${type}<br>${bin_label_prefix}${date}<br>${human_readable[idx]}`
