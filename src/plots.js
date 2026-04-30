@@ -1239,7 +1239,7 @@ function load_over_time_plot(dandiset_id) {
                     all_dates_for_layout.push(...agg.dates);
                     return {
                         ...(USE_CUMULATIVE
-                            ? { type: "scatter", mode: "lines", line: { color }, fill: "tozeroy", fillcolor: color_with_alpha(color, 0.2) }
+                            ? { type: "scatter", mode: "lines", line: { color }, stackgroup: "one" }
                             : { type: "bar", marker: { color } }),
                         name: type,
                         x: agg.dates,
@@ -1258,7 +1258,7 @@ function load_over_time_plot(dandiset_id) {
                     const archive_plot_data = USE_CUMULATIVE
                         ? make_cumulative(archive_agg.bytes_sent)
                         : archive_agg.bytes_sent;
-                    // Build per-date lookup for the sum of all asset-type series (already cumulative if USE_CUMULATIVE)
+                    // Build per-date lookup for the sum of all asset-type series
                     const series_by_date = new Map();
                     for (const series of plot_info) {
                         series.x.forEach((date, idx) => {
@@ -1272,7 +1272,7 @@ function load_over_time_plot(dandiset_id) {
                     const other_human_readable = other_y.map((b) => format_bytes(b));
                     plot_info.push({
                         ...(USE_CUMULATIVE
-                            ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" }, fill: "tozeroy", fillcolor: "rgba(150,150,150,0.15)" }
+                            ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" }, stackgroup: "one" }
                             : { type: "bar", marker: { color: "rgba(150,150,150,0.7)" } }),
                         name: "Other",
                         x: archive_agg.dates,
@@ -1375,7 +1375,7 @@ function load_over_time_plot(dandiset_id) {
                     const human_readable = series.plot_data.map((b) => format_bytes(b));
                     return {
                         ...(USE_CUMULATIVE
-                            ? { type: "scatter", mode: "lines", line: { color }, fill: "tozeroy", fillcolor: color_with_alpha(color, 0.2) }
+                            ? { type: "scatter", mode: "lines", line: { color }, stackgroup: "one" }
                             : { type: "bar", marker: { color } }),
                         name: `DANDI:${series.id}`,
                         x: series.dates,
@@ -1394,7 +1394,7 @@ function load_over_time_plot(dandiset_id) {
                     const archive_plot_data = USE_CUMULATIVE
                         ? make_cumulative(archive_agg.bytes_sent)
                         : archive_agg.bytes_sent;
-                    // Build per-date lookup for the sum of top-N series (already cumulative if USE_CUMULATIVE)
+                    // Build per-date lookup for the sum of top-N series
                     const series_by_date = new Map();
                     for (const series of valid_series) {
                         series.dates.forEach((date, idx) => {
@@ -1408,7 +1408,7 @@ function load_over_time_plot(dandiset_id) {
                     const other_human_readable = other_y.map((b) => format_bytes(b));
                     plot_info.push({
                         ...(USE_CUMULATIVE
-                            ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" }, fill: "tozeroy", fillcolor: "rgba(150,150,150,0.15)" }
+                            ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" }, stackgroup: "one" }
                             : { type: "bar", marker: { color: "rgba(150,150,150,0.7)" } }),
                         name: "Other",
                         x: archive_agg.dates,
