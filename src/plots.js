@@ -26,8 +26,11 @@ const LIGHT_THEME = {
     annotationBg:  'rgba(245, 247, 250, 0.85)',
 };
 
+// Media query used to detect the OS / browser dark-mode preference.
+const PREFERS_DARK_MQ = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
 // Tracks whether the page is currently in dark mode; initialised from
-// localStorage in initTheme() on DOMContentLoaded.
+// localStorage (or browser preference) in initTheme() on DOMContentLoaded.
 let IS_DARK_MODE = true;
 
 /** Returns the active theme colour object. */
@@ -88,8 +91,12 @@ const PLOTLY_CONFIG = {
 };
 
 /**
- * Reads the saved theme preference from localStorage (defaulting to dark),
- * applies it to the <html> element and updates IS_DARK_MODE.
+ * Reads the saved theme preference from localStorage.  When no preference has
+ * been saved yet, falls back to the browser / OS setting via
+ * `prefers-color-scheme`.  Applies the resolved theme to the <html> element,
+ * updates IS_DARK_MODE, and registers a media-query listener so the page
+ * automatically follows OS theme changes as long as the user has not chosen an
+ * explicit override.
  * Call once on page load before any plots are rendered.
  *
  * NOTE: The defaulting logic (anything other than 'light' → dark) must stay
@@ -97,9 +104,23 @@ const PLOTLY_CONFIG = {
  */
 function initTheme() {
     const saved = localStorage.getItem('theme');
-    IS_DARK_MODE = saved !== 'light';
+    if (saved === 'dark' || saved === 'light') {
+        IS_DARK_MODE = saved === 'dark';
+    } else {
+        IS_DARK_MODE = PREFERS_DARK_MQ ? PREFERS_DARK_MQ.matches : true;
+    }
     document.documentElement.setAttribute('data-theme', IS_DARK_MODE ? 'dark' : 'light');
     syncThemeToggleIcon();
+
+    // When no explicit preference is stored, keep in sync with OS theme changes.
+    if (PREFERS_DARK_MQ) {
+        PREFERS_DARK_MQ.addEventListener('change', (e) => {
+            if (localStorage.getItem('theme')) return; // user override takes precedence
+            IS_DARK_MODE = e.matches;
+            document.documentElement.setAttribute('data-theme', IS_DARK_MODE ? 'dark' : 'light');
+            syncThemeToggleIcon();
+        });
+    }
 }
 
 /**
