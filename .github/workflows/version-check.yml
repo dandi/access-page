@@ -6,9 +6,6 @@ on:
       - main
     paths:
       - "src/**"
-      - "configs/**"
-      - "package.json"
-      - "package-lock.json"
 
 jobs:
   version-check:
