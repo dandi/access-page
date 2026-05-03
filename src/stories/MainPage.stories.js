@@ -89,12 +89,12 @@ const pageHTML = `
                 </div>
                 <div class="SubControllerContainer">
                     <label for="ot_stacked">Stacked</label>
-                    <span class="info-icon" data-tooltip="Only applies to the 'group by'" tabindex="0" role="img" aria-label="Stacked: Only applies to the 'group by'">i</span>
+                    <span class="info-icon" data-tooltip="Only applies to 'group by'" tabindex="0" role="img" aria-label="Stacked: Only applies to 'group by'">i</span>
                     <input type="checkbox" id="ot_stacked" checked />
                 </div>
                 <div class="SubControllerContainer">
                     <label for="top_n_dandisets">Top Dandisets</label>
-                    <span class="info-icon" data-tooltip="Only applies to the 'group by'" tabindex="0" role="img" aria-label="Top Dandisets: Only applies to the 'group by'">i</span>
+                    <span class="info-icon" data-tooltip="Only applies to 'group by'" tabindex="0" role="img" aria-label="Top Dandisets: Only applies to 'group by'">i</span>
                     <input type="number" id="top_n_dandisets" min="1" value="8" />
                 </div>
             </div>
