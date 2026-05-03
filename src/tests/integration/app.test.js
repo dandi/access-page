@@ -32,6 +32,11 @@ const test = COVERAGE_ENABLED
 
 test.describe("DANDI Access Page", () => {
     test.beforeEach(async ({ page }) => {
+        page.on("console", (msg) => {
+            if (msg.type() === "warning") {
+                console.warn(`[browser:warning] ${msg.text()}`);
+            }
+        });
         await page.addInitScript(() => localStorage.clear());
         await page.goto("/");
     });
