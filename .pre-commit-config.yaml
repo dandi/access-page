@@ -19,7 +19,7 @@ repos:
   - id: codespell
     additional_dependencies:
     - tomli
-    exclude: '(gadm_admin1_simplified\.topojson|name_aliases\.json)$'
+    exclude: '(gadm_admin1_simplified\.topojson|name_aliases\.json|package-lock\.json)$'
 
 - repo: https://github.com/compilerla/conventional-pre-commit
   rev: v4.4.0
