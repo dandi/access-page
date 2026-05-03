@@ -5,4 +5,5 @@ export default {
         name: "@storybook/html-vite",
         options: {},
     },
+    staticDirs: [{ from: "../../src/assets", to: "/assets" }],
 };
