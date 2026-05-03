@@ -67,14 +67,15 @@ test.describe("DANDI Access Page", () => {
     test("theme toggle switches between dark and light mode", async ({ page }) => {
         const html = page.locator("html");
 
-        // Default is dark
-        await expect(html).toHaveAttribute("data-theme", "dark");
+        // Read the actual initial theme (depends on system prefers-color-scheme)
+        const initialTheme = await html.getAttribute("data-theme");
+        const otherTheme = initialTheme === "dark" ? "light" : "dark";
 
         await page.locator("#theme_toggle_btn").click();
-        await expect(html).toHaveAttribute("data-theme", "light");
+        await expect(html).toHaveAttribute("data-theme", otherTheme);
 
         await page.locator("#theme_toggle_btn").click();
-        await expect(html).toHaveAttribute("data-theme", "dark");
+        await expect(html).toHaveAttribute("data-theme", initialTheme);
     });
 
     test("over-time plot section is present", async ({ page }) => {
@@ -86,6 +87,6 @@ test.describe("DANDI Access Page", () => {
     });
 
     test("geography section is present", async ({ page }) => {
-        await expect(page.locator("#geography_heatmap, #geo_table_section")).toBeVisible();
+        await expect(page.locator("#geography_heatmap, #geo_table_section").first()).toBeVisible();
     });
 });
