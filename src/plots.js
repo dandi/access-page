@@ -1256,7 +1256,12 @@ function load_over_time_plot(dandiset_id) {
                     all_dates_for_layout.push(...agg.dates);
                     return {
                         ...(USE_OT_LINE_PLOT
-                            ? { type: "scatter", mode: "lines", line: { color }, ...(USE_STACKED ? { stackgroup: "one" } : {}) }
+                            ? {
+                                type: "scatter", mode: "lines", line: { color },
+                                ...(USE_STACKED
+                                    ? { stackgroup: "one" }
+                                    : { fill: "tozeroy", fillcolor: color_with_alpha(color, 0.2) }),
+                            }
                             : { type: "bar", marker: { color } }),
                         name: type,
                         x: agg.dates,
@@ -1289,7 +1294,12 @@ function load_over_time_plot(dandiset_id) {
                     const other_human_readable = other_y.map((b) => format_bytes(b));
                     plot_info.push({
                         ...(USE_OT_LINE_PLOT
-                            ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" }, ...(USE_STACKED ? { stackgroup: "one" } : {}) }
+                            ? {
+                                type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" },
+                                ...(USE_STACKED
+                                    ? { stackgroup: "one" }
+                                    : { fill: "tozeroy", fillcolor: "rgba(150,150,150,0.15)" }),
+                            }
                             : { type: "bar", marker: { color: "rgba(150,150,150,0.7)" } }),
                         name: "Undetermined file types",
                         x: archive_agg.dates,
@@ -1305,7 +1315,7 @@ function load_over_time_plot(dandiset_id) {
 
                 const unique_dates = [...new Set(all_dates_for_layout)].sort();
                 const layout = build_over_time_layout(unique_dates);
-                if (!USE_OT_LINE_PLOT && USE_STACKED) layout.barmode = "stack";
+                if (!USE_OT_LINE_PLOT) layout.barmode = USE_STACKED ? "stack" : "overlay";
                 layout.showlegend = true;
                 layout.legend = { title: { text: "Asset type" } };
 
@@ -1405,7 +1415,12 @@ function load_over_time_plot(dandiset_id) {
                     const human_readable = plot_data.map((b) => format_bytes(b));
                     return {
                         ...(USE_OT_LINE_PLOT
-                            ? { type: "scatter", mode: "lines", line: { color }, ...(USE_STACKED ? { stackgroup: "one" } : {}) }
+                            ? {
+                                type: "scatter", mode: "lines", line: { color },
+                                ...(USE_STACKED
+                                    ? { stackgroup: "one" }
+                                    : { fill: "tozeroy", fillcolor: color_with_alpha(color, 0.2) }),
+                            }
                             : { type: "bar", marker: { color } }),
                         name: `DANDI:${series.id}`,
                         x: global_bins,
@@ -1441,7 +1456,12 @@ function load_over_time_plot(dandiset_id) {
                     const other_human_readable = other_y.map((b) => format_bytes(b));
                     plot_info.push({
                         ...(USE_OT_LINE_PLOT
-                            ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" }, ...(USE_STACKED ? { stackgroup: "one" } : {}) }
+                            ? {
+                                type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" },
+                                ...(USE_STACKED
+                                    ? { stackgroup: "one" }
+                                    : { fill: "tozeroy", fillcolor: "rgba(150,150,150,0.15)" }),
+                            }
                             : { type: "bar", marker: { color: "rgba(150,150,150,0.7)" } }),
                         name: "Other",
                         x: global_bins,
@@ -1455,7 +1475,7 @@ function load_over_time_plot(dandiset_id) {
                 }
 
                 const layout = build_over_time_layout(global_bins);
-                if (!USE_OT_LINE_PLOT && USE_STACKED) layout.barmode = "stack";
+                if (!USE_OT_LINE_PLOT) layout.barmode = USE_STACKED ? "stack" : "overlay";
                 layout.legend = { title: { text: "Dandiset" } };
 
                 Plotly.newPlot(plot_element_id, plot_info, layout, PLOTLY_CONFIG);
