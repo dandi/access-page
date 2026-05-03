@@ -1,4 +1,4 @@
-import rawHTML from "../../src/index.html?raw";
+import rawHTML from "../src/index.html?raw";
 
 export default {
     title: "DANDI Access Page/Main Page",
