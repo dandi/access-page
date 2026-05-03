@@ -7,7 +7,6 @@ on:
     paths:
       - "src/**"
       - "configs/**"
-      - "public/**"
       - "package.json"
       - "package-lock.json"
 
