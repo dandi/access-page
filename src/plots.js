@@ -507,12 +507,13 @@ function syncFromUrl() {
         cumulativeCheckbox.checked = USE_CUMULATIVE;
     }
 
-    // Plot type (bar vs line)
-    const plotTypeSelect = document.getElementById("plot_type");
-    if (plotTypeSelect) {
-        USE_LINE_PLOT = params.get("plot_type") === "line";
-        plotTypeSelect.value = USE_LINE_PLOT ? "line" : "bar";
-    }
+    // Plot type (bar vs line) — shared by both over-time and histogram plot settings
+    USE_LINE_PLOT = params.get("plot_type") === "line";
+    const plotTypeValue = USE_LINE_PLOT ? "line" : "bar";
+    const otPlotTypeSelect = document.getElementById("ot_plot_type");
+    if (otPlotTypeSelect) otPlotTypeSelect.value = plotTypeValue;
+    const histPlotTypeSelect = document.getElementById("hist_plot_type");
+    if (histPlotTypeSelect) histPlotTypeSelect.value = plotTypeValue;
 
     // Prefix (binary vs decimal)
     const prefixSelector = document.getElementById("prefix");
@@ -567,6 +568,38 @@ function syncFromUrl() {
     apply_view_mode("histogram_plot", "histogram_table", USE_HISTOGRAM_TABLE);
 }
 
+/**
+ * Wires up open/close behaviour for a settings panel (gear wheel).
+ * Clicking the button toggles the panel; clicking outside or pressing Escape
+ * closes it.
+ */
+function setupSettingsPanel(btnId, panelId) {
+    const btn = document.getElementById(btnId);
+    const panel = document.getElementById(panelId);
+    if (!btn || !panel) return;
+
+    btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        const isOpen = panel.classList.toggle("open");
+        btn.setAttribute("aria-expanded", String(isOpen));
+        panel.setAttribute("aria-hidden", String(!isOpen));
+    });
+    document.addEventListener("click", function (e) {
+        if (!panel.contains(e.target) && !btn.contains(e.target)) {
+            panel.classList.remove("open");
+            btn.setAttribute("aria-expanded", "false");
+            panel.setAttribute("aria-hidden", "true");
+        }
+    });
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+            panel.classList.remove("open");
+            btn.setAttribute("aria-expanded", "false");
+            panel.setAttribute("aria-hidden", "true");
+        }
+    });
+}
+
 // Check if Plotly is loaded after the window loads
 window.addEventListener("load", () => {
     if (typeof Plotly === "undefined") {
@@ -579,32 +612,10 @@ window.addEventListener("load", () => {
         themeToggleBtn.addEventListener("click", toggleTheme);
     }
 
-    // Settings panel (gear wheel) open/close
-    const settingsBtn = document.getElementById("settings_btn");
-    const settingsPanel = document.getElementById("settings_panel");
-    if (settingsBtn && settingsPanel) {
-        settingsBtn.addEventListener("click", function (e) {
-            e.stopPropagation();
-            const isOpen = settingsPanel.classList.toggle("open");
-            settingsBtn.setAttribute("aria-expanded", String(isOpen));
-            settingsPanel.setAttribute("aria-hidden", String(!isOpen));
-        });
-        document.addEventListener("click", function (e) {
-            if (!settingsPanel.contains(e.target) && !settingsBtn.contains(e.target)) {
-                settingsPanel.classList.remove("open");
-                settingsBtn.setAttribute("aria-expanded", "false");
-                settingsPanel.setAttribute("aria-hidden", "true");
-            }
-        });
-        // Close on Escape key
-        document.addEventListener("keydown", function (e) {
-            if (e.key === "Escape") {
-                settingsPanel.classList.remove("open");
-                settingsBtn.setAttribute("aria-expanded", "false");
-                settingsPanel.setAttribute("aria-hidden", "true");
-            }
-        });
-    }
+    // Settings panels (gear wheels) open/close
+    setupSettingsPanel("settings_btn", "settings_panel");
+    setupSettingsPanel("ot_settings_btn", "ot_settings_panel");
+    setupSettingsPanel("hist_settings_btn", "hist_settings_panel");
 
     // Add event listener for log scale checkbox
     const logScaleCheckbox = document.getElementById("log_scale");
@@ -657,27 +668,42 @@ window.addEventListener("load", () => {
         });
     }
 
-    // Add event listener for plot type toggle (bar vs line)
-    const plotTypeSelect = document.getElementById("plot_type");
-    if (plotTypeSelect) {
-        plotTypeSelect.addEventListener("change", function () {
-            USE_LINE_PLOT = this.value === "line";
+    // Add event listener for plot type toggle (bar vs line) — shared by over-time and histogram
+    // Both selects control the same USE_LINE_PLOT state and are kept in sync with each other.
+    const otPlotTypeSelect = document.getElementById("ot_plot_type");
+    const histPlotTypeSelect = document.getElementById("hist_plot_type");
 
-            const params = new URLSearchParams(window.location.search);
-            setUrlParam(params, "plot_type", this.value, "bar");
-            const query = params.toString();
-            const newUrl = window.location.pathname + (query ? "?" + query : "");
-            window.history.pushState({}, "", newUrl);
+    function onPlotTypeChange(newValue) {
+        USE_LINE_PLOT = newValue === "line";
 
-            // Get the current dandiset ID
-            const dandiset_selector = document.getElementById("dandiset_selector");
-            const selected_dandiset = dandiset_selector.value;
+        // Sync the other select
+        if (otPlotTypeSelect) otPlotTypeSelect.value = newValue;
+        if (histPlotTypeSelect) histPlotTypeSelect.value = newValue;
 
-            // Reload plots with the current dandiset ID
-            load_over_time_plot(selected_dandiset);
-            load_histogram(selected_dandiset);
-            load_aws_histogram(selected_dandiset);
-            load_geographic_heatmap(selected_dandiset);
+        const params = new URLSearchParams(window.location.search);
+        setUrlParam(params, "plot_type", newValue, "bar");
+        const query = params.toString();
+        const newUrl = window.location.pathname + (query ? "?" + query : "");
+        window.history.pushState({}, "", newUrl);
+
+        // Get the current dandiset ID
+        const dandiset_selector = document.getElementById("dandiset_selector");
+        const selected_dandiset = dandiset_selector.value;
+
+        // Reload affected plots
+        load_over_time_plot(selected_dandiset);
+        load_histogram(selected_dandiset);
+    }
+
+    if (otPlotTypeSelect) {
+        otPlotTypeSelect.addEventListener("change", function () {
+            onPlotTypeChange(this.value);
+        });
+    }
+
+    if (histPlotTypeSelect) {
+        histPlotTypeSelect.addEventListener("change", function () {
+            onPlotTypeChange(this.value);
         });
     }
 

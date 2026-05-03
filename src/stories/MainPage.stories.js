@@ -45,24 +45,6 @@ const pageHTML = `
                     <input type="checkbox" id="log_scale" />
                 </div>
                 <div class="SubControllerContainer">
-                    <label for="cumulative">Cumulative</label>
-                    <span class="info-icon" data-tooltip="Only applies to usage over time" tabindex="0" role="img" aria-label="Cumulative: Only applies to usage over time">i</span>
-                    <input type="checkbox" id="cumulative" />
-                </div>
-                <div class="SubControllerContainer">
-                    <label for="plot_type">Plot Type</label>
-                    <span class="info-icon" data-tooltip="Use bars or lines for all plots" tabindex="0" role="img" aria-label="Plot Type: Use bars or lines for all plots">i</span>
-                    <select id="plot_type">
-                        <option value="bar">Bar</option>
-                        <option value="line">Line</option>
-                    </select>
-                </div>
-                <div class="SubControllerContainer">
-                    <label for="top_n_dandisets">Top Dandisets</label>
-                    <span class="info-icon" data-tooltip="Only applies to the 'group by' of usage over time" tabindex="0" role="img" aria-label="Top Dandisets: Only applies to the 'group by' of usage over time">i</span>
-                    <input type="number" id="top_n_dandisets" min="1" value="8" />
-                </div>
-                <div class="SubControllerContainer">
                     <label for="prefix">Prefix</label>
                     <span class="info-icon" data-tooltip="Applies to totals and hover values" tabindex="0" role="img" aria-label="Prefix: Applies to totals and hover values">i</span>
                     <select id="prefix">
@@ -83,6 +65,33 @@ const pageHTML = `
                 <label for="over_time_view_plot">Plot</label>
                 <input type="radio" id="over_time_view_table" name="over_time_view" value="table" />
                 <label for="over_time_view_table">Table</label>
+            </div>
+        </div>
+        <div class="separator"></div>
+        <div class="settings-wrapper">
+            <button class="settings-btn" id="ot_settings_btn" aria-label="Open usage over time settings" aria-expanded="false" title="Usage over time settings">
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm7.07-2.07a7.07 7.07 0 0 0 .07-.93 7.07 7.07 0 0 0-.07-.93l2-1.56a.48.48 0 0 0 .11-.61l-1.9-3.28a.48.48 0 0 0-.58-.21l-2.36.95a6.93 6.93 0 0 0-1.6-.93l-.36-2.51A.47.47 0 0 0 12 1H8a.47.47 0 0 0-.47.41l-.36 2.51a6.93 6.93 0 0 0-1.6.93L3.21 3.9a.47.47 0 0 0-.58.21L.73 7.38a.47.47 0 0 0 .11.61l2 1.56A7.2 7.2 0 0 0 2.77 10a7.2 7.2 0 0 0 .07.93l-2 1.56a.48.48 0 0 0-.11.61l1.9 3.28a.48.48 0 0 0 .58.21l2.36-.95c.5.35 1.03.64 1.6.93l.36 2.51c.06.24.27.41.52.41h3.8c.25 0 .46-.17.52-.41l.36-2.51a6.93 6.93 0 0 0 1.6-.93l2.36.95c.22.08.47 0 .58-.21l1.9-3.28a.47.47 0 0 0-.11-.61l-2-1.56z"/>
+                </svg>
+            </button>
+            <div class="settings-panel" id="ot_settings_panel" aria-hidden="true">
+                <div class="settings-panel-title">Plot Settings</div>
+                <div class="SubControllerContainer">
+                    <label for="cumulative">Cumulative</label>
+                    <input type="checkbox" id="cumulative" />
+                </div>
+                <div class="SubControllerContainer">
+                    <label for="ot_plot_type">Plot Type</label>
+                    <select id="ot_plot_type">
+                        <option value="bar">Bar</option>
+                        <option value="line">Line</option>
+                    </select>
+                </div>
+                <div class="SubControllerContainer">
+                    <label for="top_n_dandisets">Top Dandisets</label>
+                    <span class="info-icon" data-tooltip="Only applies to the 'group by'" tabindex="0" role="img" aria-label="Top Dandisets: Only applies to the 'group by'">i</span>
+                    <input type="number" id="top_n_dandisets" min="1" value="8" />
+                </div>
             </div>
         </div>
     </div>
@@ -122,6 +131,24 @@ const pageHTML = `
                 <label for="histogram_view_plot">Plot</label>
                 <input type="radio" id="histogram_view_table" name="histogram_view" value="table" />
                 <label for="histogram_view_table">Table</label>
+            </div>
+        </div>
+        <div class="separator"></div>
+        <div class="settings-wrapper">
+            <button class="settings-btn" id="hist_settings_btn" aria-label="Open usage per dandiset settings" aria-expanded="false" title="Usage per dandiset settings">
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm7.07-2.07a7.07 7.07 0 0 0 .07-.93 7.07 7.07 0 0 0-.07-.93l2-1.56a.48.48 0 0 0 .11-.61l-1.9-3.28a.48.48 0 0 0-.58-.21l-2.36.95a6.93 6.93 0 0 0-1.6-.93l-.36-2.51A.47.47 0 0 0 12 1H8a.47.47 0 0 0-.47.41l-.36 2.51a6.93 6.93 0 0 0-1.6.93L3.21 3.9a.47.47 0 0 0-.58.21L.73 7.38a.47.47 0 0 0 .11.61l2 1.56A7.2 7.2 0 0 0 2.77 10a7.2 7.2 0 0 0 .07.93l-2 1.56a.48.48 0 0 0-.11.61l1.9 3.28a.48.48 0 0 0 .58.21l2.36-.95c.5.35 1.03.64 1.6.93l.36 2.51c.06.24.27.41.52.41h3.8c.25 0 .46-.17.52-.41l.36-2.51a6.93 6.93 0 0 0 1.6-.93l2.36.95c.22.08.47 0 .58-.21l1.9-3.28a.47.47 0 0 0-.11-.61l-2-1.56z"/>
+                </svg>
+            </button>
+            <div class="settings-panel" id="hist_settings_panel" aria-hidden="true">
+                <div class="settings-panel-title">Plot Settings</div>
+                <div class="SubControllerContainer">
+                    <label for="hist_plot_type">Plot Type</label>
+                    <select id="hist_plot_type">
+                        <option value="bar">Bar</option>
+                        <option value="line">Line</option>
+                    </select>
+                </div>
             </div>
         </div>
     </div>
