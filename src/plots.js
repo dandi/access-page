@@ -1310,7 +1310,7 @@ function load_over_time_plot(dandiset_id) {
                 layout.legend = { title: { text: "Asset type" } };
 
                 // Override title for "daily" since we show weekly granularity
-                if (!USE_OT_LINE_PLOT && USE_STACKED && TIME_AGGREGATION === "daily") {
+                if (!USE_OT_LINE_PLOT && TIME_AGGREGATION === "daily") {
                     layout.title.text = "Usage per week";
                 }
 
