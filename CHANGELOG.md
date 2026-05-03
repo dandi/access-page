@@ -2,6 +2,10 @@
 
 ## Upcoming
 
+#### 🚀 Enhancement
+
+- Added "Stacked" toggle to the over-time plot settings panel to switch between stacked and overlay views when a group-by is active. ([#141](https://github.com/dandi/usage-page/pull/141))
+
 #### 🏠 Internal
 
 - Moved `gadm_admin1_simplified.topojson` and `name_aliases.json` from `public/` to `configs/` to reduce top-level noise. ([#137](https://github.com/dandi/usage-page/pull/137))
