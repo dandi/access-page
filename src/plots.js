@@ -472,7 +472,8 @@ let REGION_CODES_TO_LATITUDE_LONGITUDE = {};
 let ALL_DANDISET_TOTALS = {};
 let USE_LOG_SCALE = false;
 let USE_CUMULATIVE = false;
-let USE_LINE_PLOT = false;
+let USE_OT_LINE_PLOT = false;
+let USE_HIST_LINE_PLOT = false;
 let USE_BINARY = false;
 let GEO_VIEW = "regions";  // "regions" | "points" | "table" | "aws"
 let TIME_AGGREGATION = "daily";  // "daily" | "weekly" | "monthly" | "yearly"
@@ -507,12 +508,14 @@ function syncFromUrl() {
         cumulativeCheckbox.checked = USE_CUMULATIVE;
     }
 
-    // Plot type (bar vs line)
-    const plotTypeSelect = document.getElementById("plot_type");
-    if (plotTypeSelect) {
-        USE_LINE_PLOT = params.get("plot_type") === "line";
-        plotTypeSelect.value = USE_LINE_PLOT ? "line" : "bar";
-    }
+    // Plot type (bar vs line) — independent for over-time and histogram
+    USE_OT_LINE_PLOT = params.get("ot_plot_type") === "line";
+    const otPlotTypeSelect = document.getElementById("ot_plot_type");
+    if (otPlotTypeSelect) otPlotTypeSelect.value = USE_OT_LINE_PLOT ? "line" : "bar";
+
+    USE_HIST_LINE_PLOT = params.get("hist_plot_type") === "line";
+    const histPlotTypeSelect = document.getElementById("hist_plot_type");
+    if (histPlotTypeSelect) histPlotTypeSelect.value = USE_HIST_LINE_PLOT ? "line" : "bar";
 
     // Prefix (binary vs decimal)
     const prefixSelector = document.getElementById("prefix");
@@ -567,6 +570,38 @@ function syncFromUrl() {
     apply_view_mode("histogram_plot", "histogram_table", USE_HISTOGRAM_TABLE);
 }
 
+/**
+ * Wires up open/close behaviour for a settings panel (gear wheel).
+ * Clicking the button toggles the panel; clicking outside or pressing Escape
+ * closes it.
+ */
+function setupSettingsPanel(btnId, panelId) {
+    const btn = document.getElementById(btnId);
+    const panel = document.getElementById(panelId);
+    if (!btn || !panel) return;
+
+    btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        const isOpen = panel.classList.toggle("open");
+        btn.setAttribute("aria-expanded", String(isOpen));
+        panel.setAttribute("aria-hidden", String(!isOpen));
+    });
+    document.addEventListener("click", function (e) {
+        if (!panel.contains(e.target) && !btn.contains(e.target)) {
+            panel.classList.remove("open");
+            btn.setAttribute("aria-expanded", "false");
+            panel.setAttribute("aria-hidden", "true");
+        }
+    });
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+            panel.classList.remove("open");
+            btn.setAttribute("aria-expanded", "false");
+            panel.setAttribute("aria-hidden", "true");
+        }
+    });
+}
+
 // Check if Plotly is loaded after the window loads
 window.addEventListener("load", () => {
     if (typeof Plotly === "undefined") {
@@ -579,32 +614,10 @@ window.addEventListener("load", () => {
         themeToggleBtn.addEventListener("click", toggleTheme);
     }
 
-    // Settings panel (gear wheel) open/close
-    const settingsBtn = document.getElementById("settings_btn");
-    const settingsPanel = document.getElementById("settings_panel");
-    if (settingsBtn && settingsPanel) {
-        settingsBtn.addEventListener("click", function (e) {
-            e.stopPropagation();
-            const isOpen = settingsPanel.classList.toggle("open");
-            settingsBtn.setAttribute("aria-expanded", String(isOpen));
-            settingsPanel.setAttribute("aria-hidden", String(!isOpen));
-        });
-        document.addEventListener("click", function (e) {
-            if (!settingsPanel.contains(e.target) && !settingsBtn.contains(e.target)) {
-                settingsPanel.classList.remove("open");
-                settingsBtn.setAttribute("aria-expanded", "false");
-                settingsPanel.setAttribute("aria-hidden", "true");
-            }
-        });
-        // Close on Escape key
-        document.addEventListener("keydown", function (e) {
-            if (e.key === "Escape") {
-                settingsPanel.classList.remove("open");
-                settingsBtn.setAttribute("aria-expanded", "false");
-                settingsPanel.setAttribute("aria-hidden", "true");
-            }
-        });
-    }
+    // Settings panels (gear wheels) open/close
+    setupSettingsPanel("settings_btn", "settings_panel");
+    setupSettingsPanel("ot_settings_btn", "ot_settings_panel");
+    setupSettingsPanel("hist_settings_btn", "hist_settings_panel");
 
     // Add event listener for log scale checkbox
     const logScaleCheckbox = document.getElementById("log_scale");
@@ -657,27 +670,35 @@ window.addEventListener("load", () => {
         });
     }
 
-    // Add event listener for plot type toggle (bar vs line)
-    const plotTypeSelect = document.getElementById("plot_type");
-    if (plotTypeSelect) {
-        plotTypeSelect.addEventListener("change", function () {
-            USE_LINE_PLOT = this.value === "line";
+    // Add event listener for over-time plot type toggle (bar vs line)
+    const otPlotTypeSelect = document.getElementById("ot_plot_type");
+    if (otPlotTypeSelect) {
+        otPlotTypeSelect.addEventListener("change", function () {
+            USE_OT_LINE_PLOT = this.value === "line";
 
             const params = new URLSearchParams(window.location.search);
-            setUrlParam(params, "plot_type", this.value, "bar");
+            setUrlParam(params, "ot_plot_type", this.value, "bar");
             const query = params.toString();
-            const newUrl = window.location.pathname + (query ? "?" + query : "");
-            window.history.pushState({}, "", newUrl);
+            window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
-            // Get the current dandiset ID
-            const dandiset_selector = document.getElementById("dandiset_selector");
-            const selected_dandiset = dandiset_selector.value;
-
-            // Reload plots with the current dandiset ID
+            const selected_dandiset = document.getElementById("dandiset_selector").value;
             load_over_time_plot(selected_dandiset);
+        });
+    }
+
+    // Add event listener for histogram plot type toggle (bar vs line)
+    const histPlotTypeSelect = document.getElementById("hist_plot_type");
+    if (histPlotTypeSelect) {
+        histPlotTypeSelect.addEventListener("change", function () {
+            USE_HIST_LINE_PLOT = this.value === "line";
+
+            const params = new URLSearchParams(window.location.search);
+            setUrlParam(params, "hist_plot_type", this.value, "bar");
+            const query = params.toString();
+            window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
+
+            const selected_dandiset = document.getElementById("dandiset_selector").value;
             load_histogram(selected_dandiset);
-            load_aws_histogram(selected_dandiset);
-            load_geographic_heatmap(selected_dandiset);
         });
     }
 
@@ -1212,7 +1233,7 @@ function load_over_time_plot(dandiset_id) {
                     const color = DANDISET_BAR_COLORS[i % DANDISET_BAR_COLORS.length];
                     all_dates_for_layout.push(...agg.dates);
                     return {
-                        ...(USE_LINE_PLOT
+                        ...(USE_OT_LINE_PLOT
                             ? { type: "scatter", mode: "lines", line: { color }, stackgroup: "one" }
                             : { type: "bar", marker: { color } }),
                         name: type,
@@ -1245,7 +1266,7 @@ function load_over_time_plot(dandiset_id) {
                     });
                     const other_human_readable = other_y.map((b) => format_bytes(b));
                     plot_info.push({
-                        ...(USE_LINE_PLOT
+                        ...(USE_OT_LINE_PLOT
                             ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" }, stackgroup: "one" }
                             : { type: "bar", marker: { color: "rgba(150,150,150,0.7)" } }),
                         name: "Undetermined file types",
@@ -1262,12 +1283,12 @@ function load_over_time_plot(dandiset_id) {
 
                 const unique_dates = [...new Set(all_dates_for_layout)].sort();
                 const layout = build_over_time_layout(unique_dates);
-                if (!USE_LINE_PLOT) layout.barmode = "stack";
+                if (!USE_OT_LINE_PLOT) layout.barmode = "stack";
                 layout.showlegend = true;
                 layout.legend = { title: { text: "Asset type" } };
 
                 // Override title for "daily" since we show weekly granularity
-                if (!USE_LINE_PLOT && TIME_AGGREGATION === "daily") {
+                if (!USE_OT_LINE_PLOT && TIME_AGGREGATION === "daily") {
                     layout.title.text = "Usage per week";
                 }
 
@@ -1361,7 +1382,7 @@ function load_over_time_plot(dandiset_id) {
                     const plot_data = USE_CUMULATIVE ? make_cumulative(aligned_bytes) : aligned_bytes;
                     const human_readable = plot_data.map((b) => format_bytes(b));
                     return {
-                        ...(USE_LINE_PLOT
+                        ...(USE_OT_LINE_PLOT
                             ? { type: "scatter", mode: "lines", line: { color }, stackgroup: "one" }
                             : { type: "bar", marker: { color } }),
                         name: `DANDI:${series.id}`,
@@ -1397,7 +1418,7 @@ function load_over_time_plot(dandiset_id) {
                     });
                     const other_human_readable = other_y.map((b) => format_bytes(b));
                     plot_info.push({
-                        ...(USE_LINE_PLOT
+                        ...(USE_OT_LINE_PLOT
                             ? { type: "scatter", mode: "lines", line: { color: "rgba(150,150,150,0.7)" }, stackgroup: "one" }
                             : { type: "bar", marker: { color: "rgba(150,150,150,0.7)" } }),
                         name: "Other",
@@ -1412,7 +1433,7 @@ function load_over_time_plot(dandiset_id) {
                 }
 
                 const layout = build_over_time_layout(global_bins);
-                if (!USE_LINE_PLOT) layout.barmode = "stack";
+                if (!USE_OT_LINE_PLOT) layout.barmode = "stack";
                 layout.legend = { title: { text: "Dandiset" } };
 
                 Plotly.newPlot(plot_element_id, plot_info, layout, PLOTLY_CONFIG);
@@ -1489,7 +1510,7 @@ function load_over_time_plot(dandiset_id) {
 
             const plot_info = [
                 {
-                    ...(USE_LINE_PLOT
+                    ...(USE_OT_LINE_PLOT
                         ? { type: "scatter", mode: "lines", line: { color: getTheme().accent }, fill: "tozeroy", fillcolor: color_with_alpha(getTheme().accent, 0.2) }
                         : { type: "bar", marker: { color: getTheme().accent } }),
                     x: dates,
@@ -1598,7 +1619,7 @@ function load_dandiset_histogram() {
 
         const plot_data = [
             {
-                ...(USE_LINE_PLOT
+                ...(USE_HIST_LINE_PLOT
                     ? { type: "scatter", mode: "lines", line: { color: getTheme().accent }, fill: "tozeroy", fillcolor: color_with_alpha(getTheme().accent, 0.2) }
                     : { type: "bar", marker: { color: getTheme().accent } }),
                 x: sorted_dandiset_ids,
@@ -1690,7 +1711,7 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
             // Use sorted arrays in the plot
             const plot_data = [
                 {
-                    ...(USE_LINE_PLOT
+                    ...(USE_HIST_LINE_PLOT
                         ? { type: "scatter", mode: "lines", line: { color: getTheme().accent }, fill: "tozeroy", fillcolor: color_with_alpha(getTheme().accent, 0.2) }
                         : { type: "bar", marker: { color: getTheme().accent } }),
                     x: sorted_asset_names,
