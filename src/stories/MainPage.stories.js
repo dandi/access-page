@@ -88,9 +88,12 @@ const pageHTML = `
                     </select>
                 </div>
                 <div class="SubControllerContainer">
-                    <label for="ot_stacked">Stacked</label>
-                    <span class="info-icon" data-tooltip="Only applies to 'group by'" tabindex="0" role="img" aria-label="Stacked: Only applies to 'group by'">i</span>
-                    <input type="checkbox" id="ot_stacked" checked />
+                    <label for="ot_stacked">Stacking</label>
+                    <span class="info-icon" data-tooltip="Only applies to 'group by'" tabindex="0" role="img" aria-label="Stacking: Only applies to 'group by'">i</span>
+                    <select id="ot_stacked">
+                        <option value="stacked">Stacked</option>
+                        <option value="overlay">Overlay</option>
+                    </select>
                 </div>
                 <div class="SubControllerContainer">
                     <label for="top_n_dandisets">Top Dandisets</label>

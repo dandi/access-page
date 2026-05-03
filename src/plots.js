@@ -520,8 +520,8 @@ function syncFromUrl() {
 
     // Stacked vs overlay for grouped over-time plot (default: stacked)
     USE_STACKED = params.get("stacked") !== "false";
-    const stackedCheckbox = document.getElementById("ot_stacked");
-    if (stackedCheckbox) stackedCheckbox.checked = USE_STACKED;
+    const stackedSelect = document.getElementById("ot_stacked");
+    if (stackedSelect) stackedSelect.value = USE_STACKED ? "stacked" : "overlay";
 
     // Prefix (binary vs decimal)
     const prefixSelector = document.getElementById("prefix");
@@ -693,10 +693,10 @@ window.addEventListener("load", () => {
     }
 
     // Add event listener for stacked vs overlay toggle
-    const stackedCheckbox = document.getElementById("ot_stacked");
-    if (stackedCheckbox) {
-        stackedCheckbox.addEventListener("change", function () {
-            USE_STACKED = this.checked;
+    const stackedSelect = document.getElementById("ot_stacked");
+    if (stackedSelect) {
+        stackedSelect.addEventListener("change", function () {
+            USE_STACKED = this.value === "stacked";
 
             const params = new URLSearchParams(window.location.search);
             setUrlParam(params, "stacked", String(USE_STACKED), "true");
