@@ -87,7 +87,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
 
-  <script type="module" crossorigin src="./assets/index-DettHMgU.js"></script>
+  <script type="module" crossorigin src="./assets/index-BLVmQMSK.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-CNNnj_pz.css">
 </head>
 <body>
@@ -167,8 +167,16 @@
                     </select>
                 </div>
                 <div class="SubControllerContainer">
+                    <label for="ot_stacked">Stacking</label>
+                    <span class="info-icon" data-tooltip="Only applies to 'group by'" tabindex="0" role="img" aria-label="Stacking: Only applies to 'group by'">i</span>
+                    <select id="ot_stacked">
+                        <option value="stacked" selected>Stacked</option>
+                        <option value="overlay">Overlay</option>
+                    </select>
+                </div>
+                <div class="SubControllerContainer">
                     <label for="top_n_dandisets">Top Dandisets</label>
-                    <span class="info-icon" data-tooltip="Only applies to the 'group by'" tabindex="0" role="img" aria-label="Top Dandisets: Only applies to the 'group by'">i</span>
+                    <span class="info-icon" data-tooltip="Only applies to 'group by'" tabindex="0" role="img" aria-label="Top Dandisets: Only applies to 'group by'">i</span>
                     <input type="number" id="top_n_dandisets" min="1" value="8" />
                 </div>
             </div>
