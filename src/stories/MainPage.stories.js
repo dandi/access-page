@@ -91,7 +91,7 @@ const pageHTML = `
                     <label for="ot_stacked">Stacking</label>
                     <span class="info-icon" data-tooltip="Only applies to 'group by'" tabindex="0" role="img" aria-label="Stacking: Only applies to 'group by'">i</span>
                     <select id="ot_stacked">
-                        <option value="stacked">Stacked</option>
+                        <option value="stacked" selected>Stacked</option>
                         <option value="overlay">Overlay</option>
                     </select>
                 </div>
