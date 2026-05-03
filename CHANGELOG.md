@@ -4,6 +4,7 @@
 
 #### 🏠 Internal
 
+- Moved `gadm_admin1_simplified.topojson` and `name_aliases.json` from `public/` to `config/` to reduce top-level noise. ([#137](https://github.com/dandi/usage-page/pull/137))
 - Added weekly CI workflow (`npm-audit.yml`) that runs `npm audit` every Monday and sends an email notification on failure. ([#134](https://github.com/dandi/usage-page/pull/134))
 
 #### 📝 Documentation
