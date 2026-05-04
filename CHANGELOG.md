@@ -6,7 +6,7 @@
 
 ## v1.3.7
 
-#### 🚀 Enhancement
+### 🚀 Enhancement
 
 - Added "Stacked" toggle to the over-time plot settings panel to switch between stacked and overlay views when a group-by is active. ([#141](https://github.com/dandi/usage-page/pull/141))
 - Modularized settings into per-plot gear panels instead of a single global modal. ([#132](https://github.com/dandi/usage-page/pull/132))
@@ -40,7 +40,7 @@
 - Added log scale option for plots and updated the controls layout. ([#3](https://github.com/dandi/usage-page/pull/3))
 - Initial deployment of the DANDI usage page with geographic map, per-dandiset breakdown, and CI/CD pipeline. ([#2](https://github.com/dandi/usage-page/pull/2))
 
-#### 📝 Documentation
+### 📝 Documentation
 
 - Added `CHANGELOG.md` to track changes to the project.
 - Added daily tests passing badge to `README.md`. ([#157](https://github.com/dandi/usage-page/pull/157))
@@ -48,7 +48,7 @@
 - Added a consolidated "Data sources" section linking to underlying data files. ([#46](https://github.com/dandi/usage-page/pull/46))
 - Added a note clarifying that only public (non-embargoed) datasets are included.
 
-## 🐛 Bug Fix
+### 🐛 Bug Fix
 
 - Fixed page flash (FOUC) and layout scrambling on page refresh. ([#126](https://github.com/dandi/usage-page/pull/126))
 - Fixed x-axis gaps in grouped dandisets cumulative plot by using global bin edges. ([#123](https://github.com/dandi/usage-page/pull/123))
@@ -64,7 +64,7 @@
 - Fixed a fetch race condition. ([#39](https://github.com/dandi/usage-page/pull/39))
 - Improved histogram display and fixed cumulative bar gaps and labels. ([#24](https://github.com/dandi/usage-page/pull/24), [#26](https://github.com/dandi/usage-page/pull/26))
 
-## 🏠 Internal
+### 🏠 Internal
 
 - Reorganized repository layout to use Vite with a `src/` + `configs/` structure. ([#103](https://github.com/dandi/usage-page/pull/103))
 - Added Google Analytics tracking. ([#101](https://github.com/dandi/usage-page/pull/101))
@@ -81,7 +81,7 @@
 - Fixed `configs/vite.config.js` `publicDir` from `config/` to `configs/`. ([#140](https://github.com/dandi/usage-page/pull/140))
 - Swapped all `src/` source files from JavaScript to TypeScript (`plots.ts`, `utils.ts`, `errors.ts`); added `tsconfig.json`, type packages (`typescript`, `@types/js-yaml`, `@types/plotly.js`, `@types/topojson-client`, `@types/node`), a `vendor.d.ts` shim for `plotly.js-dist-min`, and a `typecheck` npm script. ([#149](https://github.com/dandi/usage-page/pull/149))
 
-## 🧪 Tests
+### 🧪 Tests
 
 - Set up testing infrastructure: Vitest (unit), Playwright (e2e), Storybook/Chromatic (visual), and Codecov (coverage). ([#129](https://github.com/dandi/usage-page/pull/129))
 - Added weekly CI workflow (`npm-audit.yml`) that runs `npm audit` every Monday and sends an email notification on failure. ([#134](https://github.com/dandi/usage-page/pull/134))
