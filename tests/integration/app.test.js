@@ -34,7 +34,11 @@ test.describe("DANDI Access Page", () => {
     test.beforeEach(async ({ page }) => {
         page.on("console", (msg) => {
             if (msg.type() === "warning") {
-                console.warn(`[browser:warning] ${msg.text()}`);
+                const text = msg.text();
+                // Suppress GPU/GL driver performance warnings emitted by the
+                // software rasteriser (Swiftshader) in headless CI environments.
+                if (text.includes("GL Driver Message")) return;
+                console.warn(`[browser:warning] ${text}`);
             }
         });
         await page.addInitScript(() => localStorage.clear());
