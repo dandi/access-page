@@ -6,6 +6,7 @@
   <h1 align="center">DANDI usage webpage (source)</h1>
 
   <p align="center">
+    <a href="https://github.com/dandi/usage-page/actions/workflows/daily-tests.yml"><img src="https://github.com/dandi/usage-page/actions/workflows/daily-tests.yml/badge.svg" alt="Daily tests"></a>
     <a href="https://codecov.io/github/dandi/usage-page"><img src="https://codecov.io/github/dandi/usage-page/coverage.svg?branch=main" alt="codecov"></a>
     <a href="https://github.com/dandi/usage-page/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-yellow.svg" alt="License: MIT"></a>
     <a href="https://github.com/dandi/usage-page/releases"><img src="https://img.shields.io/github/v/release/dandi/usage-page" alt="GitHub release"></a>
