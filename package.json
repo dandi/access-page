@@ -15,6 +15,7 @@
     "test:watch": "vitest --config configs/vitest.config.js",
     "test:coverage": "vitest run --coverage --config configs/vitest.config.js",
     "test:e2e": "playwright test --config configs/playwright.config.js",
+    "test:chromatic": "playwright test --config configs/playwright.chromatic.config.js",
     "test:e2e:coverage": "PW_COVERAGE=1 playwright test --config configs/playwright.config.js",
     "coverage:integration": "node src/scripts/build-integration-coverage.mjs",
     "storybook": "storybook dev -p 6006 --config-dir configs/storybook",
@@ -32,6 +33,7 @@
   },
   "homepage": "https://github.com/dandi/access-page#readme",
   "devDependencies": {
+    "@chromatic-com/playwright": "^0.13.3",
     "@playwright/test": "^1.59.1",
     "@storybook/html-vite": "^10.3.6",
     "@types/js-yaml": "^4.0.9",

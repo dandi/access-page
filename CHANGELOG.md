@@ -9,9 +9,9 @@
 
 #### 🏠 Internal
 
+- Added Playwright visual testing with Chromatic: a new `chromatic-playwright.yml` CI workflow runs visual snapshot tests (dark and light themes) via `@chromatic-com/playwright` and uploads them to a dedicated Chromatic project using `CHROMATIC_PLAYWRIGHT_PROJECT_TOKEN`; the existing Chromatic workflow was renamed to "Chromatic (Storybook)". ([#163](https://github.com/dandi/usage-page/pull/163))
 - Added `--disable-gpu` to Playwright Chromium launch args and filtered `GL Driver Message` browser warnings in the integration test console listener to suppress the WebGL GPU stall warning in CI. ([#161](https://github.com/dandi/usage-page/pull/161))
 - Made `test.yml` a reusable workflow (`workflow_call`); simplified `daily-tests.yml` to call it directly (inheriting secrets for Codecov uploads); removed Playwright artifact uploads from `weekly-tests.yml`. ([#159](https://github.com/dandi/usage-page/pull/159))
-- Moved `tsconfig.json` from the repository root into `configs/tsconfig.json` alongside the other config files. ([#155](https://github.com/dandi/usage-page/pull/155))
 - Swapped all `src/` source files from JavaScript to TypeScript (`plots.ts`, `utils.ts`, `errors.ts`); added `tsconfig.json`, type packages (`typescript`, `@types/js-yaml`, `@types/plotly.js`, `@types/topojson-client`, `@types/node`), a `vendor.d.ts` shim for `plotly.js-dist-min`, and a `typecheck` npm script. ([#149](https://github.com/dandi/usage-page/pull/149))
 
 #### 🚀 Enhancement
