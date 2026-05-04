@@ -5,7 +5,7 @@ const { version } = JSON.parse(readFileSync(new URL("../package.json", import.me
 
 export default defineConfig({
     root: "src",
-    publicDir: "../configs",
+    publicDir: "configs",
     base: "./",
     build: {
         outDir: "../dist",
