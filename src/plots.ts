@@ -11,6 +11,8 @@ import { load as loadYaml } from "js-yaml";
 import Plotly from "plotly.js-dist-min";
 import { feature as topojsonFeature } from "topojson-client";
 
+declare const __APP_VERSION__: string;
+
 // ── Theme helpers (mirrors :root CSS variables in styles.css) ───────────────
 const DARK_THEME = {
     bg:            '#1a1a2e',
@@ -50,7 +52,7 @@ function getTheme() {
  * Mutates `layout` in-place to apply the current theme colours and returns it.
  * Axis overrides are merged so callers can still add axis-specific options.
  */
-function applyTheme(layout) {
+function applyTheme(layout: Partial<Plotly.Layout>): Partial<Plotly.Layout> {
     const theme = getTheme();
     layout.paper_bgcolor = theme.surface;
     layout.plot_bgcolor  = theme.surface;
@@ -71,15 +73,15 @@ function applyTheme(layout) {
 // ── Shared Plotly config ─────────────────────────────────────────────────────
 // Replaces the default PNG camera button with a paired group containing both
 // PNG and SVG download buttons, keeping them side-by-side in the modebar.
-const PLOTLY_CONFIG = {
-    modeBarButtonsToRemove: ['toImage'],
+const PLOTLY_CONFIG: Partial<Plotly.Config> = {
+    modeBarButtonsToRemove: ['toImage' as Plotly.ModeBarDefaultButtons],
     modeBarButtonsToAdd: [
         [
             {
                 name: 'Download plot as PNG',
                 icon: Plotly.Icons.camera,
-                click: function (gd) {
-                    Plotly.downloadImage(gd, { format: 'png', filename: gd.id || 'dandi-plot' });
+                click: (gd: Plotly.PlotlyHTMLElement) => {
+                    Plotly.downloadImage(gd, { format: 'png', filename: gd.id || 'dandi-plot' } as Plotly.DownloadImgopts);
                 },
             },
             {
@@ -90,11 +92,11 @@ const PLOTLY_CONFIG = {
                     height: 24,
                     path: 'M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z',
                 },
-                click: function (gd) {
-                    Plotly.downloadImage(gd, { format: 'svg', filename: gd.id || 'dandi-plot' });
+                click: (gd: Plotly.PlotlyHTMLElement) => {
+                    Plotly.downloadImage(gd, { format: 'svg', filename: gd.id || 'dandi-plot' } as Plotly.DownloadImgopts);
                 },
             },
-        ],
+        ] as any,
     ],
 };
 
@@ -143,7 +145,7 @@ function toggleTheme() {
     syncThemeToggleIcon();
 
     // Re-render all plots with the new theme colours
-    const selector = document.getElementById('dandiset_selector');
+    const selector = document.getElementById('dandiset_selector') as HTMLSelectElement | null;
     if (selector) {
         const id = selector.value;
         load_over_time_plot(id);
@@ -155,7 +157,7 @@ function toggleTheme() {
 
 /** Updates the toggle button icon to reflect the current theme. */
 function syncThemeToggleIcon() {
-    const btn = document.getElementById('theme_toggle_btn');
+    const btn = document.getElementById('theme_toggle_btn') as HTMLElement | null;
     if (!btn) return;
     if (IS_DARK_MODE) {
         // Currently dark → clicking will switch to light → show sun icon
@@ -183,15 +185,15 @@ function apply_over_time_group_by_visibility() {
     if (!container) return;
     container.style.display = !USE_OVER_TIME_TABLE ? "" : "none";
 
-    const selector = document.getElementById("dandiset_selector");
+    const selector = document.getElementById("dandiset_selector") as HTMLSelectElement | null;
     const isArchive = !selector || selector.value === "archive";
     const dandisets_option = document.querySelector('#over_time_group_by option[value="dandisets"]');
     if (dandisets_option) {
-        dandisets_option.hidden = !isArchive;
+        (dandisets_option as HTMLOptionElement).hidden = !isArchive;
     }
 
     // If "dandisets" was selected but a non-archive dandiset is now active, reset to "none"
-    const groupBySelector = document.getElementById("over_time_group_by");
+    const groupBySelector = document.getElementById("over_time_group_by") as HTMLSelectElement | null;
     if (!isArchive && groupBySelector && groupBySelector.value === "dandisets") {
         groupBySelector.value = "none";
         OVER_TIME_GROUP_BY = "none";
@@ -204,8 +206,8 @@ function apply_over_time_group_by_visibility() {
  * If 'Daily' is currently selected, it is automatically switched to 'Weekly'.
  */
 function apply_daily_aggregation_restriction() {
-    const daily_radio = document.getElementById("aggregation_daily");
-    const daily_label = document.querySelector('label[for="aggregation_daily"]');
+    const daily_radio = document.getElementById("aggregation_daily") as HTMLInputElement | null;
+    const daily_label = document.querySelector('label[for="aggregation_daily"]') as HTMLElement | null;
     if (!daily_radio) return;
 
     const restrict = OVER_TIME_GROUP_BY === "asset_type";
@@ -218,7 +220,7 @@ function apply_daily_aggregation_restriction() {
 
     if (restrict && TIME_AGGREGATION === "daily") {
         TIME_AGGREGATION = "weekly";
-        const weekly_radio = document.getElementById("aggregation_weekly");
+        const weekly_radio = document.getElementById("aggregation_weekly") as HTMLInputElement | null;
         if (weekly_radio) weekly_radio.checked = true;
     }
 }
@@ -231,15 +233,15 @@ function apply_daily_aggregation_restriction() {
  * on every call (including each dandiset reload), so it tracks the most recent
  * fully-rendered plot height and does not accumulate across view switches.
  *
- * @param {string} plot_id - ID of the plot container element.
- * @param {string} table_id - ID of the table container element.
- * @param {boolean} use_table - When true, shows the table and hides the plot.
+ * @param plot_id - ID of the plot container element.
+ * @param table_id - ID of the table container element.
+ * @param use_table - When true, shows the table and hides the plot.
  */
-function apply_view_mode(plot_id, table_id, use_table) {
+function apply_view_mode(plot_id: string, table_id: string, use_table: boolean): void {
     const plot_el = document.getElementById(plot_id);
     const table_el = document.getElementById(table_id);
 
-    const section_el = plot_el && plot_el.closest('.view-section');
+    const section_el = (plot_el && plot_el.closest('.view-section')) as HTMLElement | null;
     if (section_el) {
         if (use_table) {
             // Switching to table: lock the current (plot) height so elements below
@@ -259,13 +261,13 @@ function apply_view_mode(plot_id, table_id, use_table) {
     if (table_el) table_el.style.display = use_table ? "" : "none";
 }
 
-function apply_geo_view_mode(view) {
+function apply_geo_view_mode(view: string): void {
     const mapEl   = document.getElementById("geography_heatmap");
     const tableEl = document.getElementById("geo_table_section");
     const showMap = (view === "regions" || view === "points");
 
     // Lock the section height before switching to prevent layout shift on elements below
-    const section_el = mapEl && mapEl.closest('.view-section');
+    const section_el = (mapEl && mapEl.closest('.view-section')) as HTMLElement | null;
     if (section_el) {
         if (!showMap) {
             // Switching to table: lock the current (map) height so elements below
@@ -296,16 +298,30 @@ function apply_geo_view_mode(view) {
  * Clicking a column header re-sorts the table in place and updates the sort
  * indicator (▲ ascending / ▼ descending / ⇅ unsorted).
  *
- * @param {string} container_id - ID of the container element.
- * @param {string} title - Heading text rendered above the table.
- * @param {Array<{label: string, key: string, numeric: boolean}>} columns
- *        Column definitions.  `numeric: true` formats the cell value with
+ * @param container_id - ID of the container element.
+ * @param title - Heading text rendered above the table.
+ * @param columns - Column definitions.  `numeric: true` formats the cell value with
  *        `format_bytes()`; otherwise the raw value is displayed as-is.
- * @param {Array<Object>} rows - Data rows (plain objects keyed by column.key).
- * @param {string} [data_url] - Optional URL to the source data file; when
+ * @param rows - Data rows (plain objects keyed by column.key).
+ * @param data_url - Optional URL to the source data file; when
  *        provided a "Data" hyperlink is rendered top-right in the table header.
  */
-function render_sortable_table(container_id, title, columns, rows, data_url) {
+function escape_html(str: string): string {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function render_sortable_table(
+    container_id: string,
+    title: string,
+    columns: Array<{label: string; key: string; numeric: boolean}>,
+    rows: Array<Record<string, unknown>>,
+    data_url?: string
+): void {
     const container = document.getElementById(container_id);
     if (!container) return;
 
@@ -320,39 +336,39 @@ function render_sortable_table(container_id, title, columns, rows, data_url) {
             const vb = b[sort_key];
             const factor = sort_asc ? 1 : -1;
             if (typeof va === "number" && typeof vb === "number") {
-                return factor * (va - vb);
+                return factor * ((va as number) - (vb as number));
             }
             // Numeric-aware locale comparison handles Dandiset IDs like "000123"
             return factor * String(va).localeCompare(String(vb), undefined, { numeric: true });
         });
 
         const data_link = data_url
-            ? `<a class="table-data-link" href="${data_url}" target="_blank" rel="noopener">Data</a>`
+            ? `<a class="table-data-link" href="${escape_html(data_url)}" target="_blank" rel="noopener">Data</a>`
             : "";
-        let html = `<div class="plot-table-header"><h3>${title}</h3>${data_link}</div>`;
+        let html = `<div class="plot-table-header"><h3>${escape_html(title)}</h3>${data_link}</div>`;
         html += '<div class="plot-table-container"><table><thead><tr>';
         columns.forEach((col) => {
             const is_sorted = col.key === sort_key;
             const indicator = is_sorted ? (sort_asc ? "▲" : "▼") : "⇅";
             const cls = is_sorted ? "th-sorted" : "th-sortable";
-            html += `<th class="${cls}" data-key="${col.key}">${col.label} <span class="sort-indicator">${indicator}</span></th>`;
+            html += `<th class="${cls}" data-key="${escape_html(col.key)}">${escape_html(col.label)} <span class="sort-indicator">${indicator}</span></th>`;
         });
         html += "</tr></thead><tbody>";
         sorted.forEach((row) => {
             html += "<tr>";
             columns.forEach((col) => {
-                const val = col.numeric ? format_bytes(row[col.key]) : row[col.key];
+                const val = col.numeric ? format_bytes(row[col.key] as number) : escape_html(String(row[col.key] ?? ""));
                 html += `<td>${val}</td>`;
             });
             html += "</tr>";
         });
         html += "</tbody></table></div>";
-        container.innerHTML = html;
+        container!.innerHTML = html;
 
         // Attach sort click handlers after innerHTML is set
-        container.querySelectorAll("th[data-key]").forEach((th) => {
+        container!.querySelectorAll("th[data-key]").forEach((th) => {
             th.addEventListener("click", () => {
-                const key = th.dataset.key;
+                const key = (th as HTMLElement).dataset.key!;
                 if (key === sort_key) {
                     sort_asc = !sort_asc;
                 } else {
@@ -408,7 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
             const href = anchor.getAttribute("href");
             window.history.pushState(null, "", href);
-            document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+            document.querySelector(href!)?.scrollIntoView({ behavior: "smooth" });
         });
     });
 });
@@ -419,14 +435,14 @@ document.addEventListener("DOMContentLoaded", () => {
  * Only retries on transient failures: network errors or 5xx server errors.
  * Permanent client errors (4xx) are thrown immediately without retrying.
  *
- * @param {string} url - The URL to fetch.
- * @param {RequestInit} [options={}] - Optional fetch options.
- * @param {number} [maxRetries=4] - Maximum number of retry attempts.
- * @param {number} [baseDelay=1000] - Base delay in milliseconds; doubles on each retry (1 s, 2 s, 4 s, 8 s).
- * @returns {Promise<Response>} Resolves with the successful Response.
- * @throws {Error} After all retries are exhausted, or immediately on a non-retryable error.
+ * @param url - The URL to fetch.
+ * @param options - Optional fetch options.
+ * @param maxRetries - Maximum number of retry attempts.
+ * @param baseDelay - Base delay in milliseconds; doubles on each retry (1 s, 2 s, 4 s, 8 s).
+ * @returns Resolves with the successful Response.
+ * @throws After all retries are exhausted, or immediately on a non-retryable error.
  */
-async function fetchWithRetry(url, options = {}, maxRetries = 4, baseDelay = 1000) {
+async function fetchWithRetry(url: string, options: RequestInit = {}, maxRetries = 4, baseDelay = 1000): Promise<Response> {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         let response;
         try {
@@ -457,6 +473,8 @@ async function fetchWithRetry(url, options = {}, maxRetries = 4, baseDelay = 100
         const delay = baseDelay * Math.pow(2, attempt);
         await new Promise((resolve) => setTimeout(resolve, delay));
     }
+    // This line is unreachable but satisfies TypeScript's control-flow analysis
+    throw new Error("fetchWithRetry: exhausted retries");
 }
 
 // URLs for fetching data
@@ -468,8 +486,14 @@ const ARCHIVE_TOTALS_URL = `${BASE_URL}/content/archive_totals.json`;
 const ALL_DANDISET_TOTALS_URL = `${BASE_URL}/content/totals.json`;
 const REGION_CODES_TO_LATITUDE_LONGITUDE_URL = `${BASE_URL}/content/region_codes_to_coordinates.yaml`;
 
-let REGION_CODES_TO_LATITUDE_LONGITUDE = {};
-let ALL_DANDISET_TOTALS = {};
+interface DandisetTotals {
+    total_bytes_sent: number;
+    number_of_unique_regions: number;
+    number_of_unique_countries: number;
+}
+
+let REGION_CODES_TO_LATITUDE_LONGITUDE: Record<string, { latitude: number; longitude: number }> = {};
+let ALL_DANDISET_TOTALS: Record<string, DandisetTotals> = {};
 let USE_LOG_SCALE = false;
 let USE_CUMULATIVE = false;
 let USE_OT_LINE_PLOT = false;
@@ -482,8 +506,8 @@ let OVER_TIME_GROUP_BY = "none";  // "none" | "dandisets"
 let TOP_N_DANDISETS = 8;
 let USE_OVER_TIME_TABLE = false;
 let USE_HISTOGRAM_TABLE = false;
-let GEOJSON_DATA = null;
-let NAME_ALIASES = null;
+let GEOJSON_DATA: { features: any[] } | null = null;
+let NAME_ALIASES: Record<string, Record<string, string>> | null = null;
 
 
 
@@ -496,14 +520,14 @@ function syncFromUrl() {
     const params = new URLSearchParams(window.location.search);
 
     // Log scale
-    const logScaleCheckbox = document.getElementById("log_scale");
+    const logScaleCheckbox = document.getElementById("log_scale") as HTMLInputElement | null;
     if (logScaleCheckbox) {
         USE_LOG_SCALE = params.get("log") === "true";
         logScaleCheckbox.checked = USE_LOG_SCALE;
     }
 
     // Cumulative
-    const cumulativeCheckbox = document.getElementById("cumulative");
+    const cumulativeCheckbox = document.getElementById("cumulative") as HTMLInputElement | null;
     if (cumulativeCheckbox) {
         USE_CUMULATIVE = params.get("cumulative") === "true";
         cumulativeCheckbox.checked = USE_CUMULATIVE;
@@ -511,20 +535,20 @@ function syncFromUrl() {
 
     // Plot type (bar vs line) — independent for over-time and histogram
     USE_OT_LINE_PLOT = params.get("ot_plot_type") === "line";
-    const otPlotTypeSelect = document.getElementById("ot_plot_type");
+    const otPlotTypeSelect = document.getElementById("ot_plot_type") as HTMLSelectElement | null;
     if (otPlotTypeSelect) otPlotTypeSelect.value = USE_OT_LINE_PLOT ? "line" : "bar";
 
     USE_HIST_LINE_PLOT = params.get("hist_plot_type") === "line";
-    const histPlotTypeSelect = document.getElementById("hist_plot_type");
+    const histPlotTypeSelect = document.getElementById("hist_plot_type") as HTMLSelectElement | null;
     if (histPlotTypeSelect) histPlotTypeSelect.value = USE_HIST_LINE_PLOT ? "line" : "bar";
 
     // Stacked vs overlay for grouped over-time plot (default: stacked)
     USE_STACKED = params.get("stacked") !== "false";
-    const stackedSelect = document.getElementById("ot_stacked");
+    const stackedSelect = document.getElementById("ot_stacked") as HTMLSelectElement | null;
     if (stackedSelect) stackedSelect.value = USE_STACKED ? "stacked" : "overlay";
 
     // Prefix (binary vs decimal)
-    const prefixSelector = document.getElementById("prefix");
+    const prefixSelector = document.getElementById("prefix") as HTMLSelectElement | null;
     if (prefixSelector) {
         USE_BINARY = params.get("prefix") === "binary";
         prefixSelector.value = USE_BINARY ? "binary" : "decimal";
@@ -533,45 +557,45 @@ function syncFromUrl() {
     // Geo view
     const urlMap = params.get("map");
     const validGeoViews = ["regions", "points", "table", "aws"];
-    GEO_VIEW = validGeoViews.includes(urlMap) ? urlMap : "regions";
-    const geoRadio = document.querySelector(`input[name="geo_view"][value="${GEO_VIEW}"]`);
+    GEO_VIEW = urlMap !== null && validGeoViews.includes(urlMap) ? urlMap : "regions";
+    const geoRadio = document.querySelector(`input[name="geo_view"][value="${GEO_VIEW}"]`) as HTMLInputElement | null;
     if (geoRadio) geoRadio.checked = true;
     apply_geo_view_mode(GEO_VIEW);
 
     // Over-time view (plot vs table)
     USE_OVER_TIME_TABLE = params.get("over_time") === "table";
     const overTimeValue = USE_OVER_TIME_TABLE ? "table" : "plot";
-    const overTimeRadio = document.querySelector(`input[name="over_time_view"][value="${overTimeValue}"]`);
+    const overTimeRadio = document.querySelector(`input[name="over_time_view"][value="${overTimeValue}"]`) as HTMLInputElement | null;
     if (overTimeRadio) overTimeRadio.checked = true;
     apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
     apply_over_time_group_by_visibility();
     const validAggregations = ["daily", "weekly", "monthly", "yearly"];
     const urlAggregation = params.get("aggregation");
-    TIME_AGGREGATION = validAggregations.includes(urlAggregation) ? urlAggregation : "daily";
-    const aggregationRadio = document.querySelector(`input[name="time_aggregation"][value="${TIME_AGGREGATION}"]`);
+    TIME_AGGREGATION = urlAggregation !== null && validAggregations.includes(urlAggregation) ? urlAggregation : "daily";
+    const aggregationRadio = document.querySelector(`input[name="time_aggregation"][value="${TIME_AGGREGATION}"]`) as HTMLInputElement | null;
     if (aggregationRadio) aggregationRadio.checked = true;
 
     // Over-time group by
-    const groupBySelector = document.getElementById("over_time_group_by");
+    const groupBySelector = document.getElementById("over_time_group_by") as HTMLSelectElement | null;
     if (groupBySelector) {
         const urlGroupBy = params.get("group_by");
-        OVER_TIME_GROUP_BY = ["none", "dandisets", "asset_type"].includes(urlGroupBy) ? urlGroupBy : "none";
+        OVER_TIME_GROUP_BY = (urlGroupBy !== null && ["none", "dandisets", "asset_type"].includes(urlGroupBy)) ? urlGroupBy : "none";
         groupBySelector.value = OVER_TIME_GROUP_BY;
     }
     apply_daily_aggregation_restriction();
 
     // Top N dandisets
-    const topNInput = document.getElementById("top_n_dandisets");
+    const topNInput = document.getElementById("top_n_dandisets") as HTMLInputElement | null;
     if (topNInput) {
-        const urlTopN = parseInt(params.get("top_n"), 10);
+        const urlTopN = parseInt(params.get("top_n") ?? "", 10);
         TOP_N_DANDISETS = (!isNaN(urlTopN) && urlTopN >= 1) ? urlTopN : 8;
-        topNInput.value = TOP_N_DANDISETS;
+        topNInput.value = String(TOP_N_DANDISETS);
     }
 
     // Histogram view (plot vs table)
     USE_HISTOGRAM_TABLE = params.get("histogram") === "table";
     const histogramValue = USE_HISTOGRAM_TABLE ? "table" : "plot";
-    const histogramRadio = document.querySelector(`input[name="histogram_view"][value="${histogramValue}"]`);
+    const histogramRadio = document.querySelector(`input[name="histogram_view"][value="${histogramValue}"]`) as HTMLInputElement | null;
     if (histogramRadio) histogramRadio.checked = true;
     apply_view_mode("histogram_plot", "histogram_table", USE_HISTOGRAM_TABLE);
 }
@@ -581,25 +605,25 @@ function syncFromUrl() {
  * Clicking the button toggles the panel; clicking outside or pressing Escape
  * closes it.
  */
-function setupSettingsPanel(btnId, panelId) {
+function setupSettingsPanel(btnId: string, panelId: string): void {
     const btn = document.getElementById(btnId);
     const panel = document.getElementById(panelId);
     if (!btn || !panel) return;
 
-    btn.addEventListener("click", function (e) {
+    btn.addEventListener("click", (e) => {
         e.stopPropagation();
         const isOpen = panel.classList.toggle("open");
         btn.setAttribute("aria-expanded", String(isOpen));
         panel.setAttribute("aria-hidden", String(!isOpen));
     });
-    document.addEventListener("click", function (e) {
-        if (!panel.contains(e.target) && !btn.contains(e.target)) {
+    document.addEventListener("click", (e) => {
+        if (!panel.contains(e.target as Node | null) && !btn.contains(e.target as Node | null)) {
             panel.classList.remove("open");
             btn.setAttribute("aria-expanded", "false");
             panel.setAttribute("aria-hidden", "true");
         }
     });
-    document.addEventListener("keydown", function (e) {
+    document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
             panel.classList.remove("open");
             btn.setAttribute("aria-expanded", "false");
@@ -628,8 +652,8 @@ window.addEventListener("load", () => {
     // Add event listener for log scale checkbox
     const logScaleCheckbox = document.getElementById("log_scale");
     if (logScaleCheckbox) {
-        logScaleCheckbox.addEventListener("change", function() {
-            USE_LOG_SCALE = this.checked;
+        logScaleCheckbox.addEventListener("change", () => {
+            USE_LOG_SCALE = (logScaleCheckbox as HTMLInputElement).checked;
 
             const params = new URLSearchParams(window.location.search);
             setUrlParam(params, "log", String(USE_LOG_SCALE), "false");
@@ -637,8 +661,8 @@ window.addEventListener("load", () => {
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
             // Get the current dandiset ID
-            const dandiset_selector = document.getElementById("dandiset_selector");
-            const selected_dandiset = dandiset_selector.value;
+            const dandiset_selector = document.getElementById("dandiset_selector") as HTMLSelectElement | null;
+            const selected_dandiset = dandiset_selector?.value ?? "";
 
             // Reload plots with the current dandiset ID
             load_over_time_plot(selected_dandiset);
@@ -651,11 +675,11 @@ window.addEventListener("load", () => {
     // Add event listener for cumulative totals
     const cumulativeCheckbox = document.getElementById("cumulative");
     if (cumulativeCheckbox) {
-        cumulativeCheckbox.addEventListener("change", function () {
-            USE_CUMULATIVE = this.checked;
+        cumulativeCheckbox.addEventListener("change", () => {
+            USE_CUMULATIVE = (cumulativeCheckbox as HTMLInputElement).checked;
 
             const params = new URLSearchParams(window.location.search);
-            if (this.checked) {
+            if ((cumulativeCheckbox as HTMLInputElement).checked) {
                 params.set("cumulative", "true");
             } else {
                 params.delete("cumulative");
@@ -665,8 +689,8 @@ window.addEventListener("load", () => {
             window.history.pushState({}, "", newUrl);
 
             // Get the current dandiset ID
-            const dandiset_selector = document.getElementById("dandiset_selector");
-            const selected_dandiset = dandiset_selector.value;
+            const dandiset_selector = document.getElementById("dandiset_selector") as HTMLSelectElement | null;
+            const selected_dandiset = dandiset_selector?.value ?? "";
 
             // Reload plots with the current dandiset ID
             load_over_time_plot(selected_dandiset);
@@ -679,15 +703,15 @@ window.addEventListener("load", () => {
     // Add event listener for over-time plot type toggle (bar vs line)
     const otPlotTypeSelect = document.getElementById("ot_plot_type");
     if (otPlotTypeSelect) {
-        otPlotTypeSelect.addEventListener("change", function () {
-            USE_OT_LINE_PLOT = this.value === "line";
+        otPlotTypeSelect.addEventListener("change", () => {
+            USE_OT_LINE_PLOT = (otPlotTypeSelect as HTMLSelectElement).value === "line";
 
             const params = new URLSearchParams(window.location.search);
-            setUrlParam(params, "ot_plot_type", this.value, "bar");
+            setUrlParam(params, "ot_plot_type", (otPlotTypeSelect as HTMLSelectElement).value, "bar");
             const query = params.toString();
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
-            const selected_dandiset = document.getElementById("dandiset_selector").value;
+            const selected_dandiset = (document.getElementById("dandiset_selector") as HTMLSelectElement | null)?.value ?? "";
             load_over_time_plot(selected_dandiset);
         });
     }
@@ -695,15 +719,15 @@ window.addEventListener("load", () => {
     // Add event listener for stacked vs overlay toggle
     const stackedSelect = document.getElementById("ot_stacked");
     if (stackedSelect) {
-        stackedSelect.addEventListener("change", function () {
-            USE_STACKED = this.value === "stacked";
+        stackedSelect.addEventListener("change", () => {
+            USE_STACKED = (stackedSelect as HTMLSelectElement).value === "stacked";
 
             const params = new URLSearchParams(window.location.search);
             setUrlParam(params, "stacked", String(USE_STACKED), "true");
             const query = params.toString();
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
-            const selected_dandiset = document.getElementById("dandiset_selector").value;
+            const selected_dandiset = (document.getElementById("dandiset_selector") as HTMLSelectElement | null)?.value ?? "";
             load_over_time_plot(selected_dandiset);
         });
     }
@@ -711,15 +735,15 @@ window.addEventListener("load", () => {
     // Add event listener for histogram plot type toggle (bar vs line)
     const histPlotTypeSelect = document.getElementById("hist_plot_type");
     if (histPlotTypeSelect) {
-        histPlotTypeSelect.addEventListener("change", function () {
-            USE_HIST_LINE_PLOT = this.value === "line";
+        histPlotTypeSelect.addEventListener("change", () => {
+            USE_HIST_LINE_PLOT = (histPlotTypeSelect as HTMLSelectElement).value === "line";
 
             const params = new URLSearchParams(window.location.search);
-            setUrlParam(params, "hist_plot_type", this.value, "bar");
+            setUrlParam(params, "hist_plot_type", (histPlotTypeSelect as HTMLSelectElement).value, "bar");
             const query = params.toString();
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
-            const selected_dandiset = document.getElementById("dandiset_selector").value;
+            const selected_dandiset = (document.getElementById("dandiset_selector") as HTMLSelectElement | null)?.value ?? "";
             load_histogram(selected_dandiset);
         });
     }
@@ -727,17 +751,17 @@ window.addEventListener("load", () => {
     // Add event listener for binary/decimal toggle
     const prefix_selector = document.getElementById("prefix");
     if (prefix_selector) {
-        prefix_selector.addEventListener("change", function () {
-            USE_BINARY = this.value === "binary";
+        prefix_selector.addEventListener("change", () => {
+            USE_BINARY = (prefix_selector as HTMLSelectElement).value === "binary";
 
             const params = new URLSearchParams(window.location.search);
-            setUrlParam(params, "prefix", this.value, "decimal");
+            setUrlParam(params, "prefix", (prefix_selector as HTMLSelectElement).value, "decimal");
             const query = params.toString();
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
             // Get the current dandiset ID
-            const dandiset_selector = document.getElementById("dandiset_selector");
-            const selected_dandiset = dandiset_selector.value;
+            const dandiset_selector = document.getElementById("dandiset_selector") as HTMLSelectElement | null;
+            const selected_dandiset = dandiset_selector?.value ?? "";
 
             // Reload plots with the current dandiset ID
             update_totals(selected_dandiset);
@@ -751,11 +775,11 @@ window.addEventListener("load", () => {
     // Add event listener for over-time view radio toggle (Plot vs Table)
     const overTimeViewRadios = document.querySelectorAll('input[name="over_time_view"]');
     overTimeViewRadios.forEach((radio) => {
-        radio.addEventListener("change", function () {
-            USE_OVER_TIME_TABLE = this.value === "table";
+        radio.addEventListener("change", () => {
+            USE_OVER_TIME_TABLE = (radio as HTMLInputElement).value === "table";
 
             const params = new URLSearchParams(window.location.search);
-            setUrlParam(params, "over_time", this.value, "plot");
+            setUrlParam(params, "over_time", (radio as HTMLInputElement).value, "plot");
             const query = params.toString();
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
@@ -767,11 +791,11 @@ window.addEventListener("load", () => {
     // Add event listener for histogram view radio toggle (Plot vs Table)
     const histogramViewRadios = document.querySelectorAll('input[name="histogram_view"]');
     histogramViewRadios.forEach((radio) => {
-        radio.addEventListener("change", function () {
-            USE_HISTOGRAM_TABLE = this.value === "table";
+        radio.addEventListener("change", () => {
+            USE_HISTOGRAM_TABLE = (radio as HTMLInputElement).value === "table";
 
             const params = new URLSearchParams(window.location.search);
-            setUrlParam(params, "histogram", this.value, "plot");
+            setUrlParam(params, "histogram", (radio as HTMLInputElement).value, "plot");
             const query = params.toString();
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
@@ -782,15 +806,15 @@ window.addEventListener("load", () => {
     // Add event listener for time aggregation radio toggle (Daily / Weekly / Monthly / Yearly)
     const timeAggregationRadios = document.querySelectorAll('input[name="time_aggregation"]');
     timeAggregationRadios.forEach((radio) => {
-        radio.addEventListener("change", function () {
-            TIME_AGGREGATION = this.value;
+        radio.addEventListener("change", () => {
+            TIME_AGGREGATION = (radio as HTMLInputElement).value;
 
             const params = new URLSearchParams(window.location.search);
             setUrlParam(params, "aggregation", TIME_AGGREGATION, "daily");
             const query = params.toString();
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
-            const selected_dandiset = document.getElementById("dandiset_selector").value;
+            const selected_dandiset = (document.getElementById("dandiset_selector") as HTMLSelectElement | null)?.value ?? "";
             load_over_time_plot(selected_dandiset);
         });
     });
@@ -798,8 +822,8 @@ window.addEventListener("load", () => {
     // Add event listener for the single geo view toggle (Regions / Dots / Table / AWS)
     const geoViewRadios = document.querySelectorAll('input[name="geo_view"]');
     geoViewRadios.forEach((radio) => {
-        radio.addEventListener("change", function () {
-            GEO_VIEW = this.value;
+        radio.addEventListener("change", () => {
+            GEO_VIEW = (radio as HTMLInputElement).value;
 
             const params = new URLSearchParams(window.location.search);
             setUrlParam(params, "map", GEO_VIEW, "regions");
@@ -808,7 +832,7 @@ window.addEventListener("load", () => {
 
             apply_geo_view_mode(GEO_VIEW);
 
-            const selected_dandiset = document.getElementById("dandiset_selector").value;
+            const selected_dandiset = (document.getElementById("dandiset_selector") as HTMLSelectElement | null)?.value ?? "";
             // Re-render the map only when a map mode is selected
             if (GEO_VIEW === "regions" || GEO_VIEW === "points") {
                 load_geographic_heatmap(selected_dandiset);
@@ -819,8 +843,8 @@ window.addEventListener("load", () => {
     // Add event listener for over-time group-by selector
     const groupBySelector = document.getElementById("over_time_group_by");
     if (groupBySelector) {
-        groupBySelector.addEventListener("change", function () {
-            OVER_TIME_GROUP_BY = this.value;
+        groupBySelector.addEventListener("change", () => {
+            OVER_TIME_GROUP_BY = (groupBySelector as HTMLSelectElement).value;
             apply_daily_aggregation_restriction();
 
             const params = new URLSearchParams(window.location.search);
@@ -829,7 +853,7 @@ window.addEventListener("load", () => {
             const query = params.toString();
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
-            const selected_dandiset = document.getElementById("dandiset_selector").value;
+            const selected_dandiset = (document.getElementById("dandiset_selector") as HTMLSelectElement | null)?.value ?? "";
             load_over_time_plot(selected_dandiset);
         });
     }
@@ -837,10 +861,10 @@ window.addEventListener("load", () => {
     // Add event listener for top-N dandisets setting
     const topNInput = document.getElementById("top_n_dandisets");
     if (topNInput) {
-        topNInput.addEventListener("change", function () {
-            const val = parseInt(this.value, 10);
+        topNInput.addEventListener("change", () => {
+            const val = parseInt((topNInput as HTMLInputElement).value, 10);
             TOP_N_DANDISETS = (!isNaN(val) && val >= 1) ? val : 8;
-            this.value = TOP_N_DANDISETS;
+            (topNInput as HTMLInputElement).value = String(TOP_N_DANDISETS);
 
             const params = new URLSearchParams(window.location.search);
             setUrlParam(params, "top_n", String(TOP_N_DANDISETS), "8");
@@ -848,7 +872,7 @@ window.addEventListener("load", () => {
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
             if (OVER_TIME_GROUP_BY === "dandisets") {
-                const selected_dandiset = document.getElementById("dandiset_selector").value;
+                const selected_dandiset = (document.getElementById("dandiset_selector") as HTMLSelectElement | null)?.value ?? "";
                 load_over_time_plot(selected_dandiset);
             }
         });
@@ -861,19 +885,19 @@ window.addEventListener("resize", resizePlots);
 function resizePlots() {
     const plotIds = ["over_time_plot", "histogram_plot", "aws_histogram", "geography_heatmap"];
     plotIds.forEach((id) => {
-        const el = document.getElementById(id);
-        if (el && el.data) {
+        const el = document.getElementById(id) as Plotly.PlotlyHTMLElement | null;
+        if (el && (el as any).data) {
             Plotly.Plots.resize(el);
         }
     });
 
     // Update min zoom for the choroplethmap based on new width
-    const mapEl = document.getElementById("geography_heatmap");
-    if (mapEl && GEO_VIEW === "regions" && mapEl._fullLayout && mapEl._fullLayout.map && mapEl._fullLayout.map._subplot) {
+    const mapEl = document.getElementById("geography_heatmap") as Plotly.PlotlyHTMLElement | null;
+    if (mapEl && GEO_VIEW === "regions" && (mapEl as any)._fullLayout && (mapEl as any)._fullLayout.map && (mapEl as any)._fullLayout.map._subplot) {
         const mapWidth = mapEl.offsetWidth;
         const defaultZoom = Math.max(1, Math.log2(mapWidth / 512));
         const minZoom = defaultZoom - 0.15;
-        const map = mapEl._fullLayout.map._subplot.map;
+        const map = (mapEl as any)._fullLayout.map._subplot.map;
         if (map && map.setMinZoom) {
             map.setMinZoom(minZoom);
         }
@@ -885,7 +909,7 @@ function resizePlots() {
 fetchWithRetry(REGION_CODES_TO_LATITUDE_LONGITUDE_URL)
     .then((response) => response.text())
     .then((data) => {
-        REGION_CODES_TO_LATITUDE_LONGITUDE = loadYaml(data);
+        REGION_CODES_TO_LATITUDE_LONGITUDE = loadYaml(data) as Record<string, { latitude: number; longitude: number }>;
     })
     .catch((error) => {
         console.error("Error loading YAML file:", error);
@@ -943,7 +967,7 @@ Promise.all([archiveTotalsPromise, allDandisetTotalsPromise])
             return a.localeCompare(b);
         });
 
-        const selector = document.getElementById("dandiset_selector");
+        const selector = document.getElementById("dandiset_selector") as HTMLSelectElement | null;
 
         if (!selector) {
             throw new Error("Dropdown element not found on main page.");
@@ -957,10 +981,10 @@ Promise.all([archiveTotalsPromise, allDandisetTotalsPromise])
         });
 
         // Normalize a raw dandiset ID to a valid selection, falling back to "archive"
-        const validateDandisetId = (raw) => (raw && dandiset_ids.includes(raw) ? raw : "archive");
+        const validateDandisetId = (raw: string | null) => (raw && dandiset_ids.includes(raw) ? raw : "archive");
 
         // Update the selector and reload all plots/totals for the given dandiset ID
-        const setSelectedDandiset = (rawId) => {
+        const setSelectedDandiset = (rawId: string | null) => {
             const id = validateDandisetId(rawId);
             selector.value = id;
             apply_over_time_group_by_visibility();
@@ -983,7 +1007,7 @@ Promise.all([archiveTotalsPromise, allDandisetTotalsPromise])
         // the wrong scroll position.  Use allSettled so the scroll still happens even
         // if one or more plots fail to load.
         if (initialHash) {
-            Promise.allSettled(initialPromises.map(p => p ?? Promise.resolve())).then(() => {
+            Promise.allSettled(initialPromises.map(p => (p instanceof Promise ? p : Promise.resolve()))).then(() => {
                 const target = document.querySelector(initialHash);
                 if (target) target.scrollIntoView({ behavior: "instant" });
             });
@@ -991,7 +1015,7 @@ Promise.all([archiveTotalsPromise, allDandisetTotalsPromise])
 
         // Update the plots and URL when a new Dandiset ID is selected
         selector.addEventListener("change", (event) => {
-            const id = event.target.value;
+            const id = (event.target as HTMLSelectElement).value;
             const params = new URLSearchParams(window.location.search);
             if (id === "archive") {
                 params.delete("dandiset");
@@ -1022,7 +1046,7 @@ Promise.all([archiveTotalsPromise, allDandisetTotalsPromise])
     });
 
 // Function to display scalar totals
-function update_totals(dandiset_id) {
+function update_totals(dandiset_id: string) {
     const totals_element_id = "totals";
     const totals_element = document.getElementById(totals_element_id);
     const totals = ALL_DANDISET_TOTALS[dandiset_id];  // Include 'archive' as a special key
@@ -1030,7 +1054,7 @@ function update_totals(dandiset_id) {
     try {
         const human_readable_bytes_sent = format_bytes(totals.total_bytes_sent);
         const header = `A total of ${human_readable_bytes_sent} was used by ${totals.number_of_unique_regions} regions across ${totals.number_of_unique_countries} countries. <sup>*</sup>`;
-        totals_element.innerHTML = dandiset_id === "unassociated"
+        totals_element!.innerHTML = dandiset_id === "unassociated"
             ? header + `<br>However, the usage could not be associated with any Dandiset.<br>This can occur if a previously uploaded file was replaced prior to publication.`
             : dandiset_id === "undetermined"
                 ? header + `<br>However, the usage could not be uniquely associated with a particular Dandiset.<br>This can occur if the same file exists within more than one Dandiset at a time.`
@@ -1041,7 +1065,7 @@ function update_totals(dandiset_id) {
         footnote.style.fontSize = "0.5em";
         footnote.style.marginTop = "7px";
         footnote.innerHTML = "<sup>*</sup> These values are only estimates for publicly released datasets and are subject to change as additional information becomes available.";
-        totals_element.appendChild(footnote);
+        totals_element!.appendChild(footnote);
     } catch (error) {
         console.error("Error:", error);
         if (totals_element) {
@@ -1052,7 +1076,7 @@ function update_totals(dandiset_id) {
 
 // Abbreviated descriptions shown as tooltip text on legend items when the
 // over-time plot is grouped by asset type.
-const ASSET_TYPE_DESCRIPTIONS = {
+const ASSET_TYPE_DESCRIPTIONS: Record<string, string> = {
     Neurophysiology: "NWB files",
     Microscopy:      "OME-Zarr, NIfTI, TIFF",
     Video:          "AVI, MKV, MP4, MOV, WMV",
@@ -1089,16 +1113,16 @@ const DANDISET_BAR_COLORS = [
  * appears in `label_to_tooltip`.  Attaches to the plotly_afterplot event so
  * tooltips survive redraws (theme switches, resizes, trace toggles, etc.).
  *
- * @param {string} plot_element_id - ID of the Plotly graph div.
- * @param {Object} label_to_tooltip - Map of legend label → tooltip string.
+ * @param plot_element_id - ID of the Plotly graph div.
+ * @param label_to_tooltip - Map of legend label → tooltip string.
  */
-function attach_legend_tooltips(plot_element_id, label_to_tooltip) {
+function attach_legend_tooltips(plot_element_id: string, label_to_tooltip: Record<string, string>): void {
     const el = document.getElementById(plot_element_id);
     if (!el) return;
 
     function inject_titles() {
-        el.querySelectorAll(".legendtext").forEach((text_el) => {
-            const desc = label_to_tooltip[text_el.textContent];
+        el!.querySelectorAll(".legendtext").forEach((text_el) => {
+            const desc = label_to_tooltip[text_el.textContent!];
             if (!desc) return;
             const group = text_el.closest(".traces");
             if (!group) return;
@@ -1114,21 +1138,21 @@ function attach_legend_tooltips(plot_element_id, label_to_tooltip) {
     inject_titles();
     // `el.on()` is Plotly's own event-emitter API (added to the graph div by
     // Plotly.newPlot); it is the documented way to subscribe to plotly_* events.
-    el.on("plotly_afterplot", inject_titles);
+    (el as Plotly.PlotlyHTMLElement).on("plotly_afterplot", inject_titles);
 }
 
 /**
  * Builds the shared layout options used by both single-series and grouped
  * over-time plots.
  */
-function build_over_time_layout(dates) {
-    const tick_formats = {
+function build_over_time_layout(dates: string[]): Partial<Plotly.Layout> {
+    const tick_formats: Record<string, string> = {
         daily:   "%Y-%m-%d",
         weekly:  "%Y-%m-%d",
         monthly: "%Y-%m",
         yearly:  "%Y",
     };
-    const per_bin_titles = {
+    const per_bin_titles: Record<string, string> = {
         daily:   "Usage per day",
         weekly:  "Usage per week",
         monthly: "Usage per month",
@@ -1148,8 +1172,8 @@ function build_over_time_layout(dates) {
             type: USE_LOG_SCALE ? "log" : "linear",
             tickformat: USE_LOG_SCALE ? "" : "s",
             ticksuffix: USE_LOG_SCALE ? "" : "B",
-            tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000] : null,
-            ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB", "PB"] : null,
+            tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000] : undefined,
+            ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB", "PB"] : undefined,
         },
     });
 
@@ -1158,42 +1182,42 @@ function build_over_time_layout(dates) {
         if (TIME_AGGREGATION === "daily") {
             const date_set = new Set(dates);
             const date_objects = dates.map(d => new Date(d + "T00:00:00Z"));
-            const min_date = new Date(Math.min(...date_objects));
-            const max_date = new Date(Math.max(...date_objects));
-            const all_dates = [];
+            const min_date = new Date(Math.min(...date_objects.map(d => d.getTime())));
+            const max_date = new Date(Math.max(...date_objects.map(d => d.getTime())));
+            const all_dates: string[] = [];
             for (let d = new Date(min_date); d <= max_date; d.setDate(d.getDate() + 1)) {
                 all_dates.push(d.toISOString().slice(0, 10));
             }
-            layout.xaxis.rangebreaks = [{ values: all_dates.filter(d => !date_set.has(d)) }];
+            if (layout.xaxis) (layout.xaxis as any).rangebreaks = [{ values: all_dates.filter(d => !date_set.has(d)) }];
         } else if (TIME_AGGREGATION === "weekly") {
             // dates are "YYYY-MM-DD" (Mondays); keep only those, remove all other days
             const week_set = new Set(dates);
             const date_objects = dates.map(d => new Date(d + "T00:00:00Z"));
-            const min_date = new Date(Math.min(...date_objects));
-            const max_date = new Date(Math.max(...date_objects));
+            const min_date = new Date(Math.min(...date_objects.map(d => d.getTime())));
+            const max_date = new Date(Math.max(...date_objects.map(d => d.getTime())));
             // Extend to end of last week (Sunday)
             const end_date = new Date(max_date);
             end_date.setUTCDate(end_date.getUTCDate() + 6);
-            const all_days = [];
+            const all_days: string[] = [];
             for (let d = new Date(min_date); d <= end_date; d.setUTCDate(d.getUTCDate() + 1)) {
                 all_days.push(d.toISOString().slice(0, 10));
             }
-            layout.xaxis.rangebreaks = [{ values: all_days.filter(d => !week_set.has(d)) }];
+            if (layout.xaxis) (layout.xaxis as any).rangebreaks = [{ values: all_days.filter(d => !week_set.has(d)) }];
         } else if (TIME_AGGREGATION === "monthly") {
             // dates are "YYYY-MM" (month bin keys); map to "YYYY-MM-01" for Date operations
             const month_starts = new Set(dates.map(d => d + "-01"));
             const date_objects = dates.map(d => new Date(d + "-01T00:00:00Z"));
-            const min_date = new Date(Math.min(...date_objects));
-            const max_date = new Date(Math.max(...date_objects));
+            const min_date = new Date(Math.min(...date_objects.map(d => d.getTime())));
+            const max_date = new Date(Math.max(...date_objects.map(d => d.getTime())));
             // Extend to last day of the final month
             const end_date = new Date(max_date);
             end_date.setUTCMonth(end_date.getUTCMonth() + 1);
             end_date.setUTCDate(0);
-            const all_days = [];
+            const all_days: string[] = [];
             for (let d = new Date(min_date); d <= end_date; d.setUTCDate(d.getUTCDate() + 1)) {
                 all_days.push(d.toISOString().slice(0, 10));
             }
-            layout.xaxis.rangebreaks = [{ values: all_days.filter(d => !month_starts.has(d)) }];
+            if (layout.xaxis) (layout.xaxis as any).rangebreaks = [{ values: all_days.filter(d => !month_starts.has(d)) }];
         }
     }
 
@@ -1203,20 +1227,20 @@ function build_over_time_layout(dates) {
 /**
  * Applies cumulative transform to an array of byte counts.
  */
-function make_cumulative(bytes_sent) {
-    return bytes_sent.reduce((acc, value, index) => {
+function make_cumulative(bytes_sent: number[]): number[] {
+    return bytes_sent.reduce((acc: number[], value, index) => {
         acc.push((acc[index - 1] || 0) + value);
         return acc;
     }, []);
 }
 
 // Function to fetch and render the over time for a given Dandiset ID
-function load_over_time_plot(dandiset_id) {
+function load_over_time_plot(dandiset_id: string): Promise<void> {
     const plot_element_id = "over_time_plot";
 
     // Clear any locked height from the previous dandiset to avoid a stale gap
     const over_time_el = document.getElementById(plot_element_id);
-    const section_el = over_time_el && over_time_el.closest('.view-section');
+    const section_el = (over_time_el && over_time_el.closest('.view-section')) as HTMLElement | null;
     if (section_el) section_el.style.minHeight = "";
 
     // ── Grouped mode: overlay asset types ────────────────────────────────────
@@ -1241,14 +1265,14 @@ function load_over_time_plot(dandiset_id) {
                 // Data is weekly; treat "daily" aggregation as weekly since no finer data exists
                 const effective_aggregation = TIME_AGGREGATION === "daily" ? "weekly" : TIME_AGGREGATION;
 
-                const bin_label_prefix = {
+                const bin_label_prefix: Record<string, string> = {
                     weekly: "Week of ", monthly: "Month: ", yearly: "Year: ",
-                }[effective_aggregation];
+                };
 
-                const all_dates_for_layout = [];
+                const all_dates_for_layout: string[] = [];
 
                 const plot_info = asset_types.map((type, i) => {
-                    const raw_bytes = series_map.get(type);
+                    const raw_bytes = series_map.get(type) ?? [];
                     const agg = aggregate_by_timebin(raw_dates, raw_bytes, effective_aggregation);
                     const plot_data = USE_CUMULATIVE ? make_cumulative(agg.bytes_sent) : agg.bytes_sent;
                     const human_readable = plot_data.map((b) => format_bytes(b));
@@ -1267,7 +1291,7 @@ function load_over_time_plot(dandiset_id) {
                         x: agg.dates,
                         y: plot_data,
                         text: agg.dates.map((date, idx) =>
-                            `${type}<br>${bin_label_prefix}${date}<br>${human_readable[idx]}`
+                            `${type}<br>${bin_label_prefix[effective_aggregation]}${date}<br>${human_readable[idx]}`
                         ),
                         textposition: "none",
                         hoverinfo: "text",
@@ -1281,10 +1305,10 @@ function load_over_time_plot(dandiset_id) {
                         ? make_cumulative(archive_agg.bytes_sent)
                         : archive_agg.bytes_sent;
                     // Build per-date lookup for the sum of all asset-type series
-                    const series_by_date = new Map();
+                    const series_by_date = new Map<string, number>();
                     for (const series of plot_info) {
-                        series.x.forEach((date, idx) => {
-                            series_by_date.set(date, (series_by_date.get(date) || 0) + series.y[idx]);
+                        (series.x as string[]).forEach((date, idx) => {
+                            series_by_date.set(date, (series_by_date.get(date) || 0) + (series.y as number[])[idx]);
                         });
                     }
                     const other_y = archive_agg.dates.map((date, i) => {
@@ -1305,7 +1329,7 @@ function load_over_time_plot(dandiset_id) {
                         x: archive_agg.dates,
                         y: other_y,
                         text: archive_agg.dates.map((date, idx) =>
-                            `Undetermined file types<br>${bin_label_prefix}${date}<br>${other_human_readable[idx]}`
+                            `Undetermined file types<br>${bin_label_prefix[effective_aggregation]}${date}<br>${other_human_readable[idx]}`
                         ),
                         textposition: "none",
                         hoverinfo: "text",
@@ -1321,23 +1345,25 @@ function load_over_time_plot(dandiset_id) {
 
                 // Override title for "daily" since we show weekly granularity
                 if (!USE_OT_LINE_PLOT && TIME_AGGREGATION === "daily") {
-                    layout.title.text = "Usage per week";
+                    if (layout.title && typeof layout.title === 'object') {
+                        (layout.title as Partial<Plotly.DataTitle>).text = "Usage per week";
+                    }
                 }
 
-                Plotly.newPlot(plot_element_id, plot_info, layout, PLOTLY_CONFIG);
+                Plotly.newPlot(plot_element_id, plot_info as Plotly.Data[], layout, PLOTLY_CONFIG);
                 attach_legend_tooltips(plot_element_id, ASSET_TYPE_DESCRIPTIONS);
 
                 // Table: show total bytes per time bin (sum across all asset types)
                 const total_bytes = raw_dates.map((_, i) =>
-                    asset_types.reduce((sum, type) => sum + (series_map.get(type)[i] || 0), 0)
+                    asset_types.reduce((sum, type) => sum + ((series_map.get(type) ?? [])[i] || 0), 0)
                 );
                 const agg_total = aggregate_by_timebin(raw_dates, total_bytes, effective_aggregation);
                 const combined = agg_total.dates.map((date, i) => ({ date, bytes: agg_total.bytes_sent[i] }));
-                const per_bin_titles = {
+                const per_bin_titles: Record<string, string> = {
                     weekly: "Usage per week",
                     monthly: "Usage per month", yearly: "Usage per year",
                 };
-                const date_col_labels = {
+                const date_col_labels: Record<string, string> = {
                     weekly: "Week of", monthly: "Month", yearly: "Year",
                 };
                 render_sortable_table("over_time_table", per_bin_titles[effective_aggregation], [
@@ -1364,9 +1390,9 @@ function load_over_time_plot(dandiset_id) {
             .slice(0, TOP_N_DANDISETS)
             .map(([id]) => id);
 
-        const bin_label_prefix = {
+        const bin_label_prefix: Record<string, string> = {
             daily: "", weekly: "Week of ", monthly: "Month: ", yearly: "Year: ",
-        }[TIME_AGGREGATION];
+        };
 
         const per_series_promises = top_dandiset_ids.map((id) =>
             fetch(`${BASE_TSV_URL}/${id}/by_day.tsv`)
@@ -1394,13 +1420,13 @@ function load_over_time_plot(dandiset_id) {
 
         return Promise.all([Promise.all(per_series_promises), archive_promise])
             .then(([series_results, archive_data]) => {
-                const valid_series = series_results.filter(Boolean);
+                const valid_series = series_results.filter((s): s is { id: string; dates: string[]; bytes_sent: number[] } => s !== null);
 
                 // Compute global bin edges: union of all dandiset bins and archive bins.
                 // Aligning every series to the same x-axis eliminates gaps between bars
                 // that would otherwise appear when dandisets have different date ranges.
                 const global_bin_set = new Set(valid_series.flatMap((s) => s.dates));
-                let archive_agg = null;
+                let archive_agg: { dates: string[]; bytes_sent: number[] } | null = null;
                 if (archive_data) {
                     archive_agg = aggregate_by_timebin(archive_data.dates, archive_data.bytes, TIME_AGGREGATION);
                     archive_agg.dates.forEach((d) => global_bin_set.add(d));
@@ -1426,7 +1452,7 @@ function load_over_time_plot(dandiset_id) {
                         x: global_bins,
                         y: plot_data,
                         text: global_bins.map((date, idx) =>
-                            `DANDI:${series.id}<br>${bin_label_prefix}${date}<br>${human_readable[idx]}`
+                            `DANDI:${series.id}<br>${bin_label_prefix[TIME_AGGREGATION]}${date}<br>${human_readable[idx]}`
                         ),
                         textposition: "none",
                         hoverinfo: "text",
@@ -1436,17 +1462,17 @@ function load_over_time_plot(dandiset_id) {
                 // Build an "Other" series: archive total minus the sum of all top-N dandisets
                 if (archive_agg) {
                     const date_to_archive_bytes = new Map(
-                        archive_agg.dates.map((d, i) => [d, archive_agg.bytes_sent[i]])
+                        archive_agg.dates.map((d, i) => [d, archive_agg!.bytes_sent[i]])
                     );
                     const aligned_archive_bytes = global_bins.map((k) => date_to_archive_bytes.get(k) || 0);
                     const archive_plot_data = USE_CUMULATIVE
                         ? make_cumulative(aligned_archive_bytes)
                         : aligned_archive_bytes;
                     // Build per-date lookup for the sum of top-N series (already cumulative if USE_CUMULATIVE)
-                    const series_by_date = new Map();
+                    const series_by_date = new Map<string, number>();
                     for (const trace of plot_info) {
-                        trace.x.forEach((date, idx) => {
-                            series_by_date.set(date, (series_by_date.get(date) || 0) + trace.y[idx]);
+                        (trace.x as string[]).forEach((date, idx) => {
+                            series_by_date.set(date, (series_by_date.get(date) || 0) + (trace.y as number[])[idx]);
                         });
                     }
                     const other_y = global_bins.map((date, i) => {
@@ -1467,7 +1493,7 @@ function load_over_time_plot(dandiset_id) {
                         x: global_bins,
                         y: other_y,
                         text: global_bins.map((date, idx) =>
-                            `Other<br>${bin_label_prefix}${date}<br>${other_human_readable[idx]}`
+                            `Other<br>${bin_label_prefix[TIME_AGGREGATION]}${date}<br>${other_human_readable[idx]}`
                         ),
                         textposition: "none",
                         hoverinfo: "text",
@@ -1478,14 +1504,14 @@ function load_over_time_plot(dandiset_id) {
                 if (!USE_OT_LINE_PLOT) layout.barmode = USE_STACKED ? "stack" : "overlay";
                 layout.legend = { title: { text: "Dandiset" } };
 
-                Plotly.newPlot(plot_element_id, plot_info, layout, PLOTLY_CONFIG);
+                Plotly.newPlot(plot_element_id, plot_info as Plotly.Data[], layout, PLOTLY_CONFIG);
 
                 // Render archive table view even in grouped mode
-                const per_bin_titles = {
+                const per_bin_titles: Record<string, string> = {
                     daily: "Usage per day", weekly: "Usage per week",
                     monthly: "Usage per month", yearly: "Usage per year",
                 };
-                const date_col_labels = {
+                const date_col_labels: Record<string, string> = {
                     daily: "Date", weekly: "Week of", monthly: "Month", yearly: "Year",
                 };
                 if (archive_data) {
@@ -1509,7 +1535,7 @@ function load_over_time_plot(dandiset_id) {
     }
 
     // ── Default single-series mode ────────────────────────────────────────────
-    let by_day_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_day.tsv`;
+    const by_day_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_day.tsv`;
 
     return fetch(by_day_summary_tsv_url)
         .then((response) => {
@@ -1543,12 +1569,12 @@ function load_over_time_plot(dandiset_id) {
             const human_readable_bytes_sent = plot_data.map((bytes) => format_bytes(bytes));
 
             // Build hover label prefix based on the selected aggregation
-            const bin_label_prefix = {
+            const bin_label_prefix: Record<string, string> = {
                 daily: "",
                 weekly: "Week of ",
                 monthly: "Month: ",
                 yearly: "Year: ",
-            }[TIME_AGGREGATION];
+            };
 
             const plot_info = [
                 {
@@ -1557,13 +1583,13 @@ function load_over_time_plot(dandiset_id) {
                         : { type: "bar", marker: { color: getTheme().accent } }),
                     x: dates,
                     y: plot_data,
-                    text: dates.map((date, index) => `${bin_label_prefix}${date}<br>${human_readable_bytes_sent[index]}`),
+                    text: dates.map((date, index) => `${bin_label_prefix[TIME_AGGREGATION]}${date}<br>${human_readable_bytes_sent[index]}`),
                     textposition: "none",
                     hoverinfo: "text",
                 }
             ];
 
-            const per_bin_titles = {
+            const per_bin_titles: Record<string, string> = {
                 daily:   "Usage per day",
                 weekly:  "Usage per week",
                 monthly: "Usage per month",
@@ -1572,10 +1598,10 @@ function load_over_time_plot(dandiset_id) {
 
             const layout = build_over_time_layout(dates);
 
-            Plotly.newPlot(plot_element_id, plot_info, layout, PLOTLY_CONFIG);
+            Plotly.newPlot(plot_element_id, plot_info as Plotly.Data[], layout, PLOTLY_CONFIG);
 
             // Render table view (sortable by column header click; default: bytes descending)
-            const date_col_labels = {
+            const date_col_labels: Record<string, string> = {
                 daily:   "Date",
                 weekly:  "Week of",
                 monthly: "Month",
@@ -1599,11 +1625,11 @@ function load_over_time_plot(dandiset_id) {
 }
 
 // Function to fetch and render histogram over asset or Dandiset IDs
-function load_histogram(dandiset_id) {
+function load_histogram(dandiset_id: string): Promise<void> | string {
     let by_asset_summary_tsv_url;
     const controls_el = document.getElementById("histogram");
     const plot_element = document.getElementById("histogram_plot");
-    const section_el = plot_element && plot_element.closest('.view-section');
+    const section_el = (plot_element && plot_element.closest('.view-section')) as HTMLElement | null;
 
     // Suppress entire histogram section if 'undetermined' or 'unassociated' is selected (nonsensical there)
     if (dandiset_id === "undetermined" || dandiset_id === "unassociated") {
@@ -1635,7 +1661,7 @@ function load_histogram(dandiset_id) {
     }
 }
 
-function load_dandiset_histogram() {
+function load_dandiset_histogram(): Promise<void> {
     const plot_element_id = "histogram_plot";
 
     return fetch(ALL_DANDISET_TOTALS_URL)
@@ -1689,12 +1715,12 @@ function load_dandiset_histogram() {
                 type: USE_LOG_SCALE ? "log" : "linear",
                 tickformat: USE_LOG_SCALE ? "" : "~s",
                 ticksuffix: USE_LOG_SCALE ? "" : "B",
-                tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000, 1000000000000000000] : null,
-                ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
+                tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000, 1000000000000000000] : undefined,
+                ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : undefined,
             },
         });
 
-        Plotly.newPlot(plot_element_id, plot_data, layout, PLOTLY_CONFIG);
+        Plotly.newPlot(plot_element_id, plot_data as Plotly.Data[], layout, PLOTLY_CONFIG);
 
         // Render table view (sortable by column header click; default: bytes descending)
         render_sortable_table("histogram_table", "", [
@@ -1715,7 +1741,7 @@ function load_dandiset_histogram() {
     });
 }
 
-function load_per_asset_histogram(by_asset_summary_tsv_url) {
+function load_per_asset_histogram(by_asset_summary_tsv_url: string): Promise<void> {
     const plot_element_id = "histogram_plot";
 
     return fetch(by_asset_summary_tsv_url)
@@ -1777,12 +1803,12 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
                     type: USE_LOG_SCALE ? "log" : "linear",
                     tickformat: USE_LOG_SCALE ? "" : "~s",
                     ticksuffix: USE_LOG_SCALE ? "" : "B",
-                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000, 1000000000000000000] : null,
-                    ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : null
+                    tickvals: USE_LOG_SCALE ? [1000, 1000000, 1000000000, 1000000000000, 1000000000000000, 1000000000000000000] : undefined,
+                    ticktext: USE_LOG_SCALE ? ["KB", "MB", "GB", "TB"] : undefined,
                 },
             });
 
-            Plotly.newPlot(plot_element_id, plot_data, layout, PLOTLY_CONFIG);
+            Plotly.newPlot(plot_element_id, plot_data as Plotly.Data[], layout, PLOTLY_CONFIG);
 
             // Render table view (sortable by column header click; default: bytes descending)
             render_sortable_table("histogram_table", "Usage per asset", [
@@ -1804,11 +1830,11 @@ function load_per_asset_histogram(by_asset_summary_tsv_url) {
 }
 
 // Function to fetch and render AWS regions as a table
-function load_aws_histogram(dandiset_id) {
+function load_aws_histogram(dandiset_id: string): Promise<void> {
     const element = document.getElementById("aws_histogram");
     if (!element) return Promise.resolve();
 
-    let by_region_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`;
+    const by_region_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`;
 
     return fetch(by_region_summary_tsv_url)
         .then((response) => {
@@ -1825,7 +1851,7 @@ function load_aws_histogram(dandiset_id) {
             }
 
             const data = rows.slice(1).map((row) => row.split("\t"));
-            const subregion_data = [];
+            const subregion_data: Array<{ name: string; bytes: number }> = [];
 
             data.forEach((row) => {
                 const region = row[0];
@@ -1856,7 +1882,7 @@ function load_aws_histogram(dandiset_id) {
 }
 
 // Normalize a subdivision name for matching against GeoJSON features
-function normalize_region_name(name) {
+function normalize_region_name(name: string): string {
     if (!name) return "";
     name = name.toLowerCase();
     const prefixes = ["state of ", "province of ", "region of ", "republic of ",
@@ -1874,7 +1900,7 @@ function normalize_region_name(name) {
             name = name.slice(0, -suffix.length);
         }
     }
-    const replacements = {
+    const replacements: Record<string, string> = {
         'á':'a','à':'a','â':'a','ä':'a','ã':'a','ą':'a','ă':'a','ā':'a',
         'é':'e','è':'e','ê':'e','ë':'e','ę':'e','ě':'e','ė':'e','ǝ':'e',
         'í':'i','ì':'i','î':'i','ï':'i','ı':'i','ī':'i',
@@ -1900,15 +1926,15 @@ function normalize_region_name(name) {
 }
 
 // Load TopoJSON and name aliases (cached after first load)
-function load_choropleth_data() {
-    const promises = [];
+function load_choropleth_data(): Promise<void[]> {
+    const promises: Promise<void>[] = [];
     if (!GEOJSON_DATA) {
         promises.push(
             fetch("gadm_admin1_simplified.topojson")
                 .then(r => { if (!r.ok) throw new Error("Failed to fetch TopoJSON"); return r.json(); })
-                .then(topoData => {
+                .then((topoData: any) => {
                     const objectName = Object.keys(topoData.objects)[0];
-                    GEOJSON_DATA = topojsonFeature(topoData, topoData.objects[objectName]);
+                    GEOJSON_DATA = topojsonFeature(topoData, topoData.objects[objectName]) as unknown as { features: any[] };
                 })
         );
     }
@@ -1923,10 +1949,10 @@ function load_choropleth_data() {
 }
 
 // Build lookups from "iso2/name_norm" to feature index for fast matching
-function build_geojson_lookup() {
-    const lookup = {};
-    const country_lookup = {};
-    GEOJSON_DATA.features.forEach((feature, idx) => {
+function build_geojson_lookup(): { lookup: Record<string, number>; country_lookup: Record<string, Array<[string, number]>> } {
+    const lookup: Record<string, number> = {};
+    const country_lookup: Record<string, Array<[string, number]>> = {};
+    GEOJSON_DATA!.features.forEach((feature, idx) => {
         const iso2 = feature.properties.iso2;
         const name_norm = feature.properties.name_norm;
         if (iso2 && name_norm && name_norm.length > 1) {
@@ -1950,10 +1976,10 @@ const COUNTRY_REMAPPING = {
     'MQ': ['MQ', null],
     'CW': ['CW', null],
     'MV': ['MV', null],
-};
+} as const;
 
 // Match a TSV region key to a GeoJSON feature index
-function match_region_to_feature(region, lookup, country_lookup) {
+function match_region_to_feature(region: string, lookup: Record<string, number>, country_lookup: Record<string, Array<[string, number]>>): number {
     const parts = region.split("/");
     if (parts.length < 2) return -1;
     let country_code = parts[0];
@@ -1962,7 +1988,7 @@ function match_region_to_feature(region, lookup, country_lookup) {
 
     // Apply country remapping
     if (country_code in COUNTRY_REMAPPING) {
-        const [new_cc, fixed_region] = COUNTRY_REMAPPING[country_code];
+        const [new_cc, fixed_region] = COUNTRY_REMAPPING[country_code as keyof typeof COUNTRY_REMAPPING];
         if (fixed_region) {
             country_code = new_cc;
             subdivision_name = fixed_region;
@@ -1999,7 +2025,7 @@ function match_region_to_feature(region, lookup, country_lookup) {
 }
 
 // Function to populate top regions table from TSV data
-function load_top_regions_table(by_region_summary_tsv_url) {
+function load_top_regions_table(by_region_summary_tsv_url: string): Promise<void> {
     return fetch(by_region_summary_tsv_url)
         .then((response) => {
             if (!response.ok) throw new Error("Failed to fetch TSV");
@@ -2041,13 +2067,13 @@ function load_top_regions_table(by_region_summary_tsv_url) {
 }
 
 // Function to fetch and render heatmap over geography
-function load_geographic_heatmap(dandiset_id) {
+function load_geographic_heatmap(dandiset_id: string): Promise<void | void[] | [void, void]> {
     const plot_element_id = "geography_heatmap";
-    let by_region_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`;
+    const by_region_summary_tsv_url = `${BASE_TSV_URL}/${dandiset_id}/by_region.tsv`;
 
     // Clear any locked height from the previous dandiset before reapplying view mode
     const mapEl = document.getElementById(plot_element_id);
-    const section_el = mapEl && mapEl.closest('.view-section');
+    const section_el = (mapEl && mapEl.closest('.view-section')) as HTMLElement | null;
     if (section_el) section_el.style.minHeight = "";
 
     const topRegionsPromise = load_top_regions_table(by_region_summary_tsv_url);
@@ -2092,10 +2118,10 @@ function load_geographic_heatmap(dandiset_id) {
                 .map((row) => row.split("\t"))
                 .sort((a, b) => parseInt(a[1], 10) - parseInt(b[1], 10));
 
-            const latitudes = [];
-            const longitudes = [];
-            const bytes_sent = [];
-            const hover_texts = [];
+            const latitudes: number[] = [];
+            const longitudes: number[] = [];
+            const bytes_sent: number[] = [];
+            const hover_texts: string[] = [];
 
             data.forEach((row) => {
                 const region = row[0];
@@ -2153,7 +2179,7 @@ function load_geographic_heatmap(dandiset_id) {
                 },
             });
 
-            Plotly.newPlot(plot_element_id, plot_info, layout, PLOTLY_CONFIG);
+            Plotly.newPlot(plot_element_id, plot_info as Plotly.Data[], layout, PLOTLY_CONFIG);
         })
         .catch((error) => {
             console.error("Error:", error);
@@ -2167,7 +2193,7 @@ function load_geographic_heatmap(dandiset_id) {
 }
 
 // Function to fetch and render choropleth over geography
-function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summary_tsv_url) {
+function load_geographic_choropleth(dandiset_id: string, plot_element_id: string, by_region_summary_tsv_url: string): Promise<void> {
     return Promise.all([
         load_choropleth_data(),
         fetch(by_region_summary_tsv_url).then(r => {
@@ -2175,7 +2201,9 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
             return r.text();
         })
     ])
-    .then(([_, text]) => {
+    .then(([, text]) => {
+        if (!GEOJSON_DATA) return;
+
         const rows = text.split("\n").filter((row) => row.trim() !== "");
         if (rows.length < 2) {
             throw new Error("TSV file does not contain enough data.");
@@ -2198,15 +2226,15 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
         // Build a filtered GeoJSON with only features that have data
         // Skip features that cross the dateline (lon span > 300°) as they
         // cause Plotly to fill the entire map width
-        const filtered_features = [];
-        const z_values = [];
-        const hover_texts = [];
+        const filtered_features: any[] = [];
+        const z_values: number[] = [];
+        const hover_texts: string[] = [];
 
         // Skip features that cross the antimeridian (have both very
         // negative and very positive longitudes) as they render incorrectly
-        function hasWideLonSpan(feature) {
+        function hasWideLonSpan(feature: any) {
             let minLon = Infinity, maxLon = -Infinity;
-            function scanCoords(coords) {
+            function scanCoords(coords: any) {
                 if (typeof coords[0] === "number") {
                     if (coords[0] < minLon) minLon = coords[0];
                     if (coords[0] > maxLon) maxLon = coords[0];
@@ -2220,7 +2248,7 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
 
         feature_bytes.forEach((bytes, idx) => {
             if (bytes > 0) {
-                const feature = GEOJSON_DATA.features[idx];
+                const feature = GEOJSON_DATA!.features[idx];
                 if (hasWideLonSpan(feature)) return;
                 const name = feature.properties.name;
                 const iso2 = feature.properties.iso2;
@@ -2251,8 +2279,8 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
                 const hi = Math.ceil(zMax);
                 vals = lo === hi ? [lo, lo + 1] : [lo, hi];
                 texts = vals.map(v => {
-                    const idx = allTicks.indexOf(v);
-                    return idx >= 0 ? allLabels[idx] : "10^" + v;
+                    const tickIdx = allTicks.indexOf(v);
+                    return tickIdx >= 0 ? allLabels[tickIdx] : "10^" + v;
                 });
             }
             return { title: "Bytes (log scale)", tickvals: vals, ticktext: texts };
@@ -2292,12 +2320,6 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
                 text: "Usage by region",
                 font: { size: 24 },
             },
-            map: {
-                style: getTheme().mapStyle,
-                center: { lat: 40, lon: 0 },
-                zoom: defaultZoom,
-                minzoom: minZoom,
-            },
             annotations: [
                 {
                     text: 'Geographic boundaries are defined by <a href="https://gadm.org/" target="_blank">GADM v4.1</a> | '
@@ -2319,11 +2341,17 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
                 },
             ],
         });
+        (layout as any).map = {
+            style: getTheme().mapStyle,
+            center: { lat: 40, lon: 0 },
+            zoom: defaultZoom,
+            minzoom: minZoom,
+        };
 
-        Plotly.newPlot(plot_element_id, plot_info, layout, PLOTLY_CONFIG).then(() => {
+        Plotly.newPlot(plot_element_id, plot_info as Plotly.Data[], layout, PLOTLY_CONFIG).then(() => {
             const el = document.getElementById(plot_element_id);
-            if (el && el._fullLayout && el._fullLayout.map && el._fullLayout.map._subplot) {
-                const map = el._fullLayout.map._subplot.map;
+            if (el && (el as any)._fullLayout && (el as any)._fullLayout.map && (el as any)._fullLayout.map._subplot) {
+                const map = (el as any)._fullLayout.map._subplot.map;
                 if (map) {
                     if (map.setMinZoom) map.setMinZoom(minZoom);
                 }
@@ -2340,6 +2368,6 @@ function load_geographic_choropleth(dandiset_id, plot_element_id, by_region_summ
 }
 
 // format_bytes delegates to the pure utility, passing the current binary/decimal setting.
-function format_bytes(bytes, decimals = 2) {
+function format_bytes(bytes: number, decimals = 2): string {
     return format_bytes_pure(bytes, decimals, USE_BINARY);
 }

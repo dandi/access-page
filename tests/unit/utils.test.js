@@ -6,7 +6,7 @@ import {
     parse_by_asset_type_per_week_tsv,
     aggregate_by_timebin,
     format_bytes,
-} from "../../src/utils.js";
+} from "../../src/utils.ts";
 
 // ── setUrlParam ──────────────────────────────────────────────────────────────
 
