@@ -74,7 +74,7 @@
          stylesheet is parsed so the first paint already uses the correct
          colours and no CSS animations play during initial state setup.
          NOTE: the defaulting logic (anything other than 'light' → dark) must
-         stay in sync with initTheme() in plots.js. -->
+         stay in sync with initTheme() in plots.ts. -->
     <script>
       try {
         const t = localStorage.getItem('theme');
@@ -88,7 +88,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./styles.css">
 
-    <script type="module" src="./plots.js"></script>
+    <script type="module" src="./plots.ts"></script>
 </head>
 <body>
     <header class="site-header">
