@@ -1,10 +1,10 @@
-name: Chromatic
+name: Chromatic (Storybook)
 
 on: push
 
 jobs:
     chromatic:
-        name: Run Chromatic
+        name: Run Chromatic (Storybook)
         runs-on: ubuntu-latest
         permissions:
             contents: read
@@ -22,5 +22,4 @@ jobs:
             - name: Run Chromatic
               uses: chromaui/action@latest
               with:
-                  projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
-                  onlyChanged: true
+                  projectToken: ${{ secrets.CHROMATIC_STORYBOOK_PROJECT_TOKEN }}
