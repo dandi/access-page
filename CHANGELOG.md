@@ -9,6 +9,7 @@
 
 #### 🏠 Internal
 
+- Added `--disable-gpu` to Playwright Chromium launch args to suppress GL driver GPU stall warning in CI. ([#161](https://github.com/dandi/usage-page/pull/161))
 - Made `test.yml` a reusable workflow (`workflow_call`); simplified `daily-tests.yml` to call it directly (inheriting secrets for Codecov uploads); removed Playwright artifact uploads from `weekly-tests.yml`. ([#159](https://github.com/dandi/usage-page/pull/159))
 - Moved `tsconfig.json` from the repository root into `configs/tsconfig.json` alongside the other config files. ([#155](https://github.com/dandi/usage-page/pull/155))
 - Swapped all `src/` source files from JavaScript to TypeScript (`plots.ts`, `utils.ts`, `errors.ts`); added `tsconfig.json`, type packages (`typescript`, `@types/js-yaml`, `@types/plotly.js`, `@types/topojson-client`, `@types/node`), a `vendor.d.ts` shim for `plotly.js-dist-min`, and a `typecheck` npm script. ([#149](https://github.com/dandi/usage-page/pull/149))
