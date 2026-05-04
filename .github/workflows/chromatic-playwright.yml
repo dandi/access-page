@@ -19,6 +19,11 @@ jobs:
                   cache: npm
             - name: Install dependencies
               run: npm ci
+            - name: Install build-archive-storybook wrapper
+              run: |
+                  chmod +x src/scripts/build-archive-storybook-wrapper.cjs
+                  rm node_modules/.bin/build-archive-storybook
+                  ln -sf ../../src/scripts/build-archive-storybook-wrapper.cjs node_modules/.bin/build-archive-storybook
             - name: Install Playwright browsers
               run: npx playwright install chromium --with-deps
             - name: Run Playwright tests
