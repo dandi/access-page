@@ -10,8 +10,15 @@
     <a href="https://codecov.io/github/dandi/usage-page"><img src="https://codecov.io/github/dandi/usage-page/coverage.svg?branch=main" alt="codecov"></a>
     <a href="https://github.com/dandi/usage-page/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-yellow.svg" alt="License: MIT"></a>
     <a href="https://github.com/dandi/usage-page/releases"><img src="https://img.shields.io/github/v/release/dandi/usage-page" alt="GitHub release"></a>
-    <a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat" alt="code style: prettier"></a>
     <a href="https://doi.org/10.5281/zenodo.20031137"><img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20031137-blue" alt="DOI"></a>
+  </p>
+  <p align="center">
+    <a href="https://www.chromatic.com"><img src="https://img.shields.io/badge/Chromatic-FC521F?logo=chromatic&logoColor=white" alt="Chromatic"></a>
+    <a href="https://storybook.js.org"><img src="https://img.shields.io/badge/Storybook-FF4785?logo=storybook&logoColor=white" alt="Storybook"></a>
+    <a href="https://playwright.dev"><img src="https://img.shields.io/badge/Playwright-2d2d2d?style=flat&logo=playwright&logoColor=2EAD33" alt="Playwright"></a>
+  </p>
+  <p align="center">
+    <a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat" alt="code style: prettier"></a>
   </p>
 </div>
 

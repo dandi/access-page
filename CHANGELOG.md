@@ -4,6 +4,7 @@
 
 #### 📝 Documentation
 
+- Added Chromatic, Storybook, and Playwright badges to `README.md` and grouped all badges by theme (CI/quality, testing tools, code style). ([#169](https://github.com/dandi/usage-page/pull/169))
 - Added Zenodo DOI badge to `README.md` using shields.io to avoid the classic Zenodo badge load failures. ([#167](https://github.com/dandi/usage-page/pull/167))
 
 
