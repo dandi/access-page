@@ -2,39 +2,13 @@
 
 ## Upcoming
 
-#### 📝 Documentation
 
-- Added daily tests passing badge to `README.md`. ([#157](https://github.com/dandi/usage-page/pull/157))
-- Added codecov, license, release, and code style badges to `README.md`. ([#151](https://github.com/dandi/usage-page/pull/151))
 
-#### 🏠 Internal
-
-- Added Playwright visual testing with Chromatic: a new `chromatic-playwright.yml` CI workflow runs visual snapshot tests (dark and light themes) via `@chromatic-com/playwright` and uploads them to a dedicated Chromatic project using `CHROMATIC_PLAYWRIGHT_PROJECT_TOKEN`; the existing Chromatic workflow was renamed to "Chromatic (Storybook)". ([#163](https://github.com/dandi/usage-page/pull/163))
-- Added `--disable-gpu` to Playwright Chromium launch args and filtered `GL Driver Message` browser warnings in the integration test console listener to suppress the WebGL GPU stall warning in CI. ([#161](https://github.com/dandi/usage-page/pull/161))
-- Made `test.yml` a reusable workflow (`workflow_call`); simplified `daily-tests.yml` to call it directly (inheriting secrets for Codecov uploads); removed Playwright artifact uploads from `weekly-tests.yml`. ([#159](https://github.com/dandi/usage-page/pull/159))
-- Swapped all `src/` source files from JavaScript to TypeScript (`plots.ts`, `utils.ts`, `errors.ts`); added `tsconfig.json`, type packages (`typescript`, `@types/js-yaml`, `@types/plotly.js`, `@types/topojson-client`, `@types/node`), a `vendor.d.ts` shim for `plotly.js-dist-min`, and a `typecheck` npm script. ([#149](https://github.com/dandi/usage-page/pull/149))
+## v1.3.7
 
 #### 🚀 Enhancement
 
 - Added "Stacked" toggle to the over-time plot settings panel to switch between stacked and overlay views when a group-by is active. ([#141](https://github.com/dandi/usage-page/pull/141))
-
-#### 🏠 Internal
-
-- Moved `gadm_admin1_simplified.topojson` and `name_aliases.json` from `configs/` to `src/configs/` so changes to them are covered by the version-check CI. ([#147](https://github.com/dandi/usage-page/pull/147))
-- Moved `src/tests/` and `src/stories/` to top-level `tests/` and `stories/` directories to avoid confusing AI tooling and the version-check CI. ([#145](https://github.com/dandi/usage-page/pull/145))
-- Replaced the hand-duplicated HTML string in `MainPage.stories.js` with a `?raw` import of `src/index.html` so the Storybook story always derives its DOM structure directly from the source. ([#143](https://github.com/dandi/usage-page/pull/143))
-- Moved `gadm_admin1_simplified.topojson` and `name_aliases.json` from `public/` to `configs/` to reduce top-level noise. ([#137](https://github.com/dandi/usage-page/pull/137))
-- Fixed `configs/vite.config.js` `publicDir` from `config/` to `configs/`. ([#140](https://github.com/dandi/usage-page/pull/140))
-- Added weekly CI workflow (`npm-audit.yml`) that runs `npm audit` every Monday and sends an email notification on failure. ([#134](https://github.com/dandi/usage-page/pull/134))
-- Added weekly CI workflow (`weekly-tests.yml`) that runs build, unit, and integration tests every Monday and sends an email notification on any failure or detected warning. ([#138](https://github.com/dandi/usage-page/pull/138))
-- Added daily CI workflow (`daily-tests.yml`) that runs build, unit, and integration tests every day at noon UTC and sends an email notification on any failure or detected warning. ([#153](https://github.com/dandi/usage-page/pull/153))
-
-#### 📝 Documentation
-
-- Added `CHANGELOG.md` to track changes to the project.
-
-## 🚀 Enhancement
-
 - Modularized settings into per-plot gear panels instead of a single global modal. ([#132](https://github.com/dandi/usage-page/pull/132))
 - Added line/bar plot type toggle with area shading for over-time and histogram views. ([#120](https://github.com/dandi/usage-page/pull/120))
 - Respected browser `prefers-color-scheme` setting as the default light/dark theme. ([#127](https://github.com/dandi/usage-page/pull/127))
@@ -66,6 +40,14 @@
 - Added log scale option for plots and updated the controls layout. ([#3](https://github.com/dandi/usage-page/pull/3))
 - Initial deployment of the DANDI usage page with geographic map, per-dandiset breakdown, and CI/CD pipeline. ([#2](https://github.com/dandi/usage-page/pull/2))
 
+#### 📝 Documentation
+
+- Added `CHANGELOG.md` to track changes to the project.
+- Added daily tests passing badge to `README.md`. ([#157](https://github.com/dandi/usage-page/pull/157))
+- Added codecov, license, release, and code style badges to `README.md`. ([#151](https://github.com/dandi/usage-page/pull/151))
+- Added a consolidated "Data sources" section linking to underlying data files. ([#46](https://github.com/dandi/usage-page/pull/46))
+- Added a note clarifying that only public (non-embargoed) datasets are included.
+
 ## 🐛 Bug Fix
 
 - Fixed page flash (FOUC) and layout scrambling on page refresh. ([#126](https://github.com/dandi/usage-page/pull/126))
@@ -92,12 +74,19 @@
 - Offloaded inline styles to a separate `styles.css` file. ([#48](https://github.com/dandi/usage-page/pull/48))
 - Added `CNAME` file to enable the `usage.dandiarchive.org` custom domain. ([#33](https://github.com/dandi/usage-page/pull/33))
 - Swapped data source base URLs to the new repository location. ([#14](https://github.com/dandi/usage-page/pull/14))
-
-## 📝 Documentation
-
-- Added a consolidated "Data sources" section linking to underlying data files. ([#46](https://github.com/dandi/usage-page/pull/46))
-- Added a note clarifying that only public (non-embargoed) datasets are included.
+- Moved `gadm_admin1_simplified.topojson` and `name_aliases.json` from `configs/` to `src/configs/` so changes to them are covered by the version-check CI. ([#147](https://github.com/dandi/usage-page/pull/147))
+- Moved `src/tests/` and `src/stories/` to top-level `tests/` and `stories/` directories to avoid confusing AI tooling and the version-check CI. ([#145](https://github.com/dandi/usage-page/pull/145))
+- Replaced the hand-duplicated HTML string in `MainPage.stories.js` with a `?raw` import of `src/index.html` so the Storybook story always derives its DOM structure directly from the source. ([#143](https://github.com/dandi/usage-page/pull/143))
+- Moved `gadm_admin1_simplified.topojson` and `name_aliases.json` from `public/` to `configs/` to reduce top-level noise. ([#137](https://github.com/dandi/usage-page/pull/137))
+- Fixed `configs/vite.config.js` `publicDir` from `config/` to `configs/`. ([#140](https://github.com/dandi/usage-page/pull/140))
+- Swapped all `src/` source files from JavaScript to TypeScript (`plots.ts`, `utils.ts`, `errors.ts`); added `tsconfig.json`, type packages (`typescript`, `@types/js-yaml`, `@types/plotly.js`, `@types/topojson-client`, `@types/node`), a `vendor.d.ts` shim for `plotly.js-dist-min`, and a `typecheck` npm script. ([#149](https://github.com/dandi/usage-page/pull/149))
 
 ## 🧪 Tests
 
 - Set up testing infrastructure: Vitest (unit), Playwright (e2e), Storybook/Chromatic (visual), and Codecov (coverage). ([#129](https://github.com/dandi/usage-page/pull/129))
+- Added weekly CI workflow (`npm-audit.yml`) that runs `npm audit` every Monday and sends an email notification on failure. ([#134](https://github.com/dandi/usage-page/pull/134))
+- Added weekly CI workflow (`weekly-tests.yml`) that runs build, unit, and integration tests every Monday and sends an email notification on any failure or detected warning. ([#138](https://github.com/dandi/usage-page/pull/138))
+- Added daily CI workflow (`daily-tests.yml`) that runs build, unit, and integration tests every day at noon UTC and sends an email notification on any failure or detected warning. ([#153](https://github.com/dandi/usage-page/pull/153))
+- Added Playwright visual testing with Chromatic: a new `chromatic-playwright.yml` CI workflow runs visual snapshot tests (dark and light themes) via `@chromatic-com/playwright` and uploads them to a dedicated Chromatic project using `CHROMATIC_PLAYWRIGHT_PROJECT_TOKEN`; the existing Chromatic workflow was renamed to "Chromatic (Storybook)". ([#163](https://github.com/dandi/usage-page/pull/163))
+- Added `--disable-gpu` to Playwright Chromium launch args and filtered `GL Driver Message` browser warnings in the integration test console listener to suppress the WebGL GPU stall warning in CI. ([#161](https://github.com/dandi/usage-page/pull/161))
+- Made `test.yml` a reusable workflow (`workflow_call`); simplified `daily-tests.yml` to call it directly (inheriting secrets for Codecov uploads); removed Playwright artifact uploads from `weekly-tests.yml`. ([#159](https://github.com/dandi/usage-page/pull/159))
