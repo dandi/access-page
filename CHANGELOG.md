@@ -2,6 +2,9 @@
 
 ## Upcoming
 
+#### 📝 Documentation
+
+- Added Zenodo DOI badge to `README.md` using shields.io to avoid the classic Zenodo badge load failures. ([#167](https://github.com/dandi/usage-page/pull/167))
 
 
 ## v1.3.7

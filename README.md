@@ -11,6 +11,7 @@
     <a href="https://github.com/dandi/usage-page/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-yellow.svg" alt="License: MIT"></a>
     <a href="https://github.com/dandi/usage-page/releases"><img src="https://img.shields.io/github/v/release/dandi/usage-page" alt="GitHub release"></a>
     <a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat" alt="code style: prettier"></a>
+    <a href="https://doi.org/10.5281/zenodo.20031137"><img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20031137-blue" alt="DOI"></a>
   </p>
 </div>
 
