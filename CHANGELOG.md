@@ -4,6 +4,7 @@
 
 #### 📝 Documentation
 
+- Added daily tests passing badge to `README.md`. ([#157](https://github.com/dandi/usage-page/pull/157))
 - Added codecov, license, release, and code style badges to `README.md`. ([#151](https://github.com/dandi/usage-page/pull/151))
 
 #### 🏠 Internal
