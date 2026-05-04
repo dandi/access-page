@@ -8,6 +8,7 @@
 
 #### 🏠 Internal
 
+- Moved `tsconfig.json` from the repository root into `configs/tsconfig.json` alongside the other config files. ([#155](https://github.com/dandi/usage-page/pull/155))
 - Swapped all `src/` source files from JavaScript to TypeScript (`plots.ts`, `utils.ts`, `errors.ts`); added `tsconfig.json`, type packages (`typescript`, `@types/js-yaml`, `@types/plotly.js`, `@types/topojson-client`, `@types/node`), a `vendor.d.ts` shim for `plotly.js-dist-min`, and a `typecheck` npm script. ([#149](https://github.com/dandi/usage-page/pull/149))
 
 #### 🚀 Enhancement
