@@ -12,6 +12,7 @@ import Plotly from "plotly.js-dist-min";
 import { feature as topojsonFeature } from "topojson-client";
 
 declare const __APP_VERSION__: string;
+declare const __GIT_HASH__: string;
 
 // ── Theme helpers (mirrors :root CSS variables in styles.css) ───────────────
 const DARK_THEME = {
@@ -395,7 +396,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Set the version tag in the footer
     const versionEl = document.getElementById("site_version");
     if (versionEl) {
-        versionEl.textContent = `v${__APP_VERSION__}`;
+        versionEl.textContent = `v${__APP_VERSION__}+${__GIT_HASH__}`;
     }
 
     // Sync global state and form controls from URL parameters early so that

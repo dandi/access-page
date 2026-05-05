@@ -2,6 +2,14 @@
 
 ## Upcoming
 
+#### 🚀 Enhancement
+
+- Appended the first 8 characters of the latest git commit hash to the version string displayed in the bottom-left footer (e.g. `v1.3.8+a25561a7`). ([#174](https://github.com/dandi/usage-page/pull/174))
+
+#### 🏠 Internal
+
+- Updated the version-check CI workflow to not trigger on `package-lock.json` changes; updated `AGENTS.md` to match. ([#174](https://github.com/dandi/usage-page/pull/174))
+
 #### 🧪 Tests
 
 - Stabilized Chromatic Playwright snapshots by intercepting all external data requests with static mock fixtures and waiting for all three Plotly plots to finish rendering before calling `takeSnapshot`. ([#171](https://github.com/dandi/usage-page/pull/171))
