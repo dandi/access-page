@@ -117,7 +117,11 @@ async function waitForPlotsToRender(page) {
 test.describe("DANDI Usage Page", () => {
     test("dark theme", async ({ page }, testInfo) => {
         await setupDataMocks(page);
-        await page.addInitScript(() => localStorage.setItem("theme", "dark"));
+        await page.addInitScript(() => {
+            localStorage.setItem("theme", "dark");
+            // Pre-dismiss the analytics consent banner so it does not overlap the plots
+            localStorage.setItem("analytics_consent", "declined");
+        });
         await page.goto("/");
         await waitForPlotsToRender(page);
         await takeSnapshot(page, testInfo);
@@ -125,7 +129,11 @@ test.describe("DANDI Usage Page", () => {
 
     test("light theme", async ({ page }, testInfo) => {
         await setupDataMocks(page);
-        await page.addInitScript(() => localStorage.setItem("theme", "light"));
+        await page.addInitScript(() => {
+            localStorage.setItem("theme", "light");
+            // Pre-dismiss the analytics consent banner so it does not overlap the plots
+            localStorage.setItem("analytics_consent", "declined");
+        });
         await page.goto("/");
         await waitForPlotsToRender(page);
         await takeSnapshot(page, testInfo);
