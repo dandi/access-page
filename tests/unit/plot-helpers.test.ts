@@ -176,6 +176,14 @@ describe("apply_view_mode", () => {
         expect(document.getElementById("over_time_table")!.style.display).toBe("none");
     });
 
+    it("locks the min-height to the current height when switching to table and offsetHeight is positive", () => {
+        const section = document.querySelector(".view-section") as HTMLElement;
+        Object.defineProperty(section, "offsetHeight", { configurable: true, get: () => 400 });
+
+        apply_view_mode("over_time_plot", "over_time_table", true);
+
+        expect(section.style.minHeight).toBe("400px");
+    });
     it("releases the min-height lock when switching back to plot", () => {
         const section = document.querySelector(".view-section") as HTMLElement;
         section.style.minHeight = "500px";
@@ -245,6 +253,14 @@ describe("apply_geo_view_mode", () => {
         expect(document.getElementById("top_regions_table")!.style.display).toBe("none");
     });
 
+    it("locks the min-height to the current height when switching away from map and offsetHeight is positive", () => {
+        const section = document.querySelector(".view-section") as HTMLElement;
+        Object.defineProperty(section, "offsetHeight", { configurable: true, get: () => 350 });
+
+        apply_geo_view_mode("table");
+
+        expect(section.style.minHeight).toBe("350px");
+    });
     it("releases the min-height lock when switching back to a map view", () => {
         const section = document.querySelector(".view-section") as HTMLElement;
         section.style.minHeight = "400px";
@@ -386,6 +402,12 @@ describe("render_sortable_table", () => {
             render_sortable_table("my_table", "Title", columns, [], fmt)
         ).not.toThrow();
         expect(document.querySelectorAll("#my_table tbody tr").length).toBe(0);
+    });
+
+    it("renders an empty string for null/undefined non-numeric cell values", () => {
+        render_sortable_table("my_table", "Title", columns, [{ name: null, bytes: 500 }], fmt);
+        const cell = document.querySelector("#my_table tbody td:first-child")!;
+        expect(cell.textContent).toBe("");
     });
 
     it("marks the default sort column header with th-sorted class", () => {
