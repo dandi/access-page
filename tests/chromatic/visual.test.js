@@ -115,6 +115,12 @@ async function waitForPlotsToRender(page) {
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 test.describe("DANDI Usage Page", () => {
+    // The Chromatic fixture calls takeSnapshot automatically after the test body
+    // unless disableAutoSnapshot is set. Since we call takeSnapshot explicitly
+    // ourselves, disabling the automatic one prevents two identical captures per
+    // test (which would show up as four redundant snapshots in Chromatic's UI).
+    test.use({ disableAutoSnapshot: true });
+
     test("dark theme", async ({ page }, testInfo) => {
         await setupDataMocks(page);
         await page.addInitScript(() => {
