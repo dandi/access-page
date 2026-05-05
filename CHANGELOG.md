@@ -2,6 +2,10 @@
 
 ## Upcoming
 
+#### 🧪 Tests
+
+- Stabilized Chromatic Playwright snapshots by intercepting all external data requests with static mock fixtures and waiting for all three Plotly plots to finish rendering before calling `takeSnapshot`. ([#171](https://github.com/dandi/usage-page/pull/171))
+
 #### 📝 Documentation
 
 - Added Chromatic, Storybook, and Playwright badges to `README.md` and grouped all badges by theme (CI/quality, testing tools, code style). ([#169](https://github.com/dandi/usage-page/pull/169))
