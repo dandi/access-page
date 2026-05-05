@@ -12,6 +12,9 @@
 
 #### 🧪 Tests
 
+- Extracted `escape_html`, `make_cumulative`, `fetchWithRetry`, `apply_view_mode`, `apply_geo_view_mode`, and `render_sortable_table` into a new `src/plot-helpers.ts` module and added 50 unit tests covering all six helpers; raised overall statement coverage from 5% to 13%. ([#175](https://github.com/dandi/usage-page/pull/175))
+- Added `stories/PlotSections.stories.js` with Storybook stories for the over-time plot, histogram, geography, and sortable-table components in both dark and light themes. ([#175](https://github.com/dandi/usage-page/pull/175))
+
 - Stabilized Chromatic Playwright snapshots by intercepting all external data requests with static mock fixtures and waiting for all three Plotly plots to finish rendering before calling `takeSnapshot`. ([#171](https://github.com/dandi/usage-page/pull/171))
 
 #### 📝 Documentation
