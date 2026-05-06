@@ -194,6 +194,20 @@ function apply_over_time_group_by_visibility() {
     if (!container) return;
     container.style.display = !USE_OVER_TIME_TABLE ? "" : "none";
 
+    const settingsContainer = document.getElementById("ot_settings_container");
+    if (settingsContainer) {
+        settingsContainer.style.display = !USE_OVER_TIME_TABLE ? "contents" : "none";
+        if (USE_OVER_TIME_TABLE) {
+            const panel = document.getElementById("ot_settings_panel");
+            const btn = document.getElementById("ot_settings_btn") as HTMLButtonElement | null;
+            if (panel) {
+                panel.classList.remove("open");
+                panel.setAttribute("aria-hidden", "true");
+            }
+            if (btn) btn.setAttribute("aria-expanded", "false");
+        }
+    }
+
     const selector = document.getElementById("dandiset_selector") as HTMLSelectElement | null;
     const isArchive = !selector || selector.value === "archive";
     const dandisets_option = document.querySelector('#over_time_group_by option[value="dandisets"]');
@@ -402,6 +416,24 @@ function syncFromUrl() {
     const histogramRadio = document.querySelector(`input[name="histogram_view"][value="${histogramValue}"]`) as HTMLInputElement | null;
     if (histogramRadio) histogramRadio.checked = true;
     apply_view_mode("histogram_plot", "histogram_table", USE_HISTOGRAM_TABLE);
+    setSettingsBtnDisabled("hist_settings_btn", "hist_settings_panel", USE_HISTOGRAM_TABLE);
+}
+
+/**
+ * Disables or re-enables a settings button.  When disabling, also closes the
+ * panel if it is currently open.
+ */
+function setSettingsBtnDisabled(btnId: string, panelId: string, disabled: boolean): void {
+    const btn = document.getElementById(btnId) as HTMLButtonElement | null;
+    const panel = document.getElementById(panelId);
+    if (btn) {
+        btn.disabled = disabled;
+        if (disabled && panel) {
+            panel.classList.remove("open");
+            btn.setAttribute("aria-expanded", "false");
+            panel.setAttribute("aria-hidden", "true");
+        }
+    }
 }
 
 /**
@@ -604,6 +636,7 @@ window.addEventListener("load", () => {
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
             apply_view_mode("histogram_plot", "histogram_table", USE_HISTOGRAM_TABLE);
+            setSettingsBtnDisabled("hist_settings_btn", "hist_settings_panel", USE_HISTOGRAM_TABLE);
         });
     });
 

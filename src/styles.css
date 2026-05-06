@@ -511,6 +511,11 @@ input[type="number"]:focus {
     border-color: var(--color-accent);
 }
 
+.settings-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 .settings-btn svg {
     width: 16px;
     height: 16px;
