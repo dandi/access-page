@@ -194,6 +194,20 @@ function apply_over_time_group_by_visibility() {
     if (!container) return;
     container.style.display = !USE_OVER_TIME_TABLE ? "" : "none";
 
+    const settingsContainer = document.getElementById("ot_settings_container");
+    if (settingsContainer) {
+        settingsContainer.style.display = !USE_OVER_TIME_TABLE ? "contents" : "none";
+        if (USE_OVER_TIME_TABLE) {
+            const panel = document.getElementById("ot_settings_panel");
+            const btn = document.getElementById("ot_settings_btn") as HTMLButtonElement | null;
+            if (panel) {
+                panel.classList.remove("open");
+                panel.setAttribute("aria-hidden", "true");
+            }
+            if (btn) btn.setAttribute("aria-expanded", "false");
+        }
+    }
+
     const selector = document.getElementById("dandiset_selector") as HTMLSelectElement | null;
     const isArchive = !selector || selector.value === "archive";
     const dandisets_option = document.querySelector('#over_time_group_by option[value="dandisets"]');
@@ -372,7 +386,6 @@ function syncFromUrl() {
     const overTimeRadio = document.querySelector(`input[name="over_time_view"][value="${overTimeValue}"]`) as HTMLInputElement | null;
     if (overTimeRadio) overTimeRadio.checked = true;
     apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
-    setSettingsBtnDisabled("ot_settings_btn", "ot_settings_panel", USE_OVER_TIME_TABLE);
     apply_over_time_group_by_visibility();
     const validAggregations = ["daily", "weekly", "monthly", "yearly"];
     const urlAggregation = params.get("aggregation");
@@ -607,7 +620,6 @@ window.addEventListener("load", () => {
             window.history.pushState({}, "", window.location.pathname + (query ? "?" + query : ""));
 
             apply_view_mode("over_time_plot", "over_time_table", USE_OVER_TIME_TABLE);
-            setSettingsBtnDisabled("ot_settings_btn", "ot_settings_panel", USE_OVER_TIME_TABLE);
             apply_over_time_group_by_visibility();
         });
     });
