@@ -87,7 +87,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
 
-  <script type="module" crossorigin src="./assets/index-Cn-Ennnl.js"></script>
+  <script type="module" crossorigin src="./assets/index-ouuiJMC-.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-ClQ2Pjga.css">
 </head>
 <body>
@@ -146,6 +146,29 @@
                 <label for="over_time_view_table">Table</label>
             </div>
         </div>
+    </div>
+    <div class="ControllerContainer PlotViewControls" id="over_time_aggregate_controls">
+        <div class="SubControllerContainer">
+            <span class="radio-label">Aggregate:</span>
+            <div class="radio-toggle">
+                <input type="radio" id="aggregation_daily" name="time_aggregation" value="daily" checked />
+                <label for="aggregation_daily">Daily</label>
+                <input type="radio" id="aggregation_weekly" name="time_aggregation" value="weekly" />
+                <label for="aggregation_weekly">Weekly</label>
+                <input type="radio" id="aggregation_monthly" name="time_aggregation" value="monthly" />
+                <label for="aggregation_monthly">Monthly</label>
+                <input type="radio" id="aggregation_yearly" name="time_aggregation" value="yearly" />
+                <label for="aggregation_yearly">Yearly</label>
+            </div>
+        </div>
+        <div class="SubControllerContainer" id="over_time_group_by_container">
+            <label for="over_time_group_by">Group by:</label>
+            <select id="over_time_group_by">
+                <option value="none">None</option>
+                <option value="dandisets">Dandisets</option>
+                <option value="asset_type">Asset type</option>
+            </select>
+        </div>
         <div class="separator"></div>
         <div class="settings-wrapper">
             <button class="settings-btn" id="ot_settings_btn" aria-label="Open usage over time settings" aria-expanded="false" title="Usage over time settings">
@@ -180,29 +203,6 @@
                     <input type="number" id="top_n_dandisets" min="1" value="8" />
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="ControllerContainer PlotViewControls" id="over_time_aggregate_controls">
-        <div class="SubControllerContainer">
-            <span class="radio-label">Aggregate:</span>
-            <div class="radio-toggle">
-                <input type="radio" id="aggregation_daily" name="time_aggregation" value="daily" checked />
-                <label for="aggregation_daily">Daily</label>
-                <input type="radio" id="aggregation_weekly" name="time_aggregation" value="weekly" />
-                <label for="aggregation_weekly">Weekly</label>
-                <input type="radio" id="aggregation_monthly" name="time_aggregation" value="monthly" />
-                <label for="aggregation_monthly">Monthly</label>
-                <input type="radio" id="aggregation_yearly" name="time_aggregation" value="yearly" />
-                <label for="aggregation_yearly">Yearly</label>
-            </div>
-        </div>
-        <div class="SubControllerContainer" id="over_time_group_by_container">
-            <label for="over_time_group_by">Group by:</label>
-            <select id="over_time_group_by">
-                <option value="none">None</option>
-                <option value="dandisets">Dandisets</option>
-                <option value="asset_type">Asset type</option>
-            </select>
         </div>
     </div>
     <div class="view-section">
