@@ -99,6 +99,17 @@ async function setupDataMocks(page) {
 }
 
 /**
+ * Replaces the footer version string with a fixed mock value so that
+ * Chromatic snapshots are not invalidated by version bumps or new commits.
+ */
+async function mockVersion(page) {
+    await page.evaluate(() => {
+        const versionEl = document.getElementById("site_version");
+        if (versionEl) versionEl.textContent = "v0.0.0+test0000";
+    });
+}
+
+/**
  * Waits until all three main Plotly plot sections have finished rendering.
  * Plotly adds the "js-plotly-plot" class to a div once newPlot() completes.
  */
@@ -130,6 +141,7 @@ test.describe("DANDI Usage Page", () => {
         });
         await page.goto("/");
         await waitForPlotsToRender(page);
+        await mockVersion(page);
         await takeSnapshot(page, testInfo);
     });
 
@@ -142,6 +154,7 @@ test.describe("DANDI Usage Page", () => {
         });
         await page.goto("/");
         await waitForPlotsToRender(page);
+        await mockVersion(page);
         await takeSnapshot(page, testInfo);
     });
 });
