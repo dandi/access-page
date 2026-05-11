@@ -10,6 +10,8 @@
 #### 🏠 Internal
 
 - Updated the version-check CI workflow to not trigger on `package-lock.json` changes; updated `AGENTS.md` to match. ([#174](https://github.com/dandi/usage-page/pull/174))
+- Updated the version-check workflow to allow dependency-only `package.json` changes (for example Dependabot dependency bumps) without requiring a package version bump. ([#189](https://github.com/dandi/usage-page/pull/189))
+- Fixed version-check CI parsing in the dependency-only `package.json` branch by replacing a malformed heredoc with `node -e`, so Dependabot dependency bumps no longer fail unexpectedly. ([#181](https://github.com/dandi/usage-page/pull/181))
 
 #### 🧪 Tests
 

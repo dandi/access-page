@@ -15,10 +15,10 @@ jobs:
             contents: read
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
 
             - name: Set up Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v6
               with:
                   node-version: lts/*
                   cache: npm
@@ -52,10 +52,10 @@ jobs:
             contents: read
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
 
             - name: Set up Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v6
               with:
                   node-version: lts/*
                   cache: npm
@@ -89,10 +89,10 @@ jobs:
             contents: read
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
 
             - name: Set up Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v6
               with:
                   node-version: lts/*
                   cache: npm
@@ -134,7 +134,7 @@ jobs:
             )
         permissions: {}
         steps:
-            - uses: dawidd6/action-send-mail@v3
+            - uses: dawidd6/action-send-mail@v17
               with:
                   server_address: smtp.gmail.com
                   server_port: 465
