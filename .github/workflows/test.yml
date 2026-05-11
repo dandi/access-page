@@ -13,10 +13,10 @@ jobs:
             contents: read
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
 
             - name: Set up Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v6
               with:
                   node-version: lts/*
                   cache: npm
@@ -28,7 +28,7 @@ jobs:
               run: npm run test:coverage
 
             - name: Upload coverage to Codecov
-              uses: codecov/codecov-action@v5
+              uses: codecov/codecov-action@v6
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
                   files: ./coverage/lcov.info
@@ -43,10 +43,10 @@ jobs:
             contents: read
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
 
             - name: Set up Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v6
               with:
                   node-version: lts/*
                   cache: npm
@@ -64,7 +64,7 @@ jobs:
               run: npm run coverage:integration
 
             - name: Upload integration coverage to Codecov
-              uses: codecov/codecov-action@v5
+              uses: codecov/codecov-action@v6
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
                   files: ./coverage/integration/lcov.info
