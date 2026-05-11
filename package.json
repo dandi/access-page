@@ -55,7 +55,7 @@
   },
   "dependencies": {
     "js-yaml": "^4.1.1",
-    "plotly.js-dist-min": "^3.0.1",
+    "plotly.js-dist-min": "^3.5.1",
     "topojson-client": "^3.1.0"
   }
 }
