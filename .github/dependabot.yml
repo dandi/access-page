@@ -5,15 +5,15 @@ updates:
     schedule:
       interval: "daily"
     reviewers:
-      - "codycbakerphd"
+      - "CodyCBakerPhD"
     assignees:
-      - "codycbakerphd"
+      - "CodyCBakerPhD"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "daily"
     reviewers:
-      - "codycbakerphd"
+      - "CodyCBakerPhD"
     assignees:
-      - "codycbakerphd"
+      - "CodyCBakerPhD"
