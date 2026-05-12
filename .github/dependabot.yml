@@ -3,17 +3,17 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "quarterly"
     reviewers:
-      - "codycbakerphd"
+      - "CodyCBakerPhD"
     assignees:
-      - "codycbakerphd"
+      - "CodyCBakerPhD"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "quarterly"
     reviewers:
-      - "codycbakerphd"
+      - "CodyCBakerPhD"
     assignees:
-      - "codycbakerphd"
+      - "CodyCBakerPhD"
